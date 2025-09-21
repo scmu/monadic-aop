@@ -102,6 +102,12 @@ r ⊑ s = ∀ x → r x ⊆ s x
 ⊑-trans : {r s t : X → ℙ Y} → r ⊑ s → s ⊑ t → r ⊑ t
 ⊑-trans = λ r⊑s s⊑t x y y∈rx → s⊑t x y (r⊑s x y y∈rx)
 
+⊑-refl-consequence : (A B : X → ℙ Y) → A ≡ B → (A ⊑ B) × (B ⊑ A)
+⊑-refl-consequence A B p = subst (A ⊑_) p (⊑-refl A), subst (B ⊑_) (sym p) (⊑-refl B)
+
+⊑-extensionality : (A B : X → ℙ Y) → (A ⊑ B) × (B ⊑ A) → A ≡ B
+⊑-extensionality A B (φ , ψ) = funExt (λ x → P.⊆-extensionality (A x) (B x) (φ x , ψ x))
+
 _⊒_ : ∀ {ℓ} {X : Type ℓ} {Y : Type ℓ} → (X → ℙ Y) → (X → ℙ Y) → Type ℓ
 r ⊒ s = s ⊑ r
 
@@ -184,6 +190,33 @@ _° : ∀ {ℓ} {X : Type ℓ} {Y : Type ℓ} → (X → ℙ Y) → (Y → ℙ X
 °-idempotent : (r : X → ℙ Y) → (r °) ° ≡ r
 °-idempotent r = refl
 
+°-order-preserving-⇒ : (f g : X → ℙ Y) → (f °) ⊑ (g °) → f ⊑ g
+°-order-preserving-⇒  f g p = λ x x₁ x₂ → p x₁ x x₂
+°-order-preserving-⇐ : (f g : X → ℙ Y) → f ⊑ g → (f °) ⊑ (g °)
+°-order-preserving-⇐ f g p = λ x x₁ x₂ → p x₁ x x₂
+
+-- return and converse
+
+return-reflex : return {X = X} ° ≡ return {X = X} 
+return-reflex = ⊑-extensionality (λ x x₁ → (return °) x x₁) (λ x x₁ → return x x₁) ((λ x x₁ x₂ → rec (P.∈-isProp (λ x₃ → return x x₃) x₁) (λ x₃ → ∣ sym x₃ ∣₁) x₂) , λ x x₁ x₂ → rec (P.∈-isProp (λ x₃ → (return °) x x₃) x₁) (λ x₃ → ∣ sym x₃ ∣₁) x₂)
+
+
+-- return-uname1 : return {X = X} <=< return {X = X} ≡ return {X = X}
+-- return-uname1 = ⊑-extensionality (λ x x₁ → (return <=< return) x x₁) (λ x x₁ → return x x₁) ((λ x x₁ x₂ → rec (P.∈-isProp (return x) x₁) (λ {(xx , (a , b)) → ∣ rec (λ x₃ y → {! Cubical.Foundations.Prelude.inS ?   !}) (λ xx≡x₁ → rec {!   !} (λ x≡xx → subst (λ x₃ → x ≡ x₃) xx≡x₁ x≡xx) a) b ∣₁}) x₂) , λ x x₁ x₂ → {!   !})
+
+return-expend : return {X = X} ⊑ return {X = X} <=< return {X = X} 
+return-expend = λ x x₁ x₂ → rec (P.∈-isProp ((return <=< return) x) x₁) (λ x₃ → ∣ x , (∣ refl ∣₁ , ∣ x₃ ∣₁) ∣₁) x₂
+
+-- fail
+-- return-expend-left : return {X = X} <=< return {X = X} ⊑ return {X = X} 
+-- return-expend-left = λ x x₁ x₂ → rec (P.∈-isProp (return x) x₁) (λ {(xx , (xx1 , xx2)) → ∣ {!     !} ∣₁}) x₂ -- rec (P.∈-isProp ((return <=< return) x) x₁) (λ x₃ → ∣ x , (∣ refl ∣₁ , ∣ x₃ ∣₁) ∣₁) x₂
+
+-- °-unnamed0 : return {X = X} <=< (return {X = X} °) ⊑ return {X = X}
+-- °-unnamed0 = {!   !}
+
+-- °-contravariant : (f : X → ℙ Y) (g : Y → ℙ Z) → (g <=< f) ° ≡ ((f °) <=< (g °))
+-- °-contravariant f g = funExt (λ z → {!   !})
+
   -- factor
   
 _/_ : (X → ℙ Z) → (X → ℙ Y) → (Y → ℙ Z)
@@ -211,3 +244,27 @@ R-trans R = ∀ x y z → y ∈ R x → z ∈ R y → z ∈ R x
 <=<-assoc-right : (R S T : X → ℙ X) → R <=< (S <=< T) ⊑ (R <=< S) <=< T
 <=<-assoc-right R S T x x' x'∈lhs = rec squash₁ (λ {(z , z∈S<=<Tx , x'∈Rz) → rec squash₁ (λ z₁ →
      ∣ z₁ .fst , z₁ .snd .fst , ∣ z , z₁ .snd .snd , x'∈Rz ∣₁ ∣₁) z∈S<=<Tx}) x'∈lhs 
+
+-- unname-1 :  ∀ {ℓ} {X : Type ℓ} {Y : Type ℓ}(f : X → ℙ Y) → (f <=< (f °)) ≡ {!    !}
+-- unname-1 = {!   !}
+
+-- -- converse and <=<
+-- transpose-of-composite :
+--   {X Y Z : Type ℓ} (f : Y → ℙ Z) (g : X → ℙ Y) → ((f <=< g) °) ≡ ((g °) <=< (f °)) 
+-- transpose-of-composite {ℓ} {X} {Y} {Z} f g = funExt (λ z → P.⊆-extensionality (((f <=< g) °) z) (((g °) <=< (f °)) z) ({!   !} , {!   !}))
+
+
+-- left-map-law : {X Y Z V : Type ℓ} (f : Y → ℙ Z) (g : X → ℙ Y) (h : ℙ Z → ℙ V) → (x : X) → h (f =<< (g x)) ≡ (h ∘ f) =<< g x -- h (f =<< g x)  =  (h . f) =<< g x
+-- left-map-law {ℓ} {X} {Y} {Z} {V} f g h x = funExt (λ v → ⇔toPath (λ x₁ → rec squash₁ (λ x₂ → ∣ {!   !} , {!   !} , {!   !} ∣₁) ∣ x₁ ∣₁) {!   !})
+
+-- te : {X Y Z V : Type ℓ} (f : Y → ℙ Z) (py : ℙ Y) (h : ℙ Z → (ℙ V)) → h (f =<< py) ≡ ((h ∘ f) =<< py)
+-- te  {X} {Y} {Z} f py h = {!   !} -- funExt λ z → ⇔toPath {! ((h ∘ f) =<< py) z !} {!   !} -- ⇔toPath (rec {!   (((h ∘ f) =<< py) z) !} {!   !} {!   !}) {!   !}
+
+-- left-map-law-> : {X Y Z : Type ℓ} (f : Y → ℙ Z) (g : X → ℙ Y) (h : ℙ Z → ℙ Z) → (x : X) → h (f =<< (g x)) ⊆ ((h ∘ f) =<< g x)
+-- left-map-law-> {ℓ} {X} {Y} {Z} f g h x z p = 
+--   let
+--     a = {! rec ? ? ?  !}
+--   in  rec (P.∈-isProp ((h ∘ f) =<< g x) z) (λ x₁ → {!   !}) ∣ {!   !} ∣₁
+-- -- rec : {P : Type ℓ} → isProp P → (A → P) → ∥ A ∥₁ → P
+-- -- rec Pprop f ∣ x ∣₁ = f x
+-- -- rec Pprop f (squash₁ x y i) = Pprop (rec Pprop f x) (rec Pprop f y) i
