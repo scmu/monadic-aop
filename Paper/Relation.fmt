@@ -41,6 +41,7 @@
 %format >=> = "\mathrel{\hstretch{0.7}{>\!\!=\!\!>}}"
 
 %format (split (f) (g)) = "\langle {" f "}, {" g "} \rangle"
+%format *** = "\times"
 %format :* = "\times"
 %format `prod` = "\times"
 %format `lfac` = "\mathbin{\backslash}"
