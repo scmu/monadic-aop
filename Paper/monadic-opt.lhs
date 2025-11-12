@@ -841,8 +841,11 @@ To apply the law, notice that lines generating |xs|, |b1|, and |b0| match that o
            y0 <- f x b0
            return (y1, y0) {-"~~."-}
 \end{spec}
-If we were calling |f x b1| instead of |f x b0|, we would be able to use |max|-cancelation again.
-That is exactly what monotonicity offers us: it assures that, instead of applying |f x| to |b0|, we lose nothing by applying |f x| to the preferred solution |b1|.
+Seeing |max (f x b1)|, we wish to use |max|-cancelation again,
+but the penultimate line is a call to |f x b0| rather than |f x b1|.
+The property that relates |f x b0| and |f x b1| is Smyth-monotonicity:
+it assures that, instead of applying |f x| to |b0|, we lose nothing by
+applying |f x| to the preferred solution |b1|.
 To make use of monotonicity, notice that the lines generating |(b1, b0)| and |y0| and the |filt unrhd (b1, b0)| match the lefthand side of \eqref{eq:monotonicity}, therefore we rewrite them to the righthand side of \eqref{eq:monotonicity}:
 \begin{spec}
        ...
@@ -866,7 +869,7 @@ Now we can use |max|-cancelation again to cancel |max (f x b1)| and |f x b1|:
            filt unrhd (y1, y0) {-"~~."-}
 \end{spec}
 The last step uses transitivity of |unrhd|, and then we are done.
-
+%
 % \begin{spec}
 %        do  xs <- any
 %            y1 <- (max . f x) =<< max (foldR f e xs)
@@ -903,7 +906,8 @@ The last step uses transitivity of |unrhd|, and then we are done.
 \end{proof}
 We use |do|-notation to implicitly invoke the monad laws, and commutative laws, behind-the-scene.
 
-We have chosen to use the fixed-point property for the proof, to demonstrate more steps. We could have also used the fusion-theorem instead.
+We have chosen to use the fixed-point property for the proof, to demonstrate more steps.
+We could have also used the fusion-theorem instead.
 The fusion condition is:
 \begin{spec}
   max_unlhd . (f x =<<) `spse` (max_unlhd . f x) <=< max_unlhd {-"~~."-}
@@ -1001,7 +1005,7 @@ derMSPRes =
 \end{code}
 %endif
 \begin{code}
-  max . prefix `spse` foldR maxPre (return []) {-"~~."-}
+  max . prefix {-"~"-}`spse` {-"~"-} foldR maxPre (return []) {-"~~."-}
 \end{code}
 % Recall the greedy theorem:
 % %format y0
@@ -1027,11 +1031,11 @@ To apply the theorem, one has to establish that |pre| is Smyth-monotonic,
 that is, given |ys1 `geqs` ys0|, for any list |zs0| in |pre x ys0|, there
 exists some list |zs1| in |pre x ys1| such that |zs1 `geqs` zs0|.
 
-In most literature this step is treated informally.
-Usually, the reader is given a verbal explanation, in which we do a case analysis on what |pre x| might return, and for each case the reader is shown how a corresponding |zs1| can be constructed.
-The same situation applies to other problems.
+In most literatures on optimisation problems, establishing such monotonicity is usually done informally.
+In the case of MSS, the readers would be given a verbal explanation consisting of a case analysis on what |pre x| might return as |zs0|, and for each case the reader is shown how a corresponding |zs1| can be constructed.
 
-One of the advantages of our monadic approach is that, if we want, we can prove the monotonicity condition formally. For the MSS problem, the proof goes:
+Such an informal explanation is often sufficient.
+The monadic approach, however, provides a framework in which one can formally prove the monotonicity condition when it is desired. For the MSS problem, the proof goes:
 %if False
 \begin{code}
 -- derMSSMain :: (a -> b -> P b) -> P b -> a -> List a -> P b
@@ -1069,7 +1073,8 @@ proofMonoMSS x =
             filt geqs (zs1, zs0)
             return (ys1, zs0)  {-"~~."-}
 \end{code}
-
+Note that case analysis on |pre| is performed by expanding its definition and using distributivity of |(>>=)|, and that monad laws
+\todo{review the proof above and explain a bit.}
 
 \section{Thinning Algorithms}
 
