@@ -774,6 +774,15 @@ If |f x| is monotonic on |unrhd| for all |x|, we have
 
 The specification on the righthand side can be refined to a |foldR| in which we apply |max| in every step. The algorithm still keeps a set of all maximums. It is in fact sufficient to keep only \emph{one} maximum solution, but the decision of which one to keep can be postponed when we further refine the lefthand side to a function.
 
+\noindent {\bf Remark}: conventionally, a function |f :: A -> B| is said to be monotonic (with respect to |unrhd| and |succeq|) if |x `unrhd` y ==> f x `succeq` f y|, where |unrhd| and |succeq| are respectively partial orders on |A| and |B|.
+In \emph{Hoare powerdomain} \citep{Smyth:78:Power} sets are related by the ordering:
+\begin{equation*}
+  |xs `succeq` ys {-"~"-} = {-"~"-} (forall y `elem` ys : (exists x `elem` xs : x `unrhd` y))| \mbox{~~.}
+\end{equation*}
+Expand the definition and we get \eqref{eq:monotonicity-logic}.
+Dually, in \emph{Smyth powerdomain} sets are ordered by |xs `succeq` ys {-"~"-} = {-"~"-} (forall x `elem` xs : (exists y `elem` ys : x `unrhd` y))|.
+{\bf End of Remark}.
+
 \subsection{Proof of the Greedy Theorem}
 
 To most users, what matters is how the Greedy Theorem can be put to use to solve actual problems.

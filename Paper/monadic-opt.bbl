@@ -1,4 +1,4 @@
-\begin{thebibliography}{7}
+\begin{thebibliography}{8}
 
 \bibitem[{Aarts et~al.}(1992){Aarts, Backhouse, Hoogendijk, Voermans, \&
   van~der Woude}]{Aarts:92:Relational}
@@ -35,5 +35,9 @@
   Gibbons}]{deMoorGibbons:00:Pointwise}
 {de~Moor, O. \& Gibbons, J.} (2000) Pointwise relational programming. Algebraic
   Methodology and Software Technology. Springer-Verlag. pp. 371--390.
+
+\bibitem[{Smyth}(1978)]{Smyth:78:Power}
+{Smyth, M.~B.} (1978) Power domains. \textit{Journal of Computer and System
+  Sciences}. {\bf 16}(1), 23--36.
 
 \end{thebibliography}
