@@ -1,4 +1,4 @@
-\begin{thebibliography}{8}
+\begin{thebibliography}{9}
 
 \bibitem[{Aarts et~al.}(1992){Aarts, Backhouse, Hoogendijk, Voermans, \&
   van~der Woude}]{Aarts:92:Relational}
@@ -39,5 +39,9 @@
 \bibitem[{Smyth}(1978)]{Smyth:78:Power}
 {Smyth, M.~B.} (1978) Power domains. \textit{Journal of Computer and System
   Sciences}. {\bf 16}(1), 23--36.
+
+\bibitem[{Winskel}(1985)]{Winskel:85:Powerdomains}
+{Winskel, G.} (1985) On powerdomains and modality. \textit{Theoretical Computer
+  Science}. {\bf 36}, 127--137.
 
 \end{thebibliography}

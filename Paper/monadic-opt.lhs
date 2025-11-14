@@ -718,17 +718,16 @@ If certain conditions hold, however, we would not need all of them, but the loca
 
 Recall that we aim to compute the maximum solutions under ordering |unlhd|.
 Therefore, when |y1 `unrhd` y0|, we call |y1| the preferred solution, and |y0| the (possibly) lesser one.
-A function |f : b -> P b| is said to be \emph{Smyth-monotonic on |unrhd|} if
+A function |f : b -> P b| is said to be \emph{Hoare-monotonic on |unrhd|} if
 \begin{equation}
   |(forall y1, y0, z0 : y1 `unrhd` y0 && z0 `elem` f y0 ==> (exists z1 : z1 `elem` f y1 && z1 `unrhd` z0)) {-"~~."-}| \label{eq:monotonicity-logic}
 \end{equation}
-\todo{an explanation of Smyth-ordering and Hoare-ordering}
 In words, let |y0| be a solution that is possibly lesser than |y1|,
 \eqref{eq:monotonicity-logic} says that for any solution |z0| that |f| can produce from |y0|,
 there must be a solution |f| may generate from |y1| that is no lesser than |z0|.
 We may therefore safely drop |y0|.
 
-To make use of Smyth-monotonicity in our proofs, \eqref{eq:monotonicity-logic} can be written as:
+To make use of Hoare-monotonicity in our proofs, \eqref{eq:monotonicity-logic} can be written as:
 \begin{equation}
 \setlength{\jot}{-1pt}
 \begin{aligned}
@@ -774,13 +773,15 @@ If |f x| is monotonic on |unrhd| for all |x|, we have
 
 The specification on the righthand side can be refined to a |foldR| in which we apply |max| in every step. The algorithm still keeps a set of all maximums. It is in fact sufficient to keep only \emph{one} maximum solution, but the decision of which one to keep can be postponed when we further refine the lefthand side to a function.
 
-\noindent {\bf Remark}: conventionally, a function |f :: A -> B| is said to be monotonic (with respect to |unrhd| and |succeq|) if |x `unrhd` y ==> f x `succeq` f y|, where |unrhd| and |succeq| are respectively partial orders on |A| and |B|.
-In \emph{Hoare powerdomain} \citep{Smyth:78:Power} sets are related by the ordering:
+\noindent {\bf Remark}: some explanations about our notion of monotonicity. Conventionally, a function |f :: A -> B| is said to be monotonic (with respect to |unrhd| and |succeq|) if |x `unrhd` y ==> f x `succeq` f y|, where |unrhd| and |succeq| are respectively partial orders on |A| and |B|.
+If we let |succeq := {-"(\unrhd_{H})"-}|, where $(\unrhd_{H})$ is defined by:
 \begin{equation*}
-  |xs `succeq` ys {-"~"-} = {-"~"-} (forall y `elem` ys : (exists x `elem` xs : x `unrhd` y))| \mbox{~~.}
+  |xs {-"\mathrel{\unrhd_{H}}"-} ys {-"~"-} = {-"~"-} (forall y `elem` ys : (exists x `elem` xs : x `unrhd` y))| \mbox{~~,}
 \end{equation*}
-Expand the definition and we get \eqref{eq:monotonicity-logic}.
-Dually, in \emph{Smyth powerdomain} sets are ordered by |xs `succeq` ys {-"~"-} = {-"~"-} (forall x `elem` xs : (exists y `elem` ys : x `unrhd` y))|.
+we get \eqref{eq:monotonicity-logic}.
+The ordering $(\unrhd_{H})$ happens to be the ordering used in \emph{Hoare powerdomain} \citep{Winskel:85:Powerdomains}, hence the name ``Hoare-monotonicity''.
+Dually, in \emph{Smyth powerdomain} \citep{Smyth:78:Power} sets are ordered by |xs {-"\mathrel{\unrhd_{S}}"-} ys {-"~"-} = {-"~"-} (forall x `elem` xs : (exists y `elem` ys : x `unrhd` y))|.
+We would be using this ordering if we prefer solutions that are smaller under |unlhd|.
 {\bf End of Remark}.
 
 \subsection{Proof of the Greedy Theorem}
@@ -852,7 +853,7 @@ To apply the law, notice that lines generating |xs|, |b1|, and |b0| match that o
 \end{spec}
 Seeing |max (f x b1)|, we wish to use |max|-cancelation again,
 but the penultimate line is a call to |f x b0| rather than |f x b1|.
-The property that relates |f x b0| and |f x b1| is Smyth-monotonicity:
+The property that relates |f x b0| and |f x b1| is Hoare-monotonicity:
 it assures that, instead of applying |f x| to |b0|, we lose nothing by
 applying |f x| to the preferred solution |b1|.
 To make use of monotonicity, notice that the lines generating |(b1, b0)| and |y0| and the |filt unrhd (b1, b0)| match the lefthand side of \eqref{eq:monotonicity}, therefore we rewrite them to the righthand side of \eqref{eq:monotonicity}:
@@ -1036,7 +1037,7 @@ derMSPRes =
 %format ys1
 %format zs0
 %format zs1
-To apply the theorem, one has to establish that |pre| is Smyth-monotonic,
+To apply the theorem, one has to establish that |pre| is Hoare-monotonic,
 that is, given |ys1 `geqs` ys0|, for any list |zs0| in |pre x ys0|, there
 exists some list |zs1| in |pre x ys1| such that |zs1 `geqs` zs0|.
 
