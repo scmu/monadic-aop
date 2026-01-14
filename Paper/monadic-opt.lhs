@@ -1114,8 +1114,11 @@ For such situations we need another theorem.
 Let us look at an example.
 
 \subsection{Example: 0-1 Knapsack}
+\label{sec:ex:0-1-knapsack}
 
-In the famous \emph{0-1 knapsack} problem, we are given a collection of items, each having a value and a weight --- for simplity we assume that both are natural numbers. The aim is to choose a subset of these items such that the total value is maximised, while the total weight does not exceed a given weight limit |w|.
+In the famous \emph{0-1 knapsack} problem, we are given a collection of items, each having a value and a weight --- for simplity we assume that both are natural numbers.
+The aim is to choose a subset of these items such that the total value is maximised, while the total weight does not exceed a given weight limit |w|
+(it is assumed that |w| is non-negative).
 Let |Val|, |Wgt| respectively denote the types of values and weights.
 The input can be abstractly represented as a list of pairs |List (Val, Wgt)|.
 Also, define:
@@ -1144,6 +1147,7 @@ knapsack = max_leqv . (filt ((w >) . wgt) <=< subseq) {-"~~."-}
 \end{spec}
 where |xs `leqv` ys = val xs <= val ys|.
 
+%format subsw = "\Varid{subs}_{w}"
 \paragraph*{Fusion.}~
 To transform to the specification to our generic form, we try to fuse |filt ((w >) . wgt) <=< subseq| into one |foldR|.
 Accroding to the |foldR| fusion rule \eqref{eq:foldRFusion}:
@@ -1152,7 +1156,7 @@ Accroding to the |foldR| fusion rule \eqref{eq:foldRFusion}:
 \end{equation*}
 if we manange to construct some function |subsw| that satisfies the fusion condition:
 \begin{equation}
- |subsw x =<< (filt ((w>).wgt) =<< m) `sse` filt ((w>).wgt) =<< (subs x =<< m) {-"~~,"-}|
+ |subsw x =<< (filt ((w>).wgt) =<< m) {-"~"-}`sse`{-"~"-} filt ((w>).wgt) =<< (subs x =<< m) {-"~~,"-}|
  \label{eq:filtSubseqFusionCond}
 \end{equation}
 we will have
@@ -1170,18 +1174,69 @@ The details are left to the reader as an exercise. The specification is now:
   knapsack = max_leqv . foldR subsw (return [])  {-"~~."-}
 \end{spec}
 
-It turns out, however, that |subsw| does not meet \eqref{eq:monotonicity} with respect to |leqv|.
-For a counter example,
-\todo{yeah, a counter example.}
+\paragraph*{Failing Monotonicity.}~
+It turns out, however, that |subsw| does not meet \eqref{eq:monotonicity} with respect to |geqv|.
+To see that, let us construct a counter example.
+For the convenience of our readers, we recite and instantiate \eqref{eq:monotonicity} here:
+\begin{equation*}
+\setlength{\jot}{-1pt}
+\begin{aligned}
+|do|~ & |(ys1, ys0) <- any|\\
+      & |filt geqv (ys1, ys0)|\\
+      & |zs0 <- subsw x ys0| \\
+      & |return (ys1, zs0)|
+\end{aligned}
+~~|`sse`|~~
+\begin{aligned}
+|do|~& |(ys1, zs0) <- any|\\
+     & |zs1 <- subsw x ys1|\\
+     & |filt geqv (zs1, zs0)|\\
+     & |return (ys1, zs0)| \mbox{~~.}
+\end{aligned}
+\tag{\ref{eq:monotonicity}'}
+\end{equation*}
+Let the weight limit |w| be |10|.
+Consider the lefthand side.
+Among all the possible values of |ys1| and |ys0|, we pick |ys1 = [(5,8)]| and |ys0 = [(4,6)]|,
+for which we do have |ys1 `geqv` ys0|.
+With |ys0| being a lesser solution, if (\ref{eq:monotonicity}') holds, we could use a greedy algorithm, dropping |ys0| and keeping only |ys1|.
+Let |x = (3,3)|.
+The two possible values of |zs0| are |[(4,6)]| and |[(3,3),(4,6)]|.
+The inclusion demands that |(y1, z0)| be a result of the righthand side as well.
+In particular, the righthand side must be able to yield |([5,8], [(3,3),(4,6)])| as a result.
+However, with |ys1| fixed as |[(5,8)]| on the righthand side, the only possible value of |zs1| is |[(5,8)]| --- since |[(3,3),(5,8)]| exceeds the weight limit!
+And we do not have |[(5,8)] `geqv` [(3,3),(4,6)]|.
+Therefore (\ref{eq:monotonicity}') fails.
 
-\todo{motivate |leqvw|}
+Notice that, comparing to traditional arguments using first-order logic, in the reasoning above we have expressions to execute with.
+Notice also how the |return (ys1, zs0)| on the lefthand side forces the value of |ys1| and |zs0| on the righthand side.
+
+The lesson we have just learned is that we cannot throw away a solution, such as |[(4,6)]|, simply because it is not the most valuable.
+In fact, one may want to keep |[(4,6)]| for its being lighter, which implies potential for adding more items later.
+Meanwhile, if a solution is neither more valuable, nor lighter, we may safely drop it without losing anything.
+This observation inspires us to use the following ordering:
 \begin{spec}
-xs `leqvw` ys = val xs <= val ys && wgt xs >= wgt ys {-"~~."-}
+xs `leqvw` ys = val xs <= val ys && wgt xs >= wgt ys {-"~~,"-}
 \end{spec}
-However, |leqvw| is not connected. For example, neither |(10,9) `leqvw` (9,10)| nor |(10,9) `geqvw` (9,10)| holds, and |max_leqvw {(10,9), (9,10)}| yields the empty set.
+One may prove that |subsw| is indeed monotonic on |geqvw|.
+However, |leqvw| is not connected. For example, neither |[(10,9)] `leqvw` [(9,10)]| nor |[(10,9)] `geqvw` [(9,10)]| holds, and |max_leqvw {[(10,9)], [(9,10)]}| yields the empty set.
 Therefore, while one may apply the Greedy Theorem to |max_leqvw . foldR subsw (return [])|, it does not give us a useful algorithm.
 
-Instead, one may use a different strategy: let the |foldR| maintain a collection of solutions that might be useful, while dispose of those that are definitely not going to contribute to the final solution. For example, \todo{an example}.
+Instead, one may use a different strategy: let the |foldR| maintain, in some data structure, a collection of solutions that might be useful, while those that are definitely not going to contribute to the final solution can be disposed of.
+For example, if at one point the algorithm computes a collection of solutions
+|{[(5,8)],[(4,6)], [(4,8)]}|, the solutions |[(5,8)]| and |[(4,6)]| must be kept because we do not yet know which will contribute to the final solution.
+Meanwhile, |[(4,8)]|, which is less valuable than |[(5,8)]| and heavier |[(4,6)]|, need not be kept.
+This process of ``keeping useful solutions, while possibly dropping those useless ones'' is called \emph{thinning} in the terminology of \cite{BirddeMoor:97:Algebra}.
+
+Note our wording: |[(4,6)]| need not be kept, but it does not mean that we \emph{have to} drop it.
+An algorithm should have the flexibility of deciding how much thinning it needs to do.
+Doing a full thinning keeps the set of solutions small, but could be time consuming,
+and it may be beneficial to remove some but not all of the useless solutions.
+Our specification of a thinning algorithm should allow such flexibility.
+
+\subsection{Overview of Thinning}
+
+
 
 \subsection{Thinning}
 
