@@ -924,7 +924,14 @@ The last step uses transitivity of |unrhd|, and then we are done.
 %            filt unrhd (y1, y0) {-"~~."-}
 % \end{spec}
 \end{proof}
-We use |do|-notation to implicitly invoke the monad laws, and commutative laws, behind-the-scene.
+
+What we have seen is a typical proof using the monadic notation.
+Notice how it is syntax-driven.
+Given is an expression, and we aim to prove that it is included in another.
+We massage the expression such that some parts (lines) of it matches the lefthand sides of known laws such as |max|-cancelation \eqref{eq:max-cancelation} or monotonicity \eqref{eq:monotonicity}.
+The matched lines are removed, while the righthand sides of the matched laws are added to our current expression.
+We then simplify the expression and repeat the procedure again, until we reach the desired expression.
+The |do|-notation is essential in that it allows us to implicitly invoke the monad laws and commutative laws behind-the-scene.
 
 We have chosen to use the fixed-point property for the proof, to demonstrate more steps.
 We could have also used the fusion-theorem instead.
