@@ -232,7 +232,7 @@ Computationally, it creates an arbitrary element of its type.
 The command |filt : (a -> Bool) -> a -> P a| is defined by
 \begin{spec}
 filt p x  | p x        = return x
-          | otherwise  = fail {-"~~."-}
+          | otherwise  = mzero {-"~~."-}
 \end{spec}
 It returns its input |x| if it satisfies |p|, and fails otherwise.%
 \footnote{Conventionally there is a function |guard :: Bool -> M ()| that returns |()| when the input is true, and |filt p x| is defined by |do { guard (p x); return x }|. In this paper we try to introduce less construct and use only |filt|.}
@@ -252,7 +252,7 @@ Therefore we have |return [] `sse` prefix xs|.
 %format prefixP = "\Varid{prefix}^{+}"
 Meanwhile, |prefixP :: List a -> P (List a)| below computes the non-empty prefixes:
 \begin{code}
-prefixP []      = fail
+prefixP []      = mzero
 prefixP (x:xs)  = return [x] <|> (x:) <$> prefixP xs {-"~~."-}
 \end{code}
 We should have |prefixP `sse` prefix| --- proof of which will be discussed in the next section.
@@ -321,7 +321,7 @@ commutativity and idempotency of |(<||>)|.
 Similarly, |prefixP| is a |foldR|:
 %format preP = "\Varid{pre}^{+}"
 \begin{spec}
-prefixP    = foldR preP (return [])
+prefixP    = foldR preP mzero
 preP x ys  = return [x] <|> return (x : ys) {-"~~."-}
 \end{spec}
 
@@ -335,7 +335,7 @@ The properties above can be proved by routine induction on the input list.
 For an example, consider showing that |prefixP `sse` prefix|.
 One may go back to first principles and use an induction on the input list.
 Alternatively, one may use the fixed-point property \eqref{eq:foldRPrefixPt}, exploiting the fact that |prefixP| is a |foldR|.
-Through the latter route, one needs to show that |fail `sse` return []|,
+Through the latter route, one needs to show that |mzero `sse` return []|,
 and that |preP x =<< prefix xs `sse` prefix (x:xs)|.
 Proof of the latter proceeds by utilising monad laws and distributivity:
 \begin{spec}
