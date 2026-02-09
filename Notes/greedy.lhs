@@ -339,38 +339,89 @@ filt p x  | p x        = return x
           | otherwise  = fail {-"~~."-}
 \end{spec}
 The new universal property of |min| is given by:
-\begin{spec}
-X `sse` min_R . f {-"\,"-}<=> {-"\,"-}  X `sse` f &&
-                                        (  do  a   <- any
-                                               b0  <- X a
-                                               b1  <- f a
-                                               return (b0, b1) {-"\,"-} `sse`
-                                                 do  (b0, b1) <- any
-                                                     filt R (b0, b1) {-"\,"-}) {-"~~."-}
-\end{spec}
+% \begin{spec}
+% X `sse` min_R . f {-"\,"-}<=> {-"\,"-}  X `sse` f &&
+%                                         (  do  a   <- any
+%                                                b0  <- X a
+%                                                b1  <- f a
+%                                                return (b0, b1) {-"\,"-} `sse`
+%                                                  do  (b0, b1) <- any
+%                                                      filt R (b0, b1) {-"\,"-}) {-"~~."-}
+% \end{spec}
+\begin{equation*}
+|X `sse` min_R . f|\mbox{~~}|<==>|\mbox{~~} |X `sse` f &&|~
+\setlength{\jot}{-1pt}
+\left(
+ \begin{aligned}
+ |do|~ & |a <- any| \\
+       & |b0 <- X a| \\
+       & |b1 <- f a| \\
+       & |return (b0, b1)|
+ \end{aligned}
+ |`sse`|~~
+ \begin{aligned}
+ |do|~ & |(b0, b1) <- any| \\
+       & |filt R (b0, b1)|
+ \end{aligned}
+ \right)\mbox{~~.}
+\end{equation*}
 The second clause is the uncurried translation of |X <=< conv f `sse` R|.
 Let |X| be |min_R . f|, we have the following useful |min|-cancelation rule:
-\begin{spec}
-do  a <- any
-    b0 <- min_R (f a)
-    b1 <- f a
-    return (b0, b1) `sse`
-   do  (b0, b1) <- any
-       filt R (b0, b1) {-"~~."-}
-\end{spec}
+% \begin{spec}
+% do  a <- any
+%     b0 <- min_R (f a)
+%     b1 <- f a
+%     return (b0, b1) `sse`
+%    do  (b0, b1) <- any
+%        filt R (b0, b1) {-"~~."-}
+% \end{spec}
+\begin{equation*}
+  \setlength{\jot}{-1pt}
+  \begin{aligned}
+  |do|~ & |a <- any| \\
+        & |b0 <- min_R (f a)| \\
+        & |b1 <- f a| \\
+        & |return (b0, b1)|
+  \end{aligned}
+  ~~|`sse`|~~
+  \begin{aligned}
+  |do|~ & |(b0, b1) <- any| \\
+        & |filt R (b0, b1)| \mbox{~~.}
+  \end{aligned}
+\end{equation*}
 
-The greedy theorem is written as below:
+The greedy theorem is written as that we have
 \begin{spec}
-min_R . foldr f e `spse` foldr (\x -> min_R . f x) (min_R e)
-   <==  do  (y0, y1) <- any
-            b1 <- f x y1
-            filt R (y0, y1)
-            return (y0, b1)  {-"~~"-}`sse`
-          do  (b1, y0) <- any
-              b2 <- f x y0
-              filt R (b2, b1)
-              return (y0, b1){-"~~."-}
+min_R . foldr f e `spse` foldr (\x -> min_R . f x) (min_R e) {-"~~,"-}
 \end{spec}
+provided that
+% \begin{spec}
+%    <==  do  (y0, y1) <- any
+%             b1 <- f x y1
+%             filt R (y0, y1)
+%             return (y0, b1)  {-"~~"-}`sse`
+%           do  (b1, y0) <- any
+%               b2 <- f x y0
+%               filt R (b2, b1)
+%               return (y0, b1){-"~~."-}
+% \end{spec}
+\begin{equation*}
+  \setlength{\jot}{-1pt}
+  \begin{aligned}
+  |do|~ & |(y0, y1) <- any| \\
+        & |b1 <- f x y1)| \\
+        & |filt R (y0,y1)| \\
+        & |return (y0, b1)|
+  \end{aligned}
+  ~~|`sse`|~~
+  \begin{aligned}
+  |do|~ & |(b1, y0) <- any| \\
+        & |b2 <- f x y0|\\
+        & |filt R (b2, b1)|\\
+        & |return (y0,b1)| \mbox{~~.}
+  \end{aligned}
+\end{equation*}
+
 Note how the monotonicity condition |R <=< conv (f x) `sse` conv (f x) <=< R| is translated to the uncurried expression above.
 
 \begin{proof}
@@ -420,14 +471,29 @@ Recall the fusion condition:
   min_R . (f x =<<) `spse` (min_R . f x) <=< min_R {-"~~."-}
 \end{spec}
 By the universal property of |min|, we ought to prove:
-\begin{spec}
-do  ys <- any
-    b0 <- (min_R . f x) =<< min_R ys
-    b1 <- f x =<< ys
-    return (b0, b1) `sse`
-   do  (b0, b1) <- any
-       filt R (b0, b1) {-"~~."-}
-\end{spec}
+% \begin{spec}
+% do  ys <- any
+%     b0 <- (min_R . f x) =<< min_R ys
+%     b1 <- f x =<< ys
+%     return (b0, b1) `sse`
+%    do  (b0, b1) <- any
+%        filt R (b0, b1) {-"~~."-}
+% \end{spec}
+\begin{equation*}
+  \setlength{\jot}{-1pt}
+  \begin{aligned}
+  |do|~ & |ys <- any| \\
+        & |b0 <- (min_R . f x) =<< min_R ys| \\
+        & |b1 <- f x =<< ys|\\
+        & |return (b0, b1)|
+  \end{aligned}
+  ~~|`sse`|~~
+  \begin{aligned}
+  |do|~ & |(b0, b1) <- any| \\
+        & |filt R (b0, b1)| \mbox{~~.}
+  \end{aligned}
+\end{equation*}
+
 The first step can be carried out by |min|-cancelation with |f := id|. The rest is the same.
 %}
 
