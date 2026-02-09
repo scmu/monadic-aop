@@ -3,12 +3,15 @@
 %format `shrink` = "\!\upharpoonright\!"
 
 %format mem = "{\in}"
+%format `mem` = "\in"
 %format ni  = "{\ni}"
 %format `cup` = "\cup"
 %format `cap` = "\mathrel{\cap}"
 
 %format `sse`  = "\subseteq"
+%format sse  = "(\subseteq)"
 %format `spse` = "\supseteq"
+%format spse = "(\supseteq)"
 %format mzero  = "\emptyset"
 
 %format (conv f) = "{" f "}^{\circ}"
