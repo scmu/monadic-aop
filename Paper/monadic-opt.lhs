@@ -215,6 +215,7 @@ and that |mzero| is a zero of |(>>=)|:
 \end{align*}
 Furthermore, |mplus| is commutative (|m `mplus` n = n `mplus` m|) and idempotent (|m `mplus` m = m|).
 
+\paragraph*{Containment.}~
 The containment relation of non-determinism monad is defined by:
 \begin{spec}
 m `sse` n = (m `mplus` n = n) {-"~~."-}
@@ -223,7 +224,18 @@ When |m `sse` n|, we say that |m| refines |n|.
 Every value |m| might yield is a value allowed by |n|.
 We also lift the relation to functions: |f `sse` g = (forall x : f x `sse` g x)|.
 
-A structure that supports all the operations above is the set monad: for all type |a|,
+The containment relation is reflexive and transitive.
+Monadic bind |(=<<)| (and thus |(<=<)|) is monotonic with respect to containment,
+\begin{align*}
+  |m `sse` n| &~\Rightarrow~ |f =<< m `sse` f =<< n| \mbox{~~,}\\
+  |f `sse` g| &~\Rightarrow~ |f =<< m `sse` g =<< m| \mbox{~~.}
+\end{align*}
+Meanwhile, function application (and composition) in general is \emph{not} monotonic with respect to containment, that is, given an arbitrary |h :: M a -> M b|, having |m `sse` n| does not guarantee that |h m `sse` h n|, nor does |f `sse` g| guarantee |h . f `sse` h . g|.
+Later in this article we will need monotonicity in more specific cases, where we will discuss conditions for such monotonicity to hold.%
+\footnote{This non-monotonicity with respect to |(.)| may look restrictive, but it is just a common phenomena that was often overlooked.
+The |(.)| operator of \cite{BirddeMoor:97:Algebra}, for example, denotes relational composition and corresponds to our |(<=<)|, and is therefore monotonic. Meanwhile, our |h . f| translates to |h . {-"\Lambda\,"-} f| of Bird and de Moor, and the $\Lambda$ operator, which collects the results of a relation in a set, is \emph{not} monotonic.}
+
+\paragraph*{Sets.}~ A structure that supports all the operations above is the set monad: for all type |a|,
 |m :: P a| is a set whose elements are of type |a|,
 |mzero| is the empty set, |mplus| is set union for two sets, |join| is union for a set of sets, |(`sse`)| is set inclusion, |return| forms a singleton set, and |m >>= f| is given by |join {f x || x <- m }|.
 For the rest of the paper we take |M = P|.
@@ -236,8 +248,10 @@ filt p x  | p x        = return x
           | otherwise  = mzero {-"~~."-}
 \end{spec}
 It returns its input |x| if it satisfies |p|, and fails otherwise.%
-\footnote{Conventionally there is a function |guard :: Bool -> M ()| that returns |()| when the input is true, and |filt p x| is defined by |do { guard (p x); return x }|. In this paper we try to introduce less construct and use only |filt|.}
-
+\footnote{The function |filt| is called |assert| in the standard Haskell library.
+We think the latter name is misleading, and instead use |filt| in this paper.%
+ % is a function |guard :: Bool -> M ()| that returns |()| when the input is true and |mzero| otherwise, and |assert p x| is defined by |do { guard (p x); return x }|. In this paper we try to introduce less construct and use only |filt|.
+}
 
 \paragraph*{Example: Prefixes and Suffixes.}~
 The function |prefix| non-deterministically computes a prefix of the given list:
