@@ -230,10 +230,11 @@ Monadic bind |(=<<)| (and thus |(<=<)|) is monotonic with respect to containment
   |m `sse` n| &~\Rightarrow~ |f =<< m `sse` f =<< n| \mbox{~~,}\\
   |f `sse` g| &~\Rightarrow~ |f =<< m `sse` g =<< m| \mbox{~~.}
 \end{align*}
-Meanwhile, function application (and composition) in general is \emph{not} monotonic with respect to containment, that is, given an arbitrary |h :: M a -> M b|, having |m `sse` n| does not guarantee that |h m `sse` h n|, nor does |f `sse` g| guarantee |h . f `sse` h . g|.
+Meanwhile, function application (and composition) in general is \emph{not} monotonic with respect to containment, that is, having |m `sse` n| certainly does not guarantee that |h m `sse` h n| for arbitrary |h :: M a -> M b|, nor does |f `sse` g| guarantee |h . f `sse` h . g|.
 Later in this article we will need monotonicity in more specific cases, where we will discuss conditions for such monotonicity to hold.%
-\footnote{This non-monotonicity with respect to |(.)| may look restrictive, but it is just a common phenomena that was often overlooked.
-The |(.)| operator of \cite{BirddeMoor:97:Algebra}, for example, denotes relational composition and corresponds to our |(<=<)|, and is therefore monotonic. Meanwhile, our |h . f| translates to |h . {-"\Lambda\,"-} f| of Bird and de Moor, and the $\Lambda$ operator, which collects the results of a relation in a set, is \emph{not} monotonic.}
+\footnote{That |(.)| being not monotonic may look restrictive, but it is just a common phenomena that was often overlooked due to notational differences.
+Consider \cite{BirddeMoor:97:Algebra}, for example, the equivalent of our |h . f| should be written as |h . {-"\Lambda\,"-} f| in their formulation, and the $\Lambda$ operator, which collects the results of a relation in a set, is \emph{not} monotonic.
+The |(.)| operator of Bird and de Moor, denoting composition of relations, corresponds to our |(<=<)|, and is indeed monotonic with respect to |(`sse`)|.}
 
 \paragraph*{Sets.}~ A structure that supports all the operations above is the set monad: for all type |a|,
 |m :: P a| is a set whose elements are of type |a|,
@@ -360,13 +361,14 @@ The difference is due to that, in the case of |prefix'|, nondeterminism of |pre|
 In the semantics of our set monad, due to commutativity and idempotency of |mplus|, the two results are seen as the same.
 From now on we equate |prefix| and |prefix'|.
 
-% The situation is different if we try to define |prefixP| as a |foldR|
-% Similarly, |prefixP| is a |foldR|:
-% %format preP = "\Varid{pre}^{+}"
-% \begin{spec}
-% prefixP    = foldR preP mzero
-% preP x ys  = return [x] <|> return (x : ys) {-"~~."-}
-% \end{spec}
+%format notPrefixP = "\Varid{notPrefix}^{+}"
+%format preP = "\Varid{pre}^{+}"
+Meanwhile, the following definition does \emph{not} equal |prefixP|:
+\begin{spec}
+notPrefixP    = foldR preP mzero  {-"~~,"-}
+  where preP x ys  = return [x] <|> return (x : ys) {-"~~,"-}
+\end{spec}
+because |pre x =<< mzero| immediately reduces to |mzero|.
 
 \paragraph*{Fixed-Point Properties and Fusion Laws.}~
 Given |h :: List a -> P b|, the \emph{fixed-point properties}, that is, sufficient conditions for |h| to contain, be contained by, or equal to |foldR f e|, are given by:
@@ -379,18 +381,18 @@ The properties above can be proved by routine induction on the input list.
 
 For an example we try to show that |prefixP `sse` prefix|.
 One may go back to first principles and use an induction on the input list.
-Alternatively, one may use the fixed-point property \eqref{eq:foldRSuffixPt}, exploiting the fact that |prefix| is a |foldR|.
-It will soon turn our that it is easier to instead prove the following property using \eqref{eq:foldRFixPt}:
+Alternatively, one may use property \eqref{eq:foldRSuffixPt}, exploiting the fact that |prefix| is a |foldR|.
+It will soon turn out that it is easier to prove instead the following equivalence using \eqref{eq:foldRFixPt}:
 \begin{spec}
    return [] <|> prefixP xs = prefix xs {-"~~,"-}
 \end{spec}
-from which |prefixP `sse` prefix|, that is |prefixP <||> prefix = prefix|, follows.
-This is a case where a stronger variation of a property is easier to prove, since it offers more information in the inductive case.
+from which |prefixP `sse` prefix|, that is, |prefixP <||> prefix = prefix|, follows.
+This is a case where a stronger variation of a property is easier to prove since it is more informative.
 The first antecedent of \eqref{eq:foldRFixPt} is immediate. For the second antecedent, we need to show that
 |return [] <||> prefixP (x:xs) = pre x =<< (return [] <||> prefixP xs)|, which is established by utilising monad laws and distributivity:
 \begin{spec}
      pre x =<< (return [] <|> prefixP xs)
- ===   {- distributivity -}
+ ===   {- |(=<<)| distributes into |mplus| -}
      (pre x =<< return []) <|> (pre x =<< prefixP xs)
  ===   {- definition of |pre| -}
      return [] <|> return [x] <|> return [] <|> (x:) <$> prefixP xs
