@@ -687,6 +687,124 @@ We will discuss about that soon.
 %   max_unlhd = min_unrhd {-"~~."-}
 % \end{spec}
 
+
+\paragraph*{Conditional Monotonicity.}~
+The function |max| is not monotonic with respect to |(`sse`)| ---
+indeed, |{1,2} `sse` {1,2,3}|, while |max {1,2} = {2} {-"\not\subseteq"-} {3} = max {1,2,3}|.
+Consequently, having |f `sse` g| does not give us |max . f `sse` max g|.%
+\footnote{Again, the situation is the same in \cite{BirddeMoor:97:Algebra}: even though $\Varid{S} \subseteq \Varid{T}$, we do not have
+$\Lambda \Varid{S} \subseteq \Lambda \Varid{T}$, therefore neither do we have $\Varid{max} \circo \Lambda \Varid{S} \subseteq \Varid{max} \circo \Lambda \Varid{T}$.
+It has not been a major problem, probably due to that using Greedy Theorem to eliminate the outermost |max| is usually the first refinement step in their treatment of optimisation problems.}
+
+Luckily, we only need monotonicity to hold in more specific cases.
+Observing the counter example above, one might conjecture that |max s `sse` max t| if |s `sse` t| and |s| somehow keeps the maximum elements of |t|. Indeed, there are two such laws.
+Provided that |unrhd| is transitive, we have:
+\begin{spec}
+max_unlhd xs `sse` max_unlhd ys  {-"~"-}<=={-"~"-} xs `sse` ys && (forall x `mem` xs, y `mem` ys : x `unrhd` y) {-"~~,"-}
+max_unlhd xs `sse` max_unlhd ys  {-"~"-}<=={-"~"-} xs `sse` ys && (forall y `mem` ys : (exists x `mem` xs : x `unrhd` y)) {-"~~."-}
+\end{spec}
+The first one says that |max xs `sse` max ys| if all elements in |xs| are maximums.
+The second laws is a bit relaxed, allowing |xs| to keep some non-maximum element, requiring only that every |y `mem` ys| is dominated by some element in |xs|.
+Their function-compositional counterparts are written as:
+\begin{spec}
+max_unlhd . f `sse` max_unlhd . g  {-"~"-}<=={-"~"-} f `sse` g && (forall z, x `mem` f z, y `mem` g z : x `unrhd` y) {-"~~,"-}
+max_unlhd . f `sse` max_unlhd . g  {-"~"-}<=={-"~"-} f `sse` g && (forall z, y `mem` g z : (exists x `mem` g z : x `unrhd` y)) {-"~~."-}
+\end{spec}
+These two laws cover all the cases in this article where we need |max| to be monotonic.
+In particular, the first law automatically is satisfied if |g| has the form |max_unlhd . g'|, that is, |f| is already a refinement of some function that computes maximums.
+
+
+The two laws translate to the monadic language as:
+\begin{equation*}
+|max_unlhd . f `sse` max_unlhd . g|\mbox{~~}|<==|\mbox{~~} |f `sse` g &&|~
+\setlength{\jot}{-1pt}
+\left(
+ \begin{aligned}
+ |do|~ & |z <- any| \\
+       & |x <- f z| \\
+       & |y <- g z| \\
+       & |return (x, y)|
+ \end{aligned}
+ |`sse`|~~
+ \begin{aligned}
+ |do|~ & |(x, y) <- any| \\
+       & |filt unrhd (x, y)|\\
+ \end{aligned}
+ \right)\mbox{~~,}
+\end{equation*}
+\begin{equation}
+|max_unlhd . f `sse` max_unlhd . g|\mbox{~~}|<==|\mbox{~~} |f `sse` g &&|~
+\setlength{\jot}{-1pt}
+\left(
+ \begin{aligned}
+ |do|~ & |z <- any| \\
+       & |y <- g z| \\
+       & |return (y, z)|
+ \end{aligned}
+ |`sse`|~~
+ \begin{aligned}
+ |do|~ & |(y, z) <- any| \\
+       & |x <- f z| \\
+       & |filt unrhd (x, y)|\\
+       & |return (y,z)|
+ \end{aligned}
+ \right)\mbox{~~.}
+ \label{eq:max-monotonic-monadic}
+\end{equation}
+It might be instructive observing how the two laws are translated: universally quantified variables are introduced on the LHS of |(`sse`)|; existential quantification of |x| is represented by introducing it on the RHS of |(`sse`)|;
+in \eqref{eq:max-monotonic-monadic} both sides return |(y,z)| to ensure that they are the same.
+
+We present a proof of \eqref{eq:max-monotonic-monadic}, as our first example of proving properties about maximum in the monadic notation.
+\begin{proof}
+By the universal property \eqref{eq:max-univ-monadic}, to have |max . f `sse` max . g| we need
+|max . f `sse` g| and
+\begin{equation*}
+\setlength{\jot}{-1pt}
+ \begin{aligned}
+ |do|~ & |z <- any| \\
+       & |x <- max (f x)| \\
+       & |y <- g x| \\
+       & |return (x, y)|
+ \end{aligned}
+ ~~|`sse`|~~
+ \begin{aligned}
+ |do|~ & |(x, y) <- any| \\
+       & |filt unrhd (x, y)|\mbox{~~.}
+ \end{aligned}
+\end{equation*}
+The first conjunct is immediate:
+|max . f `sse` f `sse` g|.
+For the second conjunct, we assume the righthand side of \eqref{eq:max-monotonic-monadic} and reason:
+%if False
+\begin{code}
+minMonoPf :: Ord b => (a -> P b) -> (a -> P b) -> P (b, b)
+minMonoPf f g =
+\end{code}
+%endif
+\begin{code}
+        do  z <- any
+            x <- max (f z)
+            y <- g z
+            return (x, y)
+ `sse`   {- matching |z <- any| and |y <- g z| in \eqref{eq:max-monotonic-monadic} and rewrite -}
+        do  (y,z) <- any
+            w <- f z
+            filt unrhd (w,y)
+            x <- max (f z)
+            return (x,y)
+ `sse`   {- |max|-cancelation -}
+        do  (x,y,w) <- any
+            filt unrhd (w, y)
+            filt unrhd (x, w)
+            return (x,y)
+ `sse`   {- |unrhd| transitive -}
+        do  (x,y) <- any
+            return (x,y) {-"~~."-}
+\end{code}
+\end{proof}
+Notice the first step of the calculation: |z <- any| and |y <- g z| match the LHS of |(`sse`)| in the big parentheses in \eqref{eq:max-monotonic-monadic}, allowing us to rewrite them to the RHS of |(`sse`)|.
+It will be a technique we use a lot in such proofs: identifying the lines that matches the LHS of some |(`sse`)|, and rewrite them to the RHS.
+
 \paragraph*{Promotion into Kliseli Composition.}~
 The function |max| promotes into |join|:
 %if False
