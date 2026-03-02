@@ -592,6 +592,10 @@ A value |y :: a| is a maximum of |xs :: P a| if |y| is in |xs|, and for every el
 The definition itself does not assume much from |unlhd|.
 In particular, since |unlhd| is not necessarily anti-symmetric, maximum elements might not be unique.
 The function |max_unlhd :: P a -> P a| takes a set and returns a refined set that keeps all the maximum elements and nothing else.
+In this section we explore its definition and properties.
+
+\subsubsection{Universal Property}
+
 In set-theoretical notation, |max_unlhd| can be defined by the following equivalence:
 for all |xs| and |ys|,
 \begin{equation}
@@ -688,7 +692,9 @@ We will discuss about that soon.
 % \end{spec}
 
 
-\paragraph*{Conditional Monotonicity.}~
+\subsubsection{Conditional Monotonicity}
+\label{sec:max-monotonic}
+
 The function |max| is not monotonic with respect to |(`sse`)| ---
 indeed, |{1,2} `sse` {1,2,3}|, while |max {1,2} = {2} {-"\not\subseteq"-} {3} = max {1,2,3}|.
 Consequently, having |f `sse` g| does not give us |max . f `sse` max g|.%
@@ -712,7 +718,6 @@ max_unlhd . f `sse` max_unlhd . g  {-"~"-}<=={-"~"-} f `sse` g && (forall z, y `
 \end{spec}
 These two laws cover all the cases in this article where we need |max| to be monotonic.
 In particular, the first law automatically is satisfied if |g| has the form |max_unlhd . g'|, that is, |f| is already a refinement of some function that computes maximums.
-
 
 The two laws translate to the monadic language as:
 \begin{equation*}
@@ -805,7 +810,8 @@ minMonoPf f g =
 Notice the first step of the calculation: |z <- any| and |y <- g z| match the LHS of |(`sse`)| in the big parentheses in \eqref{eq:max-monotonic-monadic}, allowing us to rewrite them to the RHS of |(`sse`)|.
 It will be a technique we use a lot in such proofs: identifying the lines that matches the LHS of some |(`sse`)|, and rewrite them to the RHS.
 
-\paragraph*{Promotion into Kliseli Composition.}~
+\subsubsection{Promotion into Kliseli Composition}
+
 The function |max| promotes into |join|:
 %if False
 \begin{code}
@@ -841,7 +847,8 @@ or |max (f =<< g x) === max ((max . f) =<< g x)| for all |x|.
 %      max ((max . f) =<< g xs) {-"~~."-}
 %\end{code}
 
-\paragraph*{Conversion from Lists.}~
+\subsubsection{Conversion from Lists}
+
 In the last few steps of a program calculation we usually want to refine a monadic |max| to a function on lists.
 If |unlhd| is total (that is, for all |x| and |y| of the right type, at least one of |x `unrhd` y| or |y `unrhd` x| holds), and if |xs| is non-empty, we have
 \begin{equation}
@@ -857,7 +864,8 @@ where |maxlist| is some implementation of maximum on non-empty lists, e.g.
 That |unlhd| being total guarantees that maximum exists for non-empty |xs|.
 The function |maxlist| may decide how to resolve a tie --- in the implementation above, for example, |maxlist| prefers elements that appears earlier in the list.
 
-\paragraph*{In the Agda Model}
+\subsubsection{In the Agda Model}
+
 we implement |min| by:
 
 \todo{more here.}
@@ -1169,6 +1177,8 @@ While |pre x ys| returns either |[]| or |x : ys|, |maxPre x| returns one among t
 The case when there is a tie (that is, when the sum of |x:ys| is |sum [] = 0|) is left for |zplus| to resolve.
 Our |zplus| defined above prefers |[]| when there is a tie, but it could have made another choice by substituting |(<)| for |(<=)|.
 The result would still meet the specification.
+
+The first two |(`spse`)| steps need |max| to be monotonic. Since what follows them are sub-monads of |(max . prefix) <=< suffix|, they all return maximum elements only, and satisfy the first law in Section~\ref{sec:max-monotonic}.
 
 The final one-liner algorithm:
 \begin{spec}
