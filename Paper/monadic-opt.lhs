@@ -320,19 +320,47 @@ foldR :: (a -> b -> P b) -> P b -> List a -> P b
 foldR f e []      = e
 foldR f e (x:xs)  = f x =<< foldR f e xs {-"~~."-}
 \end{spec}
-The function |prefix| defined in Section~\ref{sec:non-det-monad} can be defined in terms of |foldR|:
+Recall |prefix| defined in Section~\ref{sec:non-det-monad}.
+The following function |prefix'|, defined in terms of |foldR|,
+also computes an arbitrary prefix of the input list:
 \begin{spec}
-prefix    = foldR pre (return [])
-pre x ys  = return [] <|> return (x : ys) {-"~~."-}
+prefix' = foldR pre (return [])
+  where pre x ys  = return [] <|> return (x : ys) {-"~~."-}
 \end{spec}
 %if False
 \begin{code}
 pre x ys = return [] <|> return (x : ys)
 \end{code}
 %endif
-Due to the way we define our |foldR|, the definition above returns |[]| more frequently than that in Section~\ref{sec:non-det-monad}.
-The equivalence of the two definitions of |prefix| depends on
-commutativity and idempotency of |(<||>)|.
+Note that |prefix'| behaves subtly differently from |prefix|, in that the former returns  |[]| more frequently.
+For example, while |prefix [1,2]| evaluates to:
+\begin{spec}
+    prefix [1,2]
+ =    {- definition of |prefix| -}
+    return [] <|> (1:) <$> (return [] <|> (2:) <$> return [])
+ =    {- definition of |(<$>)| -}
+    return [] <|> (return . (1:)) =<< (return [] <|> (return . (2:)) =<< return [])
+ =    {- |(=<<)| distributes into |mplus| -}
+    return [] <|> return [1] <|> return [1,2] {-"~~,"-}
+\end{spec}
+Evaluating |prefix' [1,2]|, we get:
+\begin{spec}
+    prefix' [1,2]
+ =     {- definition of |prefix'| -}
+    pre 1 =<< pre 2 =<< return []
+ =     {- definition of |pre 2| -}
+    pre 1 =<< (return [] <|> return [2])
+ =     {- |(=<<)| distributes into |mplus| -}
+    (pre 1 =<< return []) <|> (pre 1 =<< return [2])
+ =     {- definition of |pre 1| -}
+    return [] <|> return [1] <|> return [] <|> return [1,2] {-"~~,"-}
+\end{spec}
+The difference is due to that, in the case of |prefix'|, nondeterminism of |pre| happens inside |(=<<)|.
+\todo{compare with Oege and Jeremy's early work.}
+In the semantics of our set monad, due to commutativity and idempotency of |mplus|, the two results are seen as the same.
+From now on we equate |prefix| and |prefix'|.
+
+% The situation is different if we try to define |prefixP| as a |foldR|
 % Similarly, |prefixP| is a |foldR|:
 % %format preP = "\Varid{pre}^{+}"
 % \begin{spec}
@@ -340,46 +368,38 @@ commutativity and idempotency of |(<||>)|.
 % preP x ys  = return [x] <|> return (x : ys) {-"~~."-}
 % \end{spec}
 
-Given |h :: List a -> P b|, the \emph{fixed-point properties}, that is, sufficient conditions for |h| to contain or be contained by |foldR f e| are given by:
+\paragraph*{Fixed-Point Properties and Fusion Laws.}~
+Given |h :: List a -> P b|, the \emph{fixed-point properties}, that is, sufficient conditions for |h| to contain, be contained by, or equal to |foldR f e|, are given by:
 \begin{align}
 |foldR f e `sse` h| & |{-"~"-}<=={-"~"-} e `sse` h [] {-"\,"-}&&{-"\,"-} f x =<< h xs `sse` h (x:xs)  {-"~~,"-}| \label{eq:foldRPrefixPt} \\
-|h `sse` foldR f e| & |{-"~"-}<=={-"~"-} h [] `sse` e {-"\,"-}&&{-"\,"-} h (x:xs) `sse` f x =<< h xs  {-"~~."-}| \label{eq:foldRSuffixPt}
+|h `sse` foldR f e| & |{-"~"-}<=={-"~"-} h [] `sse` e {-"\,"-}&&{-"\,"-} h (x:xs) `sse` f x =<< h xs  {-"~~."-}| \label{eq:foldRSuffixPt} \\
+|h = foldR f e| & |{-"~"-}<=>{-"~"-} h [] = e {-"\,"-}&&{-"\,"-} h (x:xs) = f x =<< h xs  {-"~~."-}| \label{eq:foldRFixPt}
 \end{align}
 The properties above can be proved by routine induction on the input list.
 
-For an example, consider showing that |prefixP `sse` prefix|.
+For an example we try to show that |prefixP `sse` prefix|.
 One may go back to first principles and use an induction on the input list.
-Alternatively, one may use the fixed-point property \eqref{eq:foldRPrefixPt}, exploiting the fact that |prefixP| is a |foldR|.
-Through the latter route, one needs to show that |mzero `sse` return []|,
-and that |preP x =<< prefix xs `sse` prefix (x:xs)|.
-Proof of the latter proceeds by utilising monad laws and distributivity:
+Alternatively, one may use the fixed-point property \eqref{eq:foldRSuffixPt}, exploiting the fact that |prefix| is a |foldR|.
+It will soon turn our that it is easier to instead prove the following property using \eqref{eq:foldRFixPt}:
 \begin{spec}
-        preP x =<< prefix xs
- ===      {- definition of |preP| -}
-        (\ys -> return [x] <|> return (x:ys)) =<< prefix xs
- ===      {- |(=<<)| distributes into |(<||>)| -}
-        ((\ys -> return [x]) =<< prefix xs) <|> ((\ys -> return (x:ys)) =<< prefix xs)
- ===      {- monad laws, definition of |(<$>)| -}
-        return [x] <|> (x:) <$> prefix xs
- ===      {- definition of |(<$>)|, distributivity -}
-        (x:) <$> (return [] <|> prefix xs)
- ===      {- since |return [] `sse` prefix xs|, or |return [] <||> prefix xs = prefix xs| -}
-        (x:) <$> prefix xs
- `sse`    {- since |m `sse` n <||> m| for all |m|, |n| -}
-        return [] <|> (x:) <$> prefix xs
- ===      {- definition of |pre|, distributivity and monad laws -}
-        pre x =<< prefix xs
- ===      {- definition of |prefix| -}
-        prefix (x:xs) {-"~~."-}
+   return [] <|> prefixP xs = prefix xs {-"~~,"-}
 \end{spec}
-Yet another approach is to use \eqref{eq:foldRSuffixPt} and exploit the fact that
-|prefix| is a |foldR|.
-One would eventually get stuck and realise that we need to prove a stronger property:
+from which |prefixP `sse` prefix|, that is |prefixP <||> prefix = prefix|, follows.
+This is a case where a stronger variation of a property is easier to prove, since it offers more information in the inductive case.
+The first antecedent of \eqref{eq:foldRFixPt} is immediate. For the second antecedent, we need to show that
+|return [] <||> prefixP (x:xs) = pre x =<< (return [] <||> prefixP xs)|, which is established by utilising monad laws and distributivity:
 \begin{spec}
-   return [] <|> prefixP xs `sse` prefix xs {-"~~."-}
+     pre x =<< (return [] <|> prefixP xs)
+ ===   {- distributivity -}
+     (pre x =<< return []) <|> (pre x =<< prefixP xs)
+ ===   {- definition of |pre| -}
+     return [] <|> return [x] <|> return [] <|> (x:) <$> prefixP xs
+ ===   {- commutativity and idempotency of |mplus| -}
+     return [] <|> return [x] <|> (x:) <$> prefixP xs
+ ===   {- definition of |prefixP| -}
+     return [] <|> prefixP (x:xs) {-"~~."-}
 \end{spec}
-This is a case where a stronger variation of a property is easier to prove!
-The actual proof is left to the readers as an exercise.
+
 
 % One would eventually get stuck and realise that we need to prove a stronger property:
 % \begin{spec}
