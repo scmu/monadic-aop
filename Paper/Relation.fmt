@@ -46,11 +46,14 @@
 %format `prod` = "\times"
 %format `lfac` = "\mathbin{\backslash}"
 
-%format <|> = "\mathrel{\lbrack\!\rbrack}"
+\newcommand{\smallBox}{\raisebox{0.8\depth}{\scaleobj{0.7}{\Box}}}
+
+%%format <|> = "\mathrel{\lbrack\!\rbrack}"
+%format <|> = "\mathrel{\,\smallBox\,}"
 
 %format mzero = "\emptyset"
-%format mplus = "({\lbrack\!\rbrack})"
-%format `mplus` = "\mathrel{\lbrack\!\rbrack}"
+%format mplus = "({\smallBox})"
+%format `mplus` = "\mathrel{\,\smallBox\,}"
 
 %format unlhd = "(\unlhd)"
 %format `unlhd` = "\unlhd"

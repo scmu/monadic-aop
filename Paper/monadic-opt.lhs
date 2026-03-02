@@ -261,7 +261,7 @@ prefix []      = return []
 prefix (x:xs)  = return [] <|> (x:) <$> prefix xs {-"~~."-}
 \end{code}
 For example, |prefix [1,2,3]| yields four possibilities: |[]|, |[1]|, |[1,2]|, and |[1,2,3]|.
-With idempotency of |(<||>)|, by a simple case analysis one can show that |return [] <||> prefix xs = prefix xs| for all |xs|.
+With idempotency of |mplus|, by a simple case analysis one can show that |return [] <||> prefix xs = prefix xs| for all |xs|.
 Therefore we have |return [] `sse` prefix xs|.
 
 %format prefixP = "\Varid{prefix}^{+}"
@@ -415,15 +415,15 @@ The first antecedent of \eqref{eq:foldRFixPt} is immediate. For the second antec
 % The proof proceeds by utilising monad laws and distributivity:
 % \begin{spec}
 %       pre x =<< (return [] <|> prefixP xs)
-%  ===    {- |(=<<)| distributes into |(<||>)| -}
+%  ===    {- |(=<<)| distributes into |mplus| -}
 %       (pre x =<< return []) <|> (pre x =<< prefixP xs)
 %  ===    {- definition of |pre|, monad laws -}
 %       return [] <|> return [x] <|> (pre x =<< prefixP xs)
 %  ===    {- definition of |pre| -}
 %       return [] <|> return [x] <|> ((\ ys -> return [] <|> return (x : y)) =<< prefixP xs)
-%  ===    {- |(=<<)| distributes into |(<||>)|, monad laws, definition of |(<$>)| -}
+%  ===    {- |(=<<)| distributes into |mplus|, monad laws, definition of |(<$>)| -}
 %       return [] <|> return [x] <|> return [] <|> (x:) <$> prefixP xs
-%  ===    {- idempotency of |(<||>)|, definition of |prefixP|  -}
+%  ===    {- idempotency of |mplus|, definition of |prefixP|  -}
 %       return [] <|> prefixP (x:xs) {-"~~."-}
 % \end{spec}
 % We wanted an inclusion but end up proving an equality.
@@ -520,7 +520,7 @@ proofScanLemmaInd f e x xs =
       foldR f e =<< suffix (x : xs)
  ===    {- definition of |suffix| -}
       foldR f e =<< (return (x:xs) <|> suffix xs)
- ===    {- |(=<<)| distributes into |(<||>)| -}
+ ===    {- |(=<<)| distributes into |mplus| -}
       (foldR f e =<< return (x:xs)) <|> (foldR f e =<< suffix xs)
  ===    {- induction -}
       foldR f e (x : xs) <|> (member =<< scanR f e xs)
@@ -528,7 +528,7 @@ proofScanLemmaInd f e x xs =
       (f x =<< foldR f e xs) <|> (member =<< scanR f e xs)
  ===    {- by \eqref{eq:HeadScan}: |head <$> scanR f e xs === foldR f e xs| -}
       (f x =<< (head <$> scanR f e xs)) <|> (member =<< scanR f e xs)
- ===    {- distributivity between |(=<<)| and |(<||>)|, switching to |do|-notation -}
+ ===    {- distributivity between |(=<<)| and |mplus|, switching to |do|-notation -}
       do  ys <- scanR f e xs
           f x (head ys) <|> member ys
  ===    {- monad laws -}
@@ -1117,7 +1117,7 @@ proofMonoMSS x =
         do  (ys1, ys0) <- any
             filt geqs (ys1, ys0)
             return (ys1, []) <|> return (ys1, x : ys0)
- ===       {- |(>>=)| distributes into |(<||>)|, since |ys1 `geqs` []| -}
+ ===       {- |(>>=)| distributes into |mplus|, since |ys1 `geqs` []| -}
         do  (ys1, ys0) <- any
             (  do { return (ys1, []) } <|>
                do { filt geqs (ys1, ys0); return (ys1, x : ys0) } )
