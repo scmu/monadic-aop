@@ -273,7 +273,7 @@ A compositional variation is:
 \end{spec}
 A monadic encoding of it goes like:
 \begin{equation}
-|min . f `sse` min . g|\mbox{~~}|<==>|\mbox{~~} |f `sse` g &&|~
+|min . f `sse` min . g|\mbox{~~}|<==|\mbox{~~} |f `sse` g &&|~
 \setlength{\jot}{-1pt}
 \left(
  \begin{aligned}
