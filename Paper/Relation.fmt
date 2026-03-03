@@ -11,8 +11,8 @@
 
 %format `bmin` = "\mathbin{\downarrow}"
 
-%format mem = "{\in}"
-%format `mem` = "\mathbin{\in}"
+%format inn = "{\in}"
+%format `inn` = "\mathbin{\in}"
 %format ni  = "{\ni}"
 %format `cup` = "\cup"
 %format `cap` = "\mathrel{\cap}"

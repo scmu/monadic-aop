@@ -307,7 +307,7 @@ Monad operators |return| and |(>>=)| are defined by
 return : {a : Set} -> a -> P a
 return x  = \y ->  x <=> y {-"~~,"-}
 (>>=) : {a b : Set} -> P a -> (a -> P b) -> P b
-m >>= f   = \y -> Sum{-"\!"-}[x `mem` a] (m x * f x y) {-"~~,"-}
+m >>= f   = \y -> Sum{-"\!"-}[x `inn` a] (m x * f x y) {-"~~,"-}
 \end{spec}
 where |(<=>)| is propositional equality, and |Sum| denotes dependent pair.
 That is, |y| is a member of the set |return x| exactly when |x <=> y|,
@@ -316,7 +316,7 @@ and |y| is a member of |m >>= f| if there exists a witness |x|, presented in the
 We would soon get stuck when we try to prove any of its properties.
 To prove the right identity law |m >>= return = m|, for example, amounts to proving that
 \begin{spec}
-  (\y -> Sum{-"\!"-}[x `mem` a] (m x * x <=> y)) {-"~"-}<=>{-"~"-} m {-"~~."-}
+  (\y -> Sum{-"\!"-}[x `inn` a] (m x * x <=> y)) {-"~"-}<=>{-"~"-} m {-"~~."-}
 \end{spec}
 The righthand side |m| is a function which yields, for each member |y|, a proof that |y| is in |m|,
 while the lefthand side is a function which produces, for each member |y|, a dependent pair consisting of a value |x : a| , a proof that |x| is in |m|, and a proof that |x <=> y|.
@@ -610,7 +610,7 @@ In this section we explore its definition and properties.
 In set-theoretical notation, |max_unlhd| can be defined by the following equivalence:
 for all |xs| and |ys|,
 \begin{equation}
-|ys `sse` max_unlhd xs {-"~"-}<==>{-"~"-} ys `sse` xs && (forall y `mem` ys : (forall x `mem` xs : y `unrhd` x)) {-"~~."-}|
+|ys `sse` max_unlhd xs {-"~"-}<==>{-"~"-} ys `sse` xs && (forall y `inn` ys : (forall x `inn` xs : y `unrhd` x)) {-"~~."-}|
 \label{eq:max-def-set}
 \end{equation}
 We omit the subscript |unlhd| when it is clear from the context or not relevant.
@@ -618,7 +618,7 @@ The |(==>)| direction of \eqref{eq:max-def-set}, letting |ys = max xs|, says tha
 
 In calculation, we often want to refine expressions of the form |max . f| where |f| generates a set. Therefore the following \emph{universal property} of |max| is more useful: for all |h| and |f| of type |a -> P b|,
 \begin{equation}
-|h `sse` max_unlhd . f {-"~"-}<==>{-"~"-} h `sse` f && (forall x : (forall y1 `mem` h x : (forall y0 `mem` f x : y1 `unrhd` y0))) {-"~~."-}|
+|h `sse` max_unlhd . f {-"~"-}<==>{-"~"-} h `sse` f && (forall x : (forall y1 `inn` h x : (forall y0 `inn` f x : y1 `unrhd` y0))) {-"~~."-}|
 \label{eq:max-univ-set}
 \end{equation}
 Properties \eqref{eq:max-def-set} and \eqref{eq:max-univ-set} are equivalent.
@@ -717,15 +717,15 @@ Luckily, we only need monotonicity to hold in more specific cases.
 Observing the counter example above, one might conjecture that |max s `sse` max t| if |s `sse` t| and |s| somehow keeps the maximum elements of |t|. Indeed, there are two such laws.
 Provided that |unrhd| is transitive, we have:
 \begin{spec}
-max_unlhd xs `sse` max_unlhd ys  {-"~"-}<=={-"~"-} xs `sse` ys && (forall x `mem` xs, y `mem` ys : x `unrhd` y) {-"~~,"-}
-max_unlhd xs `sse` max_unlhd ys  {-"~"-}<=={-"~"-} xs `sse` ys && (forall y `mem` ys : (exists x `mem` xs : x `unrhd` y)) {-"~~."-}
+max_unlhd xs `sse` max_unlhd ys  {-"~"-}<=={-"~"-} xs `sse` ys && (forall x `inn` xs, y `inn` ys : x `unrhd` y) {-"~~,"-}
+max_unlhd xs `sse` max_unlhd ys  {-"~"-}<=={-"~"-} xs `sse` ys && (forall y `inn` ys : (exists x `inn` xs : x `unrhd` y)) {-"~~."-}
 \end{spec}
 The first one says that |max xs `sse` max ys| if all elements in |xs| are maximums.
-The second laws is a bit relaxed, allowing |xs| to keep some non-maximum element, requiring only that every |y `mem` ys| is dominated by some element in |xs|.
+The second laws is a bit relaxed, allowing |xs| to keep some non-maximum element, requiring only that every |y `inn` ys| is dominated by some element in |xs|.
 Their function-compositional counterparts are written as:
 \begin{spec}
-max_unlhd . f `sse` max_unlhd . g  {-"~"-}<=={-"~"-} f `sse` g && (forall z, x `mem` f z, y `mem` g z : x `unrhd` y) {-"~~,"-}
-max_unlhd . f `sse` max_unlhd . g  {-"~"-}<=={-"~"-} f `sse` g && (forall z, y `mem` g z : (exists x `mem` g z : x `unrhd` y)) {-"~~."-}
+max_unlhd . f `sse` max_unlhd . g  {-"~"-}<=={-"~"-} f `sse` g && (forall z, x `inn` f z, y `inn` g z : x `unrhd` y) {-"~~,"-}
+max_unlhd . f `sse` max_unlhd . g  {-"~"-}<=={-"~"-} f `sse` g && (forall z, y `inn` g z : (exists x `inn` g z : x `unrhd` y)) {-"~~."-}
 \end{spec}
 These two laws cover all the cases in this article where we need |max| to be monotonic.
 In particular, the first law automatically is satisfied if |g| has the form |max_unlhd . g'|, that is, |f| is already a refinement of some function that computes maximums.
