@@ -97,11 +97,22 @@ r ⊑ s = ∀ x → r x ⊆ s x
 ⊑-trans : ∀ {ℓ} {X Y : Type ℓ} {r s t : X → ℙ Y} → r ⊑ s → s ⊑ t → r ⊑ t
 ⊑-trans = λ r⊑s s⊑t x y y∈rx → s⊑t x y (r⊑s x y y∈rx)
 
+⊑-refl-consequence : ∀ {ℓ} → {X Y : Type ℓ} (A B : X → ℙ Y) → A ≡ B → (A ⊑ B) × (B ⊑ A)
+⊑-refl-consequence A B p = subst (A ⊑_) p (⊑-refl A), subst (B ⊑_) (sym p) (⊑-refl B)
+
+⊑-extensionality : ∀ {ℓ} → {X Y : Type ℓ} (A B : X → ℙ Y) → (A ⊑ B) × (B ⊑ A) → A ≡ B
+⊑-extensionality A B (φ , ψ) = funExt (λ x → P.⊆-extensionality (A x) (B x) (φ x , ψ x))
+
+
 _⊒_ : ∀ {ℓ} {X Y : Type ℓ} → (X → ℙ Y) → (X → ℙ Y) → Type ℓ
 r ⊒ s = s ⊑ r
 
 ⊒-trans : ∀ {ℓ} {X Y : Type ℓ} {r s t : X → ℙ Y} → r ⊒ s → s ⊒ t → r ⊒ t
 ⊒-trans = λ r⊒s s⊒t x y y∈tx → r⊒s x y (s⊒t x y y∈tx)
+
+⊑-antisym :  ∀ {ℓ} → {X Y : Type ℓ} (f g : X → ℙ Y) → f ⊑ g → g ⊑ f → f ≡ g
+⊑-antisym f g f⊑g g⊑f = funExt (λ x → P.⊆-antisym (f x) (g x) (f⊑g x) (g⊑f x)) 
+
 -- ⊓ and ⊔
 
 _⊓_ : ∀ {ℓ} {X Y : Type ℓ} → (X → ℙ Y) → (X → ℙ Y) → (X → ℙ Y)
@@ -149,6 +160,9 @@ _<=<_ : ∀ {ℓ} {X Y Z : Type ℓ} → (Y → ℙ Z) → (X → ℙ Y) → (X 
 _<$>_ : ∀ {ℓ} {X Y : Type ℓ} → (X → Y) → ℙ X → ℙ Y
 f <$> m  = m >>= λ x → return (f x)      -- _<$>_ = map
 
+fmap : ∀ {ℓ} {X Y : Type ℓ} → (X → Y) → ℙ X → ℙ Y
+fmap f m = m >>= λ x → return (f x)
+
 -- -- monotonicity
 
 <$>-monotonic : ∀ {ℓ} {X Y : Type ℓ} → ∀ {m0 m1 : ℙ X} → (f : X → Y) → m0 ⊆ m1 → (f <$> m0) ⊆ (f <$> m1)
@@ -163,13 +177,21 @@ f <$> m  = m >>= λ x → return (f x)      -- _<$>_ = map
 <=<-monotonic-right : ∀ {ℓ} {X Y Z : Type ℓ} → ∀ (m : Y → ℙ Z) → (f g : X → ℙ Y) → f ⊑ g → (m <=< f) ⊑ (m <=< g)
 <=<-monotonic-right {Y} {Z} {X} m f g f⊑g x z z∈m<=<fx = rec squash₁ (λ {(y , y∈fx , z∈my) → ∣ y , f⊑g x y y∈fx , z∈my ∣₁}) z∈m<=<fx
 
-=<<-monotonic :
+=<<-monotonic-right :
   ∀ {ℓ} {X Y : Type ℓ}
-  {m0 m1 : ℙ X} →
+  (m0 m1 : ℙ X) →
   (f : X → ℙ Y) →
   m0 ⊆ m1 →
   (f =<< m0) ⊆ (f =<< m1)
-=<<-monotonic f m0⊆m1 y y∈ = rec squash₁ (λ {(x , x∈m0 , x∈m1) → ∣ x , (m0⊆m1 x x∈m0 , x∈m1) ∣₁}) y∈
+=<<-monotonic-right m0 m1 f m0⊆m1 y y∈ = rec squash₁ (λ {(x , x∈m0 , x∈m1) → ∣ x , (m0⊆m1 x x∈m0 , x∈m1) ∣₁}) y∈
+
+=<<-monotonic-left :
+  ∀ {ℓ} {X Y : Type ℓ}
+  (m : ℙ X) →
+  (f g : X → ℙ Y) →
+  f ⊑ g →
+  (f =<< m) ⊆ (g =<< m)
+=<<-monotonic-left  = λ m f g f⊑g y y∈fm → rec squash₁ (λ {(x , x∈m , y∈fx ) → ∣ x , x∈m , f⊑g x y y∈fx ∣₁ }) y∈fm
 
 --   -- converse
 
@@ -178,6 +200,13 @@ _° : ∀ {ℓ} {X Y : Type ℓ} → (X → ℙ Y) → (Y → ℙ X)
 
 °-idempotent : ∀ {ℓ} {X Y : Type ℓ} → (r : X → ℙ Y) → (r °) ° ≡ r
 °-idempotent r = refl
+
+°-order-preserving-⇒ : ∀ {ℓ} {X Y : Type ℓ} (f g : X → ℙ Y) → (f °) ⊑ (g °) → f ⊑ g
+°-order-preserving-⇒  f g p = λ x x₁ x₂ → p x₁ x x₂
+
+°-order-preserving-⇐ : ∀ {ℓ} {X Y : Type ℓ} (f g : X → ℙ Y) → f ⊑ g → (f °) ⊑ (g °)
+°-order-preserving-⇐ f g p = λ x x₁ x₂ → p x₁ x x₂
+
 
 --   -- factor
   

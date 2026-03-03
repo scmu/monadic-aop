@@ -19,6 +19,10 @@ foldrM : (A → B → ℙ B) → ℙ B → List A → ℙ B
 foldrM f e []       = e 
 foldrM f e (x ∷ xs) = f x =<< foldrM f e xs
 
+foldr : (A → B → B) → B → List A → B
+foldr f e []       = e 
+foldr f e (x ∷ xs) = f x (foldr f e xs)
+
 -- tools, [todo : move to other files]
 
 ⊆-elim :
@@ -28,78 +32,89 @@ foldrM f e (x ∷ xs) = f x =<< foldrM f e xs
   → m ∈ xs
 ⊆-elim {ℓ} {A} {ys} {xs} {m} = λ z → z m
 
-⊆-trans :  ∀ {ℓ : Level} {A : Type ℓ} → ∀ {x y z : ℙ A} → x ⊆ y → y ⊆ z → x ⊆ z
-⊆-trans = λ x₁ x₂ x₃ x₄ → x₂ x₃ (x₁ x₃ x₄)
-
-
-folrM-fixed-point-properties-⇐ :
+foldrM-fixed-point-properties-⇐ :
   (f : A → B → ℙ B)
   → (e : ℙ B)
   → (h : List A → ℙ B)
   → (base : e ⊆ h [])
   → (step : ∀ x xs → (f x =<< h xs) ⊆ h (x ∷ xs))
   → foldrM f e ⊑ h
-folrM-fixed-point-properties-⇐ f e h base step [] b b∈fold = base b b∈fold
-folrM-fixed-point-properties-⇐ f e h base step (x ∷ xs) b b∈fold = 
+foldrM-fixed-point-properties-⇐ f e h base step [] b b∈fold = base b b∈fold
+foldrM-fixed-point-properties-⇐ f e h base step (x ∷ xs) b b∈fold = 
     let 
         -- goal b ∈ h (x ∷ xs)
         -- 1. b ∈ (f x =<< h xs)
         -- 2. step x xs b : b ∈ (f x =<< h xs) → b ∈ h (x ∷ xs)
         lem : b ∈ (f x =<< h xs)
-        lem = rec squash₁ (λ {(b' , (b'∈fold , b∈fxb') ) → ∣ b' , folrM-fixed-point-properties-⇐ f e h base step xs b' b'∈fold , b∈fxb' ∣₁ }) b∈fold
+        lem = rec squash₁ (λ {(b' , (b'∈fold , b∈fxb') ) → ∣ b' , foldrM-fixed-point-properties-⇐ f e h base step xs b' b'∈fold , b∈fxb' ∣₁ }) b∈fold
     in step x xs b lem
 
-folrM-fixed-point-properties-⇒ :
+foldrM-fixed-point-properties-⇒ :
   (f : A → B → ℙ B)
   → (e : ℙ B)
   → (h : List A → ℙ B)
   → (base : h [] ⊆ e)
   → (step : ∀ x xs → h (x ∷ xs) ⊆ (f x =<< h xs))
   → h ⊑ foldrM f e
-folrM-fixed-point-properties-⇒ f e h base step [] b b∈h[] = base b b∈h[]
-folrM-fixed-point-properties-⇒ f e h base step (x ∷ xs) b b∈hxss = 
+foldrM-fixed-point-properties-⇒ f e h base step [] b b∈h[] = base b b∈h[]
+foldrM-fixed-point-properties-⇒ f e h base step (x ∷ xs) b b∈hxss = 
     let 
-        lem : (f x =<< h xs) ⊆ (f x =<< foldrM f e xs) 
-        lem = =<<-monotonic {m0 = h xs} {m1 = foldrM f e xs} (f x) (folrM-fixed-point-properties-⇒  f e h base step xs)
-        trans = ⊆-trans {x = h (x ∷ xs)} {y = (f x =<< h xs)} {z = (f x =<< foldrM f e xs) } (step x xs) lem
+        ind : (f x =<< h xs) ⊆ (f x =<< foldrM f e xs) 
+        ind = =<<-monotonic-right (h xs) (foldrM f e xs) (f x) (foldrM-fixed-point-properties-⇒  f e h base step xs)
+        trans = P.⊆-trans (h (x ∷ xs)) (f x =<< h xs) (f x =<< foldrM f e xs) (step x xs) ind
     in trans b b∈hxss
 
+foldrM-fusion :
+    (g : A → B → ℙ B)
+    → (f : A → B → ℙ B)
+    → (e : ℙ B)
+    → (h : ℙ B → ℙ B) 
+    → (p : ∀ x m → (g x =<< h m) ⊆ h (f x =<< m))
+    →  foldrM g (h e) ⊑ h ∘ foldrM f e
+foldrM-fusion g f e h p [] b q = q
+foldrM-fusion g f e h p (y ∷ ys) b q = 
+    let
+        ind : (g y =<< foldrM g (h e) ys) ⊆ (g y =<< (h ∘ foldrM f e) ys)
+        ind = =<<-monotonic-right (foldrM g (h e) ys) ((h ∘ foldrM f e) ys) (g y) (foldrM-fusion g f e h p ys)
 
-postulate
-    foldrM-monotonic : 
-        (f₀ : A → B → ℙ B)
-        → (f₁ : A → B → ℙ B)
-        → (e₀ : ℙ B)
-        → (e₁ : ℙ B)
-        → (∀ x → f₀ x ⊑ f₁ x) 
-        → e₀ ⊆ e₁
-        → foldrM f₀ e₀ ⊑ foldrM f₁ e₁
-
-    foldRM-fusion :
-        (g : A → B → ℙ B)
-        → (f : A → B → ℙ B)
-        → (e : ℙ B)
-        → (h : ℙ B → ℙ B) 
-        →  ∀ x m → (g x =<< h m) ⊆ h (f x =<< m)
-        →  foldrM g (h e) ⊑ h ∘ foldrM f e
-
--- foldRM-fusion :
---     (g : A → B → ℙ B)
---   → (f : A → B → ℙ B)
---   → (e : ℙ B)
---   → (h : ℙ B → ℙ B) 
---   →  ∀ x m → (g x =<< h m) ⊆ h (f x =<< m)
---   →  foldrM g (h e) ⊑ h ∘ foldrM f e
--- foldRM-fusion g f e h a m p [] b b∈he = b∈he
--- foldRM-fusion g f e h a m p (x ∷ xs) b q = {!  folrM-fixed-point-properties-⇒ ? ? ? ? ? ? b ? !}
+        trans = P.⊆-trans (g y =<< foldrM g (h e) ys) (g y =<< (h ∘ foldrM f e) ys) (h (foldrM f e (y ∷ ys)))
+                ind (p y (foldrM f e ys)) b q
+    in trans
+        
+    
+foldrM-monotonic :
+    (f₀ : A → B → ℙ B)
+    → (f₁ : A → B → ℙ B)
+    → (e₀ : ℙ B)
+    → (e₁ : ℙ B)
+    → (f₀⊑f₁ : ∀ x → f₀ x ⊑ f₁ x)
+    → e₀ ⊆ e₁
+    → foldrM f₀ e₀ ⊑ foldrM f₁ e₁
+foldrM-monotonic f₀ f₁ e₀ e₁ f₀⊑f₁ e₀⊆e₁ [] = e₀⊆e₁
+foldrM-monotonic f₀ f₁ e₀ e₁ f₀⊑f₁ e₀⊆e₁ (x ∷ xs) = 
+    foldrM-fixed-point-properties-⇐ 
+        f₀ e₀ (foldrM f₁ e₁) e₀⊆e₁ 
+        (λ x' xs' → =<<-monotonic-left (foldrM f₁ e₁ xs') (f₀ x') (f₁ x') (f₀⊑f₁ x')) 
+        (x ∷ xs)
 
 
--- foldrM-monotonic : 
---       (f₀ : A → B → ℙ B)
---     → (f₁ : A → B → ℙ B)
---     → (e₀ : ℙ B)
---     → (e₁ : ℙ B)
---     → (∀ x → f₀ x ⊑ f₁ x) 
---     → e₀ ⊆ e₁
---     → foldrM f₀ e₀ ⊑ foldrM f₁ e₁
--- foldrM-monotonic f₀ f₁ e₀ e₁ x x₁ x₂ x₃ x₄ = {!   !}
+
+foldrM-pure :
+  (f : A → B → B)
+  → (e : B)
+  → (return ∘ (foldr f e)) ≡ foldrM (λ x → return ∘ f x) (return e)
+foldrM-pure f e = funExt (λ x → help x) 
+    where
+        help : ∀ x → (return ∘ (foldr f e)) x ≡ foldrM (λ x → return ∘ f x) (return e) x
+        help []       = refl
+        help (x ∷ xs) = 
+            return (f x (foldr f e xs))
+                ≡⟨ refl ⟩
+            (return ∘ f x) (foldr f e xs)
+                ≡⟨ sym (ret-left-id (foldr f e xs) (return ∘ f x)) ⟩
+            (return ∘ f x) =<< (return ∘ (foldr f e)) xs
+                ≡⟨ cong (λ u → (return ∘ f x) =<< u) (help xs) ⟩
+            (return ∘ f x) =<< foldrM (λ x → return ∘ f x) (return e) (xs)
+                ≡⟨ refl ⟩
+            foldrM (λ x → return ∘ f x) (return e) (x ∷ xs)
+                ∎

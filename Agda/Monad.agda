@@ -182,6 +182,23 @@ f <$> m  = m >>= λ x → return (f x)      -- _<$>_ = map
   (f =<< m0) ⊆ (f =<< m1)
 =<<-monotonic f m0⊆m1 y y∈ = rec squash₁ (λ {(x , x∈m0 , x∈m1) → ∣ x , (m0⊆m1 x x∈m0 , x∈m1) ∣₁}) y∈
 
+=<<-monotonic-right :
+  ∀ {ℓ} {X Y : Type ℓ}
+  (m0 m1 : ℙ X) →
+  (f : X → ℙ Y) →
+  m0 ⊆ m1 →
+  (f =<< m0) ⊆ (f =<< m1)
+=<<-monotonic-right m0 m1 f m0⊆m1 y y∈ = rec squash₁ (λ {(x , x∈m0 , x∈m1) → ∣ x , (m0⊆m1 x x∈m0 , x∈m1) ∣₁}) y∈
+
+=<<-monotonic-left :
+  ∀ {ℓ} {X Y : Type ℓ}
+  (m : ℙ X) →
+  (f g : X → ℙ Y) →
+  f ⊑ g →
+  (f =<< m) ⊆ (g =<< m)
+=<<-monotonic-left  = λ m f g f⊑g y y∈fm → rec squash₁ (λ {(x , x∈m , y∈fx ) → ∣ x , x∈m , f⊑g x y y∈fx ∣₁ }) y∈fm
+
+
   -- converse
 
 _° : ∀ {ℓ} {X : Type ℓ} {Y : Type ℓ} → (X → ℙ Y) → (Y → ℙ X)
