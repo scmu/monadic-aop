@@ -1,9 +1,9 @@
 
 %%\newcommand*{\circo}{\mathrel{\scalebox{0.6}{$\circ$}}}
 
-\newcommand{\circo}{\mathrel{\kern 0.12em%
+\newcommand{\circo}{\mathrel{\kern 0.06em%
       \raisebox{1pt}{\tikz \draw[line width=0.6pt] circle(1.1pt);}%
-      \kern 0.12em}}
+      \kern 0.06em}}
 
 \newlength{\mylen}
 \setbox1=\hbox{$\bullet$}\setbox2=\hbox{\tiny$\bullet$}

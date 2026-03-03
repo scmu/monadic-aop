@@ -1,4 +1,21 @@
-\documentclass[dvipsnames, fleqn]{jfp}
+%% lhs2TeX monadic-opt.lhs | pdflatex --jobname=monadic-opt
+
+%let anonymous = False
+%let draft = False
+
+\documentclass[acmsmall,fleqn,screen,nonacm]{acmart}
+\settopmatter{printccs=false, printacmref=false}
+\setcopyright{none}
+
+\usepackage[capitalise,noabbrev]{cleveref}
+\citestyle{acmauthoryear}
+\crefformat{equation}{#2#1#3}
+
+
+\usepackage{mathtools}
+\usepackage{varwidth}
+\usepackage{pifont}
+
 \usepackage{url}
 \let\Bbbk\relax  % avoiding error "Bbbk' already defined."
 \usepackage{tikz}
@@ -6,8 +23,6 @@
 \usepackage{caption}
 \usepackage{subcaption}
 \usepackage{scalerel}
-
-%% lhs2TeX monadic-opt.lhs | pdflatex --jobname=monadic-opt
 
 %if False
 \begin{code}
@@ -66,28 +81,24 @@ infixr 0 ===
 
 \begin{document}
 
-\righttitle{A Monadic Notation for Calculating Optimisation Algorithms}
-\lefttitle{S-C. Mu}
+
+
+\author{Shin-Cheng Mu}
+\affiliation{
+\institution{Institute of Information Science, Academia Sinica, Taipei, Taiwan}}
+\author{You-Zheng Yu}
+\affiliation{
+\institution{National Taiwan University, Taipei, Taiwan}}
 
 \title{A Monadic Notation for Calculating Optimisation Algorithms}
-\begin{authgrp}
-\author{Shin-Cheng Mu}
-\affiliation{Institute of Information Science, Academia Sinica, Taipei, Taiwan}
-\author{You-Zheng Yu}
-\affiliation{National Taiwan University, Taipei, Taiwan}
-\end{authgrp}
-
-\date{}
-\journaltitle{JFP}
-\cpr{Cambridge University Press}
-\doival{yyyy/xxxxx}
-\jnlDoiYr{2025}
 
 \begin{abstract}
 
 \end{abstract}
 
 \maketitle
+
+\section{} % why doesn't this show up?
 
 \section{Introduction}
 \label{sec:intro}
@@ -122,21 +133,21 @@ having to decide, in the specification phase, what list to return when there are
 One therefore needs a different framework, where a specification describes a collection of solution that is allowed by the final program, which no longer equals, but is instead contained by the specification.
 
 One of the possibilities is to use relations as specifications.
-Foundations of this approach were laid by works including \cite{BackhousedeBruin:91:Relational}, \cite{Aarts:92:Relational}, \cite{BackhouseHoogendijk:92:Elements}, etc,
-before \cite{BirddeMoor:97:Algebra}, taking a more abstract, categorical approach,
+Foundations of this approach were laid by works including \citet{BackhousedeBruin:91:Relational}, \citet{Aarts:92:Relational}, \citet{BackhouseHoogendijk:92:Elements}, etc,
+before \citet{BirddeMoor:97:Algebra}, taking a more abstract, categorical approach,
 presented general theories for constructing various forms of greedy, thinning, and dynamic programming algorithms.
-\cite{BirddeMoor:97:Algebra} presented a point-free calculus that is concise, elegant, and surprisingly expressive.
+\citet{BirddeMoor:97:Algebra} presented a point-free calculus that is concise, elegant, and surprisingly expressive.
 \todo{Why AoP is amazing}
 Such conciseness and expressiveness also turned out to be a curse, however.
 For those who not sharing the background, the calculus has a sharp learning curve, which limited its popularity to a small circle of enthusiasts.
 \todo{Why AoP can't be popular.}
 
-Efforts has been made to re-introduce variables back to the relational calculus, for example, \cite{deMoorGibbons:00:Pointwise}.
+Efforts has been made to re-introduce variables back to the relational calculus, for example, \citet{deMoorGibbons:00:Pointwise}.
 One cannot help feeling unease with some of its peculiarities, for example
 \todo{What?}
-Around two decades later, \cite{BirdRabe:19:How} presented a theoretical background of ``multifunctions'',
+Around two decades later, \citet{BirdRabe:19:How} presented a theoretical background of ``multifunctions'',
 which was then used in
-\cite{BirdGibbons:20:Algorithm}.
+\citet{BirdGibbons:20:Algorithm}.
 \todo{What is wrong with it?}
 
 \todo{Why we recommend using monads.}
@@ -152,7 +163,7 @@ In all cases we consider, the filtering phase can be fused into |foldR|, therefo
 We then discuss conditions under which the specification can be refined to a fold-based greedy algorithm --- one where we greedily keep only the locally best solution in each step of the fold,
 or a \emph{thinning} algorithm, where in each step of the fold we keep a set of solution candidates that still might be useful.
 
-All these were covered in \cite{BirddeMoor:97:Algebra}.
+All these were covered in \citet{BirddeMoor:97:Algebra}.
 Rather than solving new problems or discovering new algorithms, the purpose of this article is to propose new notations that make previous derivations more accessible, while still being accurate without being too cumbersome.
 In traditional functional programming, one may reason about a functional program by induction on the input.
 This article aims to show that reasoning about monadic programs is just like that: one only need to make use of monad laws and properties of effect operators.
@@ -233,7 +244,7 @@ Monadic bind |(=<<)| (and thus |(<=<)|) is monotonic with respect to containment
 Meanwhile, function application (and composition) in general is \emph{not} monotonic with respect to containment, that is, having |m `sse` n| certainly does not guarantee that |h m `sse` h n| for arbitrary |h :: M a -> M b|, nor does |f `sse` g| guarantee |h . f `sse` h . g|.
 Later in this article we will need monotonicity in more specific cases, where we will discuss conditions for such monotonicity to hold.%
 \footnote{That |(.)| being not monotonic may look restrictive, but it is just a common phenomena that was often overlooked due to notational differences.
-Consider \cite{BirddeMoor:97:Algebra}, for example, the equivalent of our |h . f| should be written as |h . {-"\Lambda\,"-} f| in their formulation, and the $\Lambda$ operator, which collects the results of a relation in a set, is \emph{not} monotonic.
+Consider \citet{BirddeMoor:97:Algebra}, for example, the equivalent of our |h . f| should be written as |h . {-"\Lambda\,"-} f| in their formulation, and the $\Lambda$ operator, which collects the results of a relation in a set, is \emph{not} monotonic.
 The |(.)| operator of Bird and de Moor, denoting composition of relations, corresponds to our |(<=<)|, and is indeed monotonic with respect to |(`sse`)|.}
 
 \paragraph*{Sets.}~ A structure that supports all the operations above is the set monad: for all type |a|,
@@ -698,7 +709,7 @@ We will discuss about that soon.
 The function |max| is not monotonic with respect to |(`sse`)| ---
 indeed, |{1,2} `sse` {1,2,3}|, while |max {1,2} = {2} {-"\not\subseteq"-} {3} = max {1,2,3}|.
 Consequently, having |f `sse` g| does not give us |max . f `sse` max g|.%
-\footnote{Again, the situation is the same in \cite{BirddeMoor:97:Algebra}: even though $\Varid{S} \subseteq \Varid{T}$, we do not have
+\footnote{Again, the situation is the same in \citet{BirddeMoor:97:Algebra}: even though $\Varid{S} \subseteq \Varid{T}$, we do not have
 $\Lambda \Varid{S} \subseteq \Lambda \Varid{T}$, therefore neither do we have $\Varid{max} \circo \Lambda \Varid{S} \subseteq \Varid{max} \circo \Lambda \Varid{T}$.
 It has not been a major problem, probably due to that using Greedy Theorem to eliminate the outermost |max| is usually the first refinement step in their treatment of optimisation problems.}
 
@@ -1384,14 +1395,14 @@ This observation inspires us to use the following ordering:
 xs `leqvw` ys = val xs <= val ys && wgt xs >= wgt ys {-"~~,"-}
 \end{spec}
 One may prove that |subsw| is indeed monotonic on |geqvw|.
-However, |leqvw| is not connected. For example, neither |[(10,9)] `leqvw` [(9,10)]| nor |[(10,9)] `geqvw` [(9,10)]| holds, and |max_leqvw {[(10,9)], [(9,10)]}| yields the empty set.
-Therefore, while one may apply the Greedy Theorem to |max_leqvw . foldR subsw (return [])|, it does not give us a useful algorithm.
+However, |leqvw| is not connected. For example, neither |[(10,9)] `leqvw` [(9,10)]| nor |[(10,9)] `geqvw` [(9,10)]| holds, and |max_leqvw| |{[(10,9)], [(9,10)]}| yields the empty set.
+Therefore, while one may apply the Greedy Theorem to |max_leqvw . | |foldR subsw (return [])|, it does not give us a useful algorithm.
 
 Instead, one may use a different strategy: let the |foldR| maintain, in some data structure, a collection of solutions that might be useful, while those that are definitely not going to contribute to the final solution can be disposed of.
 For example, if at one point the algorithm computes a collection of solutions
 |{[(5,8)],[(4,6)], [(4,8)]}|, the solutions |[(5,8)]| and |[(4,6)]| must be kept because we do not yet know which will contribute to the final solution.
 Meanwhile, |[(4,8)]|, which is less valuable than |[(5,8)]| and heavier |[(4,6)]|, need not be kept.
-This process of ``keeping useful solutions, while possibly dropping those useless ones'' is called \emph{thinning} in the terminology of \cite{BirddeMoor:97:Algebra}.
+This process of ``keeping useful solutions, while possibly dropping those useless ones'' is called \emph{thinning} in the terminology of \citet{BirddeMoor:97:Algebra}.
 
 Note our wording: |[(4,6)]| need not be kept, but it does not mean that we \emph{have to} drop it.
 An algorithm should have the flexibility of deciding how much thinning it needs to do.
