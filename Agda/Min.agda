@@ -33,8 +33,14 @@ const {ℓ} {Z} {X} xs = λ (_ : Z) → xs
 ⊆2⊑ : {X Z : Set} (f g : ℙ Z) → f ⊆ g → (λ (_ : X) → f) ⊑ (λ (_ : X) → g)
 ⊆2⊑ f g f⊆g = λ x x₁ x₂ → f⊆g x₁ x₂
 
-y≡[y] : {Y : Set} → (y : Y) → y ∈ (return y)
-y≡[y] y = ∣ refl ∣₁
+y∈[y] : {Y : Set} → (y : Y) → y ∈ (return y)
+y∈[y] y = ∣ refl ∣₁
+
+singleton_sub_elem : {Y : Set} (A : ℙ Y) (y : Y) → (return y ⊆ A) → y ∈ A
+singleton_sub_elem A y p = p y (y∈[y] y)
+
+elem_subset_singleton : {Y : Set} (A : ℙ Y) (y : Y) → y ∈ A → (return y ⊆ A) 
+elem_subset_singleton A y y∈A = λ x x∈[y] → rec (P.∈-isProp A x) (λ eq → subst (λ v → v ∈ A) eq y∈A) x∈[y]
 
 
 record MinR {Y : Set} (R : Y → ℙ Y) : Set₁ where
@@ -86,6 +92,9 @@ record MinR {Y : Set} (R : Y → ℙ Y) : Set₁ where
   set-property-⇐ : (xs ys : ℙ Y) → ys ⊆ xs → (p : (∀ y → y ∈ ys → ∀ x → x ∈ xs → y ∈ R x)) → (ys ⊆ minR xs)
   set-property-⇐ xs ys ys⊆xs p = universal-property-⇐ (λ (_ : Agda.Builtin.Unit.⊤) → ys) (λ (_ : Agda.Builtin.Unit.⊤) → xs) ((λ _ y₂ y₂∈ → rec-⊆ {X = Y} {xs = xs} {ys = ys} ys⊆xs y₂ y₂∈) , λ x x₁ x₂ → p x₁ (rec (P.∈-isProp ys x₁) (λ x₃ → x₃ .snd .snd) x₂) x (rec (P.∈-isProp xs x) (λ x₃ → x₃ .snd .fst) x₂)) tt
 
+  set-property-elem-⇒ : (y : Y) → (xs : ℙ Y)→ (y ∈ minR xs) → ((y ∈ xs) × (∀ x → x ∈ xs → y ∈ R x))
+  set-property-elem-⇒ y xs y∈minxs = ((minR⊑id xs y) y∈minxs) , (λ x x∈xs → snd(set-property-⇒ xs (return y) λ y' y'∈[y] → rec (P.∈-isProp (minR xs) y') (λ eq → subst (λ v → v ∈ minR xs) eq  y∈minxs) y'∈[y]) y (y∈[y] y) x x∈xs)
+
   minR-property : (xs : ℙ Y) → (minR xs ⊆ xs × (∀ y → y ∈ minR xs → ∀ x → x ∈ xs → y ∈ R x))
   minR-property xs = set-property-⇒ xs (minR xs) (P.⊆-refl (minR xs))
 
@@ -102,7 +111,7 @@ record MinR {Y : Set} (R : Y → ℙ Y) : Set₁ where
   singleton isSetY y x = (x ≡ y) , isSetY x y
 
   minR-property-⇐ : (xs : ℙ Y) (y : Y) → y ∈ xs → (p : (∀ x → x ∈ xs → y ∈ R x)) → (y ∈ minR xs)
-  minR-property-⇐ xs y y∈xs p = set-property-⇐ xs (return y) ([y]⊆xs y xs y∈xs) lem2 y (y≡[y] y)
+  minR-property-⇐ xs y y∈xs p = set-property-⇐ xs (return y) ([y]⊆xs y xs y∈xs) lem2 y (y∈[y] y)
     where
       [y]⊆xs : (y : Y) → (xs : ℙ Y) →  y ∈ xs → return y ⊆ xs
       [y]⊆xs y xs y∈xs = λ x x₁ → rec (P.∈-isProp xs x) (λ x≡y → subst (λ v → v ∈ xs) x≡y y∈xs) x₁
@@ -137,8 +146,8 @@ record MinR {Y : Set} (R : Y → ℙ Y) : Set₁ where
       pf2 = ⊑-trans {r = (minR ∘ g) <=< (f °)} {s = (minR ∘ g) <=< (g °)} {t = R} lem1 (thm1 g)
 
 
-  minR-monotonicity' : (xs ys : ℙ Y) → xs ⊆ ys → minR xs ⊆ minR ys -- not hold, larger set would have smaller minimums
-  minR-monotonicity' xs ys xs⊆ys = {!   !}
+  -- minR-monotonicity' : (xs ys : ℙ Y) → xs ⊆ ys → minR xs ⊆ minR ys -- not hold, larger set would have smaller minimums
+  -- minR-monotonicity' xs ys xs⊆ys = {!   !}
 
   minR-conditional-monotonicity : (xs ys : ℙ Y) 
       → xs ⊆ ys 
@@ -197,8 +206,9 @@ record MinR {Y : Set} (R : Y → ℙ Y) : Set₁ where
   left-monot-for-minR-un : {X Z : Set} (f : Z → ℙ Y) (g : X → ℙ Z) → (f ⊑ minR ∘ f) → (f <=< g) ⊑ ((minR ∘ f) <=< g)
   left-monot-for-minR-un f g f⊑minf = <=<-monotonic-left {m0 = f} {m1 = minR ∘ f} g f⊑minf
 
-  minR-monotonicity-2 : (A B : ℙ Y) → (A ⊆ B) →  (p : ∀ x → ∀ y → x ∈ R y) → minR A ⊆ minR B
-  minR-monotonicity-2 A B A⊆B p = set-property-⇐ B (minR A) (minR-preserves-order (λ _ → A) (λ _ → B) (λ x x₁ x₂ → A⊆B x₁ x₂) p) (λ x x∈minRA → λ y y∈B → p x y)
+  -- too strong 
+  -- minR-monotonicity-2 : (A B : ℙ Y) → (A ⊆ B) →  (p : ∀ x → ∀ y → x ∈ R y) → minR A ⊆ minR B
+  -- minR-monotonicity-2 A B A⊆B p =  set-property-⇐ B (minR A) (minR-preserves-order (λ _ → A) (λ _ → B) (λ x x₁ x₂ → A⊆B x₁ x₂) p) (λ x x∈minRA → λ y y∈B → p x y)
 
   minR-monotonicity-3 : (A B : ℙ Y) → (A ⊆ B) → (p : ∀ x → x ∈ A → ∀ y → y ∈ B → x ∈ R y) → minR A ⊆ minR B
   minR-monotonicity-3 A B A⊆B p = set-property-⇐ B (minR A) (minR-preserves-order (λ _ → A) (λ _ → B) (λ x x₁ x₂ → A⊆B x₁ x₂) p) λ y y∈minRA y' y'∈B → p y (minR-contained A y y∈minRA) y' y'∈B
@@ -243,10 +253,6 @@ record MinR {Y : Set} (R : Y → ℙ Y) : Set₁ where
           
         in minR-conditional-monotonicity (((minR ∘ f) <=< g) x) ((f <=< g) x)
           lem-1 lem-2 R-trans
-      
-      minR-promote-<=<-right-2 : {X Z : Set} (f : Z → ℙ Y) → (g : X → ℙ Z) → (p : ∀ x → ∀ y → x ∈ R y) → minR ∘ ((minR ∘ f) <=< g) ⊑ (minR ∘ (f <=< g))
-      minR-promote-<=<-right-2 {X} {Z} f g p x = minR-monotonicity-2 (((minR ∘ f) <=< g) x) ((f <=< g) x) ((<=<-monotonic-left {m0 = (minR ∘ f)} {m1 = f} g (mf⊑f f)) x) p
-
       minR-promote-<=<-left : {X Z : Set} (f : Z → ℙ Y) → (g : X → ℙ Z) → minR ∘ (f <=< g) ⊑ minR ∘ ((minR ∘ f) <=< g)
       minR-promote-<=<-left  {X} {Z} f g = universal-property-⇐ (minR ∘ (f <=< g)) ((minR ∘ f) <=< g) (lem-1 f g , lem-2 f g)
       -- we need: minR ∘ (f <=< g) ⊑ ((minR ∘ f) <=< g)
@@ -272,6 +278,13 @@ record MinR {Y : Set} (R : Y → ℙ Y) : Set₁ where
                 }) 
             p
 
+
+  ∈-bind-⇒ : {X Z : Set} → (f : Z → ℙ Y) → (y : Y) → ∀ m → y ∈ f =<< m → ∥ Σ Z (λ x → (x ∈ m) × (y ∈ f x)) ∥₁ 
+  ∈-bind-⇒ f y m y∈fm = y∈fm
+  
+  ∈-bind-⇐ : {X Z : Set} → (f : Z → ℙ Y) → (y : Y) → ∀ m → ∥ Σ Z (λ x → (x ∈ m) × (y ∈ f x)) ∥₁ → y ∈ f =<< m
+  ∈-bind-⇐ f y m p = p
+
   minR-<=<-Promotion-2 : {X Z : Set} → (f : Z → ℙ Y) → (g : X → ℙ Z) → 
     (p : ∀ y₁ → ∀ y₂ → ∥ Σ X (λ x → y₁ ∈ ((minR ∘ f) <=< g) x → y₂ ∈ (f <=< g) x) ∥₁ → y₁ ∈ R y₂) →
     minR ∘ (f <=< g) ≡ minR ∘ ((minR ∘ f) <=< g)
@@ -279,6 +292,52 @@ record MinR {Y : Set} (R : Y → ℙ Y) : Set₁ where
     where      
       minR-promote-<=<-right : {X Z : Set} (f : Z → ℙ Y) → (g : X → ℙ Z) → (p : ∀ y₁ → ∀ y₂ → ∥ Σ X (λ x → y₁ ∈ ((minR ∘ f) <=< g) x → y₂ ∈ (f <=< g) x) ∥₁ → y₁ ∈ R y₂) → minR ∘ ((minR ∘ f) <=< g) ⊑ (minR ∘ (f <=< g))
       minR-promote-<=<-right {X} {Z} f g p x = minR-monotonicity-3 (((minR ∘ f) <=< g) x) ((f <=< g) x) ((<=<-monotonic-left {m0 = (minR ∘ f)} {m1 = f} g (mf⊑f f)) x) λ y y∈lhs y' y'∈rhs → p y y' ∣ x , (λ z → y'∈rhs) ∣₁
+          
+      minR-promote-<=<-right-without-assumption : {X Z : Set} (f : Z → ℙ Y) → (g : X → ℙ Z) → minR ∘ ((minR ∘ f) <=< g) ⊑ (minR ∘ (f <=< g))
+      minR-promote-<=<-right-without-assumption {X} {Z} f g z = set-property-⇐ (f =<< g z) (minR ((minR ∘ f) =<< g z)) pf1 pf2
+        where
+          pf1 : minR ((minR ∘ f) =<< g z) ⊆ (f =<< g z)
+          pf1 = 
+            let
+              step1 : minR ∘ ((minR ∘ f) <=< g) ⊑ ((minR ∘ f) <=< g)
+              step1 = mf⊑f ((minR ∘ f) <=< g)
+
+              step2 : ((minR ∘ f) <=< g) ⊑ f <=< g
+              step2 = <=<-monotonic-left {m0 = minR ∘ f} {m1 = f} g (mf⊑f f)
+
+            in ⊑-trans {r = minR ∘ ((minR ∘ f) <=< g)} {s = (minR ∘ f) <=< g}
+              {t = f <=< g} step1 step2 z
+          pf2 : ∀ x → x ∈ minR ((minR ∘ f) =<< g z) → ∀ y → y ∈ (f =<< g z) → x ∈ R y
+          pf2 x x∈mmfgz = let
+
+            assumption-R-reflex : ∀ y → y ∈ R y
+            assumption-R-reflex = {!   !}
+            
+            s2 : ∀ w → w ∈ (minR ∘ f) =<< g z → x ∈ R w
+            s2 w w∈mfgz = snd (set-property-elem-⇒ x ((minR ∘ f) =<< g z) x∈mmfgz) w w∈mfgz
+            
+            s2-5 : ∀ w → ∥ Σ Z (λ v → (v ∈ g z) × (w ∈ (minR ∘ f) v)) ∥₁ → w ∈ (minR ∘ f) =<< g z
+            s2-5 w p = ∈-bind-⇐ {X = X} {Z = Z} (minR ∘ f) w (g z) p
+
+            s3 : ∀ w → ∥ Σ Z (λ v → (v ∈ g z) × (w ∈ (minR ∘ f) v)) ∥₁ → x ∈ R w
+            s3 w p = s2 w (s2-5 w p)
+
+            s4 : ∀ w → ∥ Σ Z (λ v → (v ∈ g z) × (w ∈ f v) × (∀ y → (y ∈ f v) × (w ∈ R y))) ∥₁ → x ∈ R w
+            s4 w p = s3 w (rec squash₁ (λ (v , v∈gz , w∈fv , q) → ∣ v , (v∈gz , (minR-property-⇐ (f v) w (fst (q w)) (λ y _ → snd (q y)))) ∣₁) p)
+
+            s5 : ∀ y → ∀ w → ∥ Σ Z (λ v → (v ∈ g z) × (w ∈ f v) × (y ∈ f v) × (w ∈ R y)) ∥₁ → x ∈ R w
+            s5 y w p = rec (P.∈-isProp (R w) x) (λ (v , v∈gz , w∈fv , y∈fv , w∈Ry) → s4 w ∣ v , (v∈gz , w∈fv , λ y' → {! we have y∈fv and w∈Ry, but we need (y' ∈ f v) × (w ∈ R y') !}) ∣₁) p
+            
+            s8 : ∀ y → ∀ v → (v ∈ g z) × (y ∈ f v) → x ∈ R y
+            s8 y v p = s5 y y ∣ v , ((fst p) , ((snd p) , ((snd p) , assumption-R-reflex y))) ∣₁
+
+            s9 : ∀ y → ∥ Σ Z (λ v → (v ∈ g z) × (y ∈ f v)) ∥₁ → x ∈ R y
+            s9 y p = rec (P.∈-isProp (R y) x) (λ (v , q) → s8 y v q) p
+
+            s10 : ∀ y → y ∈ (f =<< g z) → x ∈ R y
+            s10 = s9
+
+            in s10
 
       minR-promote-<=<-left : {X Z : Set} (f : Z → ℙ Y) → (g : X → ℙ Z) → minR ∘ (f <=< g) ⊑ minR ∘ ((minR ∘ f) <=< g)
       minR-promote-<=<-left  {X} {Z} f g = universal-property-⇐ (minR ∘ (f <=< g)) ((minR ∘ f) <=< g) (lem-1 f g , lem-2 f g)
