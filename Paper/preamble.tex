@@ -1,0 +1,72 @@
+\settopmatter{printccs=false, printacmref=false}
+\setcopyright{none}
+
+\usepackage[capitalise,noabbrev]{cleveref}
+\citestyle{acmauthoryear}
+\crefformat{equation}{#2#1#3}
+
+\usepackage{mathtools}
+\usepackage{varwidth}
+\usepackage{pifont}
+
+\usepackage{url}
+\let\Bbbk\relax  % avoiding error "Bbbk' already defined."
+\usepackage{tikz}
+\usepackage{chngcntr} % for \counterwithout
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{scalerel}
+
+%if False
+\begin{code}
+import Prelude hiding (repeat)
+(===) :: a -> a -> a
+(===) = undefined
+
+infixr 0 ===
+\end{code}
+%endif
+
+%include lhs2TeX.fmt
+%include polycode.fmt
+%include forall.fmt
+%include exists.fmt
+
+%include Formatting.fmt
+%include Relation.fmt
+
+
+%%\email{scm@iis.sinica.edu.tw}
+
+\usepackage{doubleequals}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}{Lemma}
+
+\def\commentbegin{\quad$\{$~}
+\def\commentend{$\}$}
+\mathindent=\parindent
+\addtolength{\mathindent}{0.3cm}
+\allowdisplaybreaks
+
+\newcommand{\tagx}[1][]{\refstepcounter{equation}(\theequation)\label{#1}}
+\newcommand\numberthis{\refstepcounter{equation}\tag{\theequation}}
+
+\newcommand{\todo}[1]{{\color{brown}\lbrack{\bf to do}: #1 \rbrack}}
+
+\counterwithout{equation}{section}
+
+%format b0
+%format b1
+%format b1'
+%format y0
+%format y1
+%format y2
+%format z0
+%format z1
+%format z2
+%format t0
+%format t1
+%format u0
+%format u1
+%format Set1
