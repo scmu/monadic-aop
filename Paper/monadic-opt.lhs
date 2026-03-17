@@ -3,18 +3,24 @@
 %let anonymous = False
 %let draft = False
 
-\documentclass[acmsmall,fleqn,screen,nonacm]{acmart}
+\documentclass[pearl,fleqn,review]{jfp-epi}
 
 %include preamble.tex
 
 \begin{document}
 
 \author{Shin-Cheng Mu}
+\orcid{0000-0002-4755-601X}
 \affiliation{
-\institution{Institute of Information Science, Academia Sinica, Taipei, Taiwan}}
+\institution{Institute of Information Science, Academia Sinica}
+\city{Taipei}
+\country{Taiwan}
+}
 \author{You-Zheng Yu}
 \affiliation{
-\institution{National Taiwan University, Taipei, Taiwan}}
+\institution{National Taiwan University}
+\city{Taipei}
+\country{Taiwan}}
 
 \title{A Monadic Notation for Calculating Optimisation Algorithms}
 
@@ -24,8 +30,6 @@
 
 \maketitle
 
-\section{} % why doesn't this show up?
-
 %include sections/Intro.lhs
 %include sections/Prelim.lhs
 %include sections/Greedy.lhs
@@ -34,7 +38,7 @@
 
 \section{Conclusions}
 
-\bibliographystyle{jfplike}
+\bibliographystyle{ACM-Reference-Format}
 \bibliography{monadic-opt.bib}
 %\input{sublists.bbl}
 
