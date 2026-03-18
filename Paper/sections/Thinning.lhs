@@ -133,20 +133,38 @@ Our specification of a thinning algorithm should allow such flexibility.
 \subsection{Overview of Thinning}
 
 We assume a data structure |T| used to store potentially useful partial solutions.
+Conceptually, |T a| is just a set of |a|'s.
+It could be implemented as a list, a tree, an array... the choice of implementation is problem-specific and often crucial to the efficiency of the algorithm.
+We assume two operators:
 \begin{spec}
 mem      :: T a -> P a {-"~~,"-}
 collect  :: P a -> T a {-"~~,"-}
 \end{spec}
+where |mem| non-deterministically yields an element in |T|, while |collect m| collects the results of |m| and stores them in the data structure |T|.
+Both |T| and |P| represent sets. If we let |T = P|, we would have |mem = collect = id|, and some notations could be much simplified.
+However, we prefer to treat |T| and |P| as different types, since they serve different purposes: |P| denotes non-determinism, while |T| denotes a \emph{finite} collection of potential solutions.
 
-\subsection{Thinning}
+Given a preorder |preceq| on some type |b| that is not necessarily connected, and a table |xs :: T b|,
+|thinT_preceq xs| computes a table that is possibly smaller, but still contains necessary elements that leads to an optimal solution.
+There could be many such tables, therefore we let |thinT_preceq| have type |T b -> P (T b)|. It non-deterministically computes a table that meets the following criteria :
+\begin{equation}
+|ys `inn` thinT_preceq xs {-"~"-}<==>{-"~"-} ys `sse` xs && (forall x `inn` xs : (exists y `inn` ys : y `succeq` x)) {-"~~."-}|
+\label{eq:thin-def-set}
+\end{equation}
+That is, |thin_preceq xs| contains all the table |ys| that is a sub-table of |xs|
+(we overload the subset relation |(`sse`)| to tables), and for every element in |xs| there exists some element in |ys| that is at least as good.
+The monadic function |thin_preceq| can be seen as a specification that contains all possible ways to thin a table,
+of which the actual algorithm that maintains the table is a refinement.
+The algorithm may aggressively remove all candidates that are not needed in each step.
+It may also remove some but not all the redundant candidates, if that turns out to be more efficient.
+In particular, |xs| itself is in |thin_preceq xs|, meaning that the algorithm may sometimes just keep the table unchanged.
 
-
-The function |thin_preceq| now has type |T b -> P (T b)|.
-Its universal property is:
+Property \eqref{eq:thin-def-set} can be wrapped into the following universal property:
+for all |f :: a -> P b| and |h :: a -> P (T b)|,
 \begin{equation}
 \setlength{\jot}{-1pt}
 \begin{split}
-|h `sse` thin_preceq . collect . f |\mbox{~~}|<==>|&\mbox{~~} |(mem <=< h) `sse` f &&|\\
+|h `sse` thinT_preceq . collect . f |\mbox{~~}|<==>|&\mbox{~~} |(mem <=< h) `sse` f &&|\\
 &
 \left(
  \begin{aligned}
@@ -169,29 +187,40 @@ Its universal property is:
 %if False
 \begin{code}
 propThinUniv :: forall a (b :: Type) . (a -> P (T b)) -> (a -> P b) -> a -> P (T b)
-propThinUniv x s =
-    x `sse` thin_Q . collect . s
- where pre0 = (mem <=< x) `sse` s
-       pre1 = (do a <- any
-                  t0 <- x a
-                  b1 <- s a
-                  return (t0, b1)) `sse`
-               (do (t0, b1) <- any
-                   b0 <- mem t0
-                   filt_Q (b0, b1)
-                   return (t0, b1))
+propThinUniv h f =
+    h `sse` thin_Q . collect . f
+ where pre0 = (mem <=< h) `sse` f
+       pre1 = (do x <- any
+                  t1 <- h x
+                  y0 <- f x
+                  return (t1, y0)) `sse`
+               (do (t1, y0) <- any
+                   y1 <- mem t1
+                   filt_Q (y1, y0)
+                   return (t1, y0))
 \end{code}
 %endif
-Letting |h := thin_preceq . collect| and |f := id| in \eqref{eq:thin-univ-monadic}, we get
+The monadic inclusion in the big bracket encodes the existential quantification:
+for all table |t1| returned by |h|, and for all |y0| returned by |f|,
+there must exists an elememt |y1| in |t1| such that |y1 `succeq` y0|.
+In |thinT_preceq. collect . f|, the results of |f| is collected into a table of type |T b| and passed to |thinT_preceq|.
+Since |thinT_preceq| and |collect| often appear together, we will use the following abbreviation.
+Given a preorder |(`preceq`)| on some type |b|, define
+\begin{spec}
+thin_preceq :: P b -> P (T b)
+thin_preceq = thinT_preceq . collect {-"~~."-}
+\end{spec}
+
+Letting |h := thin_preceq| and |f := id| in \eqref{eq:thin-univ-monadic}, we get
 \begin{equation}
-    |mem <=< (thin_preceq . collect) `sse` id|
+    |mem <=< thin_preceq `sse` id|
 \end{equation}
-Letting |h = thin_preceq . collect . f|, we have the cancelation law:
+Letting |h := thin_preceq . f| in \eqref{eq:thin-univ-monadic}, we get the cancelation law:
 \begin{equation}
 \setlength{\jot}{-1pt}
   \begin{aligned}
   |do|~ & |x <- any| \\
-        & |t1 <- thin_preceq (collect (f x))| \\
+        & |t1 <- thin_preceq (f x)| \\
         & |y0 <- f x| \\
         & |return (t1, y0)|
   \end{aligned}
@@ -204,7 +233,11 @@ Letting |h = thin_preceq . collect . f|, we have the cancelation law:
   \end{aligned}
 \end{equation}
 
-\subsection{The Thinning Theorem}
+|thin| introduction:
+\begin{spec}
+(max_unlhd . mem) <=< thin_preceq {-"\,"-}`sse`{-"\,"-} max_unlhd
+\end{spec}
+
 
 The thinning theorem is given by:
 \begin{theorem}[Thinning Theorem]
@@ -215,14 +248,14 @@ If |f x| is monotonic on |succeq| for all |x|, we have
 \begin{equation}
 \setlength{\jot}{-1pt}
 \begin{split}
-&|foldR (\x -> thin_preceq . collect . (f x <=< mem)) (thin_preceq (collect e)) `sse`| \\
-& \qquad  |thin_preceq . collect . foldR f e  {-"~~."-}|
+&|foldR (\x -> thin_preceq . (f x <=< mem)) (thin_preceq e) `sse`| \\
+& \qquad  |thin_preceq . foldR f e  {-"~~."-}|
 \end{split}
 \label{eq:thinning}
 \end{equation}
 }
 %if False
-xtxttx\begin{code}
+\begin{code}
 thmThinning :: (a -> b -> P b) -> P b -> List a -> P (T b)
 thmThinning f e =
   thin_Q . collect . foldR f e `spse`
@@ -232,96 +265,16 @@ thmThinning f e =
 %endif
 \end{theorem}
 
-\subsection{Proof of the Thinning Theorem}
+\subsection{Solving knapsack}
 
-\begin{proof}
-By the fixed-point property of |foldR| \eqref{eq:foldRPrefixPt}, to prove \eqref{eq:thinning} it is sufficient to show that:
 \begin{spec}
-     (thin_preceq . collect . (f x <=< mem)) =<< (thin_preceq . collect . foldR f e) xs `sse`
-       (thin_preceq . collect . foldR f e) (x : xs)
-<=>      {- definition of |foldR| -}
-     (thin_preceq . collect . (f x <=< mem)) =<< (thin_preceq . collect . foldR f e) xs `sse`
-       thin_preceq (collect (f x =<< foldR f e xs))
-<=>     {- abstracting away |xs| -}
-     (thin_preceq . collect . (f x <=< mem)) <=< (thin_preceq . collect . foldR f e) `sse`
-       thin_preceq . collect . (f x <=< foldR f e) {-"~~."-}
+         max_leqv . (filt ((w >) . wgt) <=< subseq)
+ `spse`    {- |foldR|-fusion -}
+         max_leqv . foldR subsw (return [])
+ `spse`    {- introducing |thin| -}
+         ((max_leqv . mem) <=< thin_preceq) . foldR subsw (return [])
+ ===       {- |(f <=< g) . h = f <=< (g . h)|-}
+         (max_leqv . mem) <=< (thin_preceq . foldR subsw (return []))
+ `spse`    {- thinning theorem -}
+         max_leqv . foldR (\x -> thin_preceq . (subsw x <=< mem)) (thin_preceq (return []))
 \end{spec}
-%if False
-\begin{code}
-propFixPoint0 :: (a -> b -> P b) -> P b -> a -> List a -> P (T b)
-propFixPoint0 f e x xs =
-  (thin_Q . collect . (f x <=< mem)) =<< (thin_Q . collect . foldR f e) xs
-  `sse` (thin_Q . collect . foldR f e) (x : xs)
-
-propFixPoint1 :: (a -> b -> P b) -> P b -> a -> List a -> P (T b)
-propFixPoint1 f e x xs =
-  (thin_Q . collect . (f x <=< mem)) =<< (thin_Q . collect . foldR f e) xs
-  `sse` (thin_Q . collect . foldR f e) (x : xs)
-  `sse` thin_Q (collect (f x =<< foldR f e xs))
-
-propFixPoint2 :: (a -> b -> P b) -> P b -> a -> List a -> P (T b)
-propFixPoint2 f e x  =
-  (thin_Q . collect . (f x <=< mem)) <=< (thin_Q . collect . foldR f e)
-  `sse` thin_Q . collect . (f x <=< foldR f e)
-\end{code}
-%endif
-According to the universal property of |thin_preceq|, for the above to hold we need to show that
-\begin{spec}
-  mem <=< (thin_preceq . collect . (f x <=< mem)) <=< (thin_preceq . collect . foldR f e) `sse` f x <=< foldR f e {-"~~,"-}
-\end{spec}
-and that
-%if False
-\begin{code}
-pfThinThm2 :: (a -> b -> P b) -> P b -> a -> P (T b, b)
-pfThinThm2 f e x =
-\end{code}
-%endif
-\begin{code}
-     do  xs <- any
-         t1 <- (thin_preceq . collect . (f x <=< mem)) =<< (thin_preceq . collect . foldR f e) xs
-         y0 <- f x =<< foldR f e xs
-         return (t1, y0)
-===  do  xs <- any
-         u1 <- (thin_preceq . collect) (foldR f e xs)
-         t1 <- (thin_preceq . collect . (f x <=< mem)) u1
-         b0 <- foldR f e xs
-         y0 <- f x b0
-         return (t1, y0)
-`sse`  {- |thin| cancelation -}
-     do  (u1, b0) <- any
-         b1 <- mem u1
-         filt preceq (b1, b0)
-         t1 <- (thin_preceq . collect . (f x <=< mem)) u1
-         y0 <- f x b0
-         return (t1, y0)
-`sse`  {- monotonicity -}
-     do  (u1, y0) <- any
-         b1 <- mem u1
-         y1 <- f x b1
-         filt preceq (y1, y0)
-         t1 <- (thin_preceq . collect . (f x <=< mem)) u1
-         return (t1, y0)
-===    {- monad laws -}
-     do  (u1, y0) <- any
-         y1 <- (f x <=< mem) u1
-         filt preceq (y1, y0)
-         t1 <- (thin_preceq . collect . (f x <=< mem)) u1
-         return (t1, y0)
-`sse`  {- |thin| cancelation -}
-     do  (y0, t1, y1) <- any
-         y2 <- mem t1
-         filt preceq (y2, y1)
-         filt preceq (y1, y0)
-         return (t1, y0)
-`sse`  {- transitivity of |preceq| -}
-     do  (y0, t1) <- any
-         y2 <- mem t1
-         filt preceq (y2, y0)
-         return (t1, y0) {-"~~."-}
-\end{code}
-Note that the second "monotonicity" step is not quite the same as the
-monotonicity assumption --- |b1| is not drawn from |any|, but a result of
-|mem u1|. This is fine because
-|do {b1 <- mem u1 ...} | can be rewritten as
-|do {b1' <- mem u1; b1 <- any; filt (=) b1 b1' ... }|.
-\end{proof}

@@ -7,6 +7,7 @@
 %format max_leqv = "\mathit{max}_{\leq_{v}}"
 %format max_leqvw = "\mathit{max}_{\leq_{\mathit{vw}}}"
 %format thin_preceq = "\mathit{thin}_{\preceq}"
+%format thinT_preceq = "\mathit{thinT}_{\preceq}"
 %format `shrink` = "\!\upharpoonright\!"
 
 %format `bmin` = "\mathbin{\downarrow}"

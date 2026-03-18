@@ -42,5 +42,8 @@
 \bibliography{monadic-opt.bib}
 %\input{sublists.bbl}
 
+\appendix
+
+%include sections/ThinningProof.lhs
 
 \end{document}

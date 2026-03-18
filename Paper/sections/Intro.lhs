@@ -50,7 +50,7 @@ which was then used in
 
 \todo{Why we recommend using monads.}
 
-\paragraph*{In this article} we consider problems having the form:
+\paragraph*{In this article} We consider problems having the form:
 \begin{spec}
   max . (filt p <=< foldR f e) {-"~~,"-}
 \end{spec}

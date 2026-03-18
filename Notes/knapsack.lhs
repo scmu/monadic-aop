@@ -75,7 +75,10 @@ data T a
 
 instance Functor T where
 
-thin_preceq :: T a -> P (T a)
+thinT_preceq :: T a -> P (T a)
+thinT_preceq = undefined
+
+thin_preceq :: P a -> P (T a)
 thin_preceq = undefined
 
 collect :: P a -> T a
@@ -238,6 +241,21 @@ Therefore we have
 Curiously, in the step using |(filt p =<<) `sse` id| we need only one side of the inclusion,
 therefore we have not yet demanded that |(w>).wgt| being suffix-closed.
 
+%if False
+\begin{code}
+thin_intro :: P (List Item) -> P (List Item)
+thin_intro =
+          max_v
+  `spse`  (max_v . mem) <=< thin_preceq
+\end{code}
+
+\begin{code}
+proper f g h  =
+       ((f <=< g) . h)
+  ===  (f <=< (g . h))
+\end{code}
+%endif
+
 \section{Introducing Thinning}
 
 
@@ -248,7 +266,7 @@ therefore we have not yet demanded that |(w>).wgt| being suffix-closed.
  `spse`    {- introducing |thin| -}
          max_v . thin_preceq . foldR subsw (return []) {-"~~."-}
  `spse`    {- thinning theorem -}
-         max_v . foldR (\x -> thin_preceq . collect . (subsw x <=< mem)) (thin_preceq (collect e))
+         max_v . foldR (\x -> thin_preceq . (subsw x <=< mem)) (thin_preceq (return []))
 \end{spec}
 
 
