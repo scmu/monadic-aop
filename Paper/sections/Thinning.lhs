@@ -334,3 +334,26 @@ addw :: Item -> T (List Item) -> T (List Item)
 addw x = map (x:) . dropWhile (((snd x + w) >) . wgt)
 \end{code}
 We have |collect ((filt ((w>) . wgt) . (x:)) =<< mem t = addw x t|.
+
+Back to the derivation:
+%if False
+\begin{code}
+knapsackDer2 :: Wgt -> List Item -> P (List Item)
+knapsackDer2 w =
+\end{code}
+%endif
+\begin{code}
+         (max_v . mem) <=< foldR (\x -> thin_preceq . (subsw x <=< mem)) (thin_preceq (return []))
+ `spse`     {-  -}
+         (max_v . mem) <=< foldR (\x t -> return (thinlist (mergeT t (addw x t)))) (return [[]])
+ ===        {- -}
+         (max_v . mem) <=< (return . foldr (\x t -> thinlist (mergeT t (addw x t))) [[]])
+ ===        {- monad laws -}
+         max_v . mem . foldr (\x t -> thinlist (mergeT t (addw x t))) [[]]
+ ===        {- -}
+         return . head . foldr (\x t -> thinlist (mergeT t (addw x t))) [[]] {-"~~."-}
+\end{code}
+
+\begin{spec}
+   knapsack = return . head . foldr (\x t -> thinlist (mergeT t (addw x t))) [[]] {-"~~."-}
+\end{spec}

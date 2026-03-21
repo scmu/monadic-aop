@@ -303,7 +303,7 @@ knapsackDer w =
  `spse`    {- thinning theorem -}
          (max_v . mem) <=< foldR (\x -> thin_preceq . (subsw x <=< mem)) (thin_preceq (return []))
  `spse`    {- refinement below -}
-         (max_v . mem) <=< foldR (\x t -> return (thinlist (mergeT t (addw x t)))) [[]]
+         (max_v . mem) <=< foldR (\x t -> return (thinlist (mergeT t (addw x t)))) (return [[]])
  ===       {- -}
          (max_v . mem) <=< (return . foldr (\x t -> thinlist (mergeT t (addw x t))) [[]])
  ===       {- monad law -}
