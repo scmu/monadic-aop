@@ -2,8 +2,8 @@
 %format thin_Q = "\mathit{thin}_{\mathit{Q}}"
 %format `shrink` = "\!\upharpoonright\!"
 
-%format mem = "{\in}"
-%format `mem` = "\in"
+%format inn = "{\in}"
+%format `inn` = "\in"
 %format ni  = "{\ni}"
 %format `cup` = "\cup"
 %format `cap` = "\mathrel{\cap}"

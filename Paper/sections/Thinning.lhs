@@ -130,7 +130,7 @@ Doing a full thinning keeps the set of solutions small, but could be time consum
 and it may be beneficial to remove some but not all of the useless solutions.
 Our specification of a thinning algorithm should allow such flexibility.
 
-\subsection{Overview of Thinning}
+\subsection{Thinning}
 
 We assume a data structure |T| used to store potentially useful partial solutions.
 Conceptually, |T a| is just a set of |a|'s.
@@ -233,11 +233,11 @@ Letting |h := thin_preceq . f| in \eqref{eq:thin-univ-monadic}, we get the cance
   \end{aligned}
 \end{equation}
 
-|thin| introduction:
+The \emph{|thin| introduction law} assures us that thinning is safe ---
+thinning the set of solutions before taking maximum still yields legistimate results:
 \begin{spec}
-(max_unlhd . mem) <=< thin_preceq {-"\,"-}`sse`{-"\,"-} max_unlhd
+(max_unlhd . mem) <=< thin_preceq {-"\,"-}`sse`{-"\,"-} max_unlhd {-"~~."-}
 \end{spec}
-
 
 The thinning theorem is given by:
 \begin{theorem}[Thinning Theorem]
@@ -267,14 +267,70 @@ thmThinning f e =
 
 \subsection{Solving knapsack}
 
-\begin{spec}
-         max_leqv . (filt ((w >) . wgt) <=< subseq)
+Now we try to solve the 0-1 knapsack problem by thinning.
+Start from the fused specification, we introduce |thin|, and apply the thinning theorem:
+%if False
+\begin{code}
+knapsackDer :: Wgt -> List Item -> P (List Item)
+knapsackDer w =
+\end{code}
+%endif
+\begin{code}
+         max_v . (filt ((w >) . wgt) <=< subseq)
  `spse`    {- |foldR|-fusion -}
-         max_leqv . foldR subsw (return [])
+         max_v . foldR subsw (return [])
  `spse`    {- introducing |thin| -}
-         ((max_leqv . mem) <=< thin_preceq) . foldR subsw (return [])
+         ((max_v . mem) <=< thin_preceq) . foldR subsw (return []) {-"~~."-}
  ===       {- |(f <=< g) . h = f <=< (g . h)|-}
-         (max_leqv . mem) <=< (thin_preceq . foldR subsw (return []))
+         (max_v . mem) <=< (thin_preceq . foldR subsw (return []))
  `spse`    {- thinning theorem -}
-         max_leqv . foldR (\x -> thin_preceq . (subsw x <=< mem)) (thin_preceq (return []))
+         (max_v . mem) <=< foldR (\x -> thin_preceq . (subsw x <=< mem)) (thin_preceq (return [])) {-"~~."-}
+\end{code}
+
+We now need to choose a representation of |T|.
+We let |T| be a list of packings, \emph{sorted by descending weights}.
+\begin{spec}
+collect (t <|> u) = mergeT (collect t) (collect u) {-"~~,"-}
 \end{spec}
+where |mergeT| is defined by:
+\begin{code}
+mergeT :: T (List Item) -> T (List Item) -> T (List Item)
+mergeT []      u       = u
+mergeT t       []      = t
+mergeT (xs:t)  (ys:u)  | wgt xs >= wgt ys  = xs : mergeT t (ys:u)
+                       | otherwise         = ys : mergeT (xs:t) u {-"~~."-}
+\end{code}
+With this representation, thinning can be performed by comparing values of adjacent solutions in the list, and drop those elements that are not more valuable, and yet not lighter:
+\begin{code}
+thinlist :: T (List Item) -> T (List Item)
+thinlist [] = []
+thinlist [xs] = [xs]
+thinlist (xs:ys:xss)  | val xs > val ys = xs : thinlist (ys:xss)
+                      | otherwise       = thinlist (ys:xss) {-"~~."-}
+\end{code}
+
+We have |return (thinlist t) `sse` thinT_preceq t| for table |t|.
+To refine |thin_preceq . (subsw x <=< mem)|, we reason:
+%if False
+\begin{code}
+tstepDer x t =
+\end{code}
+%endif
+\begin{code}
+         (thin . (subsw x <=< mem)) t
+ ===       {- definition of |(<=<)| -}
+         thin (subsw x =<< mem t)
+ ===       {- definition of |subsw|, |(=<<)| distributes into |(<||>)|, monad laws -}
+         thin (mem t <|> ((filt ((w>) . wgt) . (x:)) =<< mem t))
+ ===       {- definition of |thin|, |collect| distributes into |(<||>)|, |collect . mem = id| -}
+ ===     thinT (mergeT t (collect ((filt ((w>) . wgt) . (x:)) =<< mem t)))
+ ===     thinT (mergeT t (addw x t))
+ `spse`  return (thinlist (mergeT t (addw x t)))
+\end{code}
+
+Consider the subexpression |collect ((filt ((w>) . wgt) . (x:)) =<< mem t|.
+\begin{code}
+addw :: Item -> T (List Item) -> T (List Item)
+addw x = map (x:) . dropWhile (((snd x + w) >) . wgt)
+\end{code}
+We have |collect ((filt ((w>) . wgt) . (x:)) =<< mem t = addw x t|.

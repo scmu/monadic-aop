@@ -35,7 +35,7 @@ import Control.Monad
 infixr 0 ===
 
 -- type P a = [a]
-data P a
+newtype P a = P a
 
 instance Functor P where
 instance Applicative P where
@@ -71,15 +71,21 @@ sse = undefined
 
 wrap x = [x]
 
-data T a
+type T a = List a
 
-instance Functor T where
+-- instance Functor T where
 
 thinT_preceq :: T a -> P (T a)
 thinT_preceq = undefined
 
+thinT :: T a -> P (T a)
+thinT = thinT_preceq
+
 thin_preceq :: P a -> P (T a)
 thin_preceq = undefined
+
+thin :: P a -> P (T a)
+thin = thin_preceq
 
 collect :: P a -> T a
 collect = undefined
@@ -90,6 +96,18 @@ mem = undefined
 filt_Q :: (a, a) -> P (a, a)
 filt_Q = undefined
 
+(<|.>) :: (a -> P b) -> (a -> P b) -> (a -> P b)
+(f <|.> g) x = f x <|> g x
+
+-- mergeT :: T a -> T a -> T a
+-- mergeT = undefined
+
+joinT :: T (T a) -> T a
+joinT = undefined
+
+foldR :: (a -> b -> P b) -> P b -> List a -> P b
+foldR f e []      = e
+foldR f e (x:xs)  = f x =<< foldR f e xs {-"~~."-}
 \end{code}
 %endif
 
@@ -109,6 +127,7 @@ filt_Q = undefined
 %format geqv   = "(\geq_{v})"
 %format max_v = "\Varid{max}_{\leq_{v}}"
 %format thin_preceq = "\Varid{thin}_{\preceq}"
+%format <|.> = "\mathrel{\lbrack\hat{\!}\rbrack}"
 
 \usepackage{common/doubleequals}
 
@@ -204,6 +223,8 @@ Recall the |foldR| fusion rule:
   |foldR g (h e) `sse` h . foldR f e {-"~"-}<=={-"~"-} g x =<< h m `sse` h (f x =<< m) {-"~~."-}|
 \end{equation}
 
+%format subsw = "\Varid{subs}_{w}"
+
 The task is to fuse |filt ((w >) . wgt) <=< subseq| into |foldR subsw (return [])| for some |subsw|.
 For the base case, we assume that |w| is non-negative, therefore |filt ((w >) . wgt) [] = return []| holds.
 The function |subsw| should satisfy the fusion condition:
@@ -237,6 +258,12 @@ Therefore we have
   foldR subsw (return []) {-"~"-}`spse`{-"~"-} filt ((w >) . wgt) <=< subseq  {-"~~,"-}
      where subsw x ys = return ys <|> filt ((w>).wgt) (x:ys) {-"~~."-}
 \end{spec}
+%if False
+\begin{code}
+subsw :: Item -> List Item -> P (List Item)
+subsw x ys = return ys <|> filt ((w>) . wgt) (x:ys)
+\end{code}
+%endif
 
 Curiously, in the step using |(filt p =<<) `sse` id| we need only one side of the inclusion,
 therefore we have not yet demanded that |(w>).wgt| being suffix-closed.
@@ -258,16 +285,87 @@ proper f g h  =
 
 \section{Introducing Thinning}
 
-
-\begin{spec}
+Main calculation:
+%if False
+\begin{code}
+knapsackDer :: Wgt -> List Item -> P (List Item)
+knapsackDer w =
+\end{code}
+%endif
+\begin{code}
          max_v . (filt ((w >) . wgt) <=< subseq)
  `spse`    {- |foldR|-fusion -}
          max_v . foldR subsw (return [])
  `spse`    {- introducing |thin| -}
-         max_v . thin_preceq . foldR subsw (return []) {-"~~."-}
+         ((max_v . mem) <=< thin_preceq) . foldR subsw (return []) {-"~~."-}
+ ===       {- |(f <=< g) . h = f <=< (g . h)|-}
+         (max_v . mem) <=< (thin_preceq . foldR subsw (return []))
  `spse`    {- thinning theorem -}
-         max_v . foldR (\x -> thin_preceq . (subsw x <=< mem)) (thin_preceq (return []))
+         (max_v . mem) <=< foldR (\x -> thin_preceq . (subsw x <=< mem)) (thin_preceq (return []))
+ `spse`    {- refinement below -}
+         (max_v . mem) <=< foldR (\x t -> return (thinlist (mergeT t (addw x t)))) [[]]
+ ===       {- -}
+         (max_v . mem) <=< (return . foldr (\x t -> thinlist (mergeT t (addw x t))) [[]])
+ ===       {- monad law -}
+         max_v . mem . foldr (\x t -> thinlist (mergeT t (addw x t))) [[]]
+ ===       {- -}
+         return . head . foldr (\x t -> thinlist (mergeT t (addw x t))) [[]] {-"~~."-}
+\end{code}
+
+
+We let |T| be list of items \emph{sorted by descending weights}.
+\begin{spec}
+     thin_preceq (return [])
+===  thinT (collect (return []))
+===  thinT [[]]
+===  [[]] {-"~~."-}
 \end{spec}
 
+%if False
+\begin{code}
+tstepDer x t =
+\end{code}
+%endif
+\begin{code}
+         (thin . (subsw x <=< mem)) t
+ ===     thin (subsw x =<< mem t)
+ ===     thin (return =<< mem t <|> ((filt ((w>) . wgt) . (x:)) =<< mem t))
+ ===     thin (mem t <|> ((filt ((w>) . wgt) . (x:)) =<< mem t))
+ ===     thinT (mergeT (collect (mem t)) (collect ((filt ((w>) . wgt) . (x:)) =<< mem t)))
+ ===     thinT (mergeT t (joinT (map (collect . filt ((w>) . wgt) . (x:)) t)))
+ ===     thinT (mergeT t (addw x t))
+ `spse`  return (thinlist (mergeT t (addw x t)))
+\end{code}
+
+\begin{code}
+addw :: Item -> T (List Item) -> T (List Item)
+addw x = map (x:) . dropWhile (((snd x + w) >) . wgt)
+
+mergeT :: T (List Item) -> T (List Item) -> T (List Item)
+mergeT [] u = u
+mergeT t [] = t
+mergeT (xs:t) (ys:u)  | wgt xs >= wgt ys = xs : mergeT t (ys:u)
+                      | otherwise        = ys : mergeT (xs:t) u
+
+thinlist :: T (List Item) -> T (List Item)
+thinlist [] = []
+thinlist [xs] = [xs]
+thinlist (xs:ys:xss)  | val xs > val ys = xs : thinlist (ys:xss)
+                      | otherwise       = thinlist (ys:xss)
+\end{code}
+
+%if False
+\begin{code}
+propJoinChoice :: (a -> P b) -> (a -> P b) -> P a -> P b
+propJoinChoice f g xs =
+  (f <|.> g) =<< xs === (f =<< xs) <|> (g =<< xs)
+
+propCollectMem :: (a -> P b) -> T a -> T b
+propCollectMem f t =
+       collect (f =<< mem t)
+  ===  collect (join (fmap f (mem t)))
+  ===  joinT (map (collect . f) t)
+\end{code}
+%endif
 
 \end{document}
