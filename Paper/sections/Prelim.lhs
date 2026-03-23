@@ -1,6 +1,19 @@
 \section{Preliminaries}
 \label{sec:prelim}
 
+%if False
+\begin{code}
+module Prelim where
+
+import Prelude hiding (max, any)
+import GHC.Base (Alternative, (<|>))
+import Control.Monad
+
+import Common
+\end{code}
+%endif
+
+
 We introduce in this section the building blocks we need.
 
 \subsection{Nondeterminism Monad}
@@ -85,10 +98,10 @@ For the rest of the paper we take |M = P|.
 The set |any :: P a| contains all elements having type |a|.
 Computationally, it creates an arbitrary element of its type.
 The command |filt : (a -> Bool) -> a -> P a| is defined by
-\begin{spec}
+\begin{code}
 filt p x  | p x        = return x
           | otherwise  = mzero {-"~~."-}
-\end{spec}
+\end{code}
 It returns its input |x| if it satisfies |p|, and fails otherwise.%
 \footnote{The function |filt| is called |assert| in the standard Haskell library.
 We think the latter name is misleading, and instead use |filt| in this paper.%
@@ -157,18 +170,18 @@ While logically we recognize that they are equivalent, in the type theory of Agd
 \subsection{Monadic Fold}
 
 We define the monadic fold on lists as:
-\begin{spec}
+\begin{code}
 foldR :: (a -> b -> P b) -> P b -> List a -> P b
 foldR f e []      = e
 foldR f e (x:xs)  = f x =<< foldR f e xs {-"~~."-}
-\end{spec}
+\end{code}
 Recall |prefix| defined in Section~\ref{sec:non-det-monad}.
 The following function |prefix'|, defined in terms of |foldR|,
 also computes an arbitrary prefix of the input list:
-\begin{spec}
+\begin{code}
 prefix' = foldR pre (return [])
   where pre x ys  = return [] <|> return (x : ys) {-"~~."-}
-\end{spec}
+\end{code}
 %if False
 \begin{code}
 pre x ys = return [] <|> return (x : ys)
@@ -205,10 +218,10 @@ From now on we equate |prefix| and |prefix'|.
 %format notPrefixP = "\Varid{notPrefix}^{+}"
 %format preP = "\Varid{pre}^{+}"
 Meanwhile, the following definition does \emph{not} equal |prefixP|:
-\begin{spec}
+\begin{code}
 notPrefixP    = foldR preP mzero  {-"~~,"-}
   where preP x ys  = return [x] <|> return (x : ys) {-"~~,"-}
-\end{spec}
+\end{code}
 because |pre x =<< mzero| immediately reduces to |mzero|.
 
 \paragraph*{Fixed-Point Properties and Fusion Laws.}~
@@ -231,7 +244,13 @@ from which |prefixP `sse` prefix|, that is, |prefixP <||> prefix = prefix|, foll
 This is a case where a stronger variation of a property is easier to prove since it is more informative.
 The first antecedent of \eqref{eq:foldRFixPt} is immediate. For the second antecedent, we need to show that
 |return [] <||> prefixP (x:xs) = pre x =<< (return [] <||> prefixP xs)|, which is established by utilising monad laws and distributivity:
-\begin{spec}
+%if False
+\begin{code}
+prefixPPrefixInd :: a -> List a -> P (List a)
+prefixPPrefixInd x xs =
+\end{code}
+%endif
+\begin{code}
      pre x =<< (return [] <|> prefixP xs)
  ===   {- |(=<<)| distributes into |mplus| -}
      (pre x =<< return []) <|> (pre x =<< prefixP xs)
@@ -241,7 +260,7 @@ The first antecedent of \eqref{eq:foldRFixPt} is immediate. For the second antec
      return [] <|> return [x] <|> (x:) <$> prefixP xs
  ===   {- definition of |prefixP| -}
      return [] <|> prefixP (x:xs) {-"~~."-}
-\end{spec}
+\end{code}
 
 
 % One would eventually get stuck and realise that we need to prove a stronger property:
@@ -315,6 +334,12 @@ scanR f e (x : xs)  = do  ys <- scanR f e xs
                           z <- f x (head ys)
                           return (z : ys) {-"~~,"-}
 \end{code}
+%if False
+\begin{code}
+wrap :: a -> List a
+wrap x = [x]
+\end{code}
+%endif
 where |wrap x = [x]|.
 With |f| and |e| being non-deterministic, |scanR f e| returns a set of all possible lists.
 \todo{example.}
@@ -327,7 +352,7 @@ scanR f e = foldR f' (wrap <$> e)
 Therefore, from \eqref{eq:foldr-foldR} one can induce that |scanR| with a
 deterministic step function is itself deterministic:
 \begin{align}
-  |scanR (\x -> return . f x) (return e)| ~&=~ |return . scanr f e| \mbox{~~.}
+  |return . scanr f e|~&=~ |scanR (\x -> return . f x) (return e)|  \mbox{~~.}
     \label{eq:scanr-scanR}
 \end{align}
 
@@ -386,7 +411,7 @@ In the last few steps of the proof we find it more comprehensible to use the |do
 In the proof we needed the property that the head of the list returned by |scanR| is always the result of |foldR| applied to the entire list, and vice versa:
 %if False
 \begin{code}
--- propHeadScanStmt :: (a -> b -> P b) -> P b -> List a -> P b
+propHeadScanStmt :: (a -> b -> P b) -> P b -> List a -> P b
 propHeadScanStmt f e xs =
    head <$> scanR f e xs === foldR f e xs
 \end{code}
@@ -399,7 +424,7 @@ propHeadScanStmt f e xs =
 % For |xs := x:xs| we reason:
 %if False
 \begin{code}
--- propHeadScanStmt :: (a -> b -> P b) -> P b -> List a -> P b
+propHeadScanPfInd :: (a -> b -> P b) -> P b -> a -> List a -> P b
 propHeadScanPfInd f e x xs =
 \end{code}
 \begin{code}
@@ -483,6 +508,23 @@ It turns out that \eqref{eq:max-univ-set} can be rewritten monadically as below:
  \right)\mbox{~~.}
  \label{eq:max-univ-monadic}
 \end{equation}
+%if False
+\begin{code}
+maxUnivMonadic ::
+  (a -> P b) -> (a -> P b) -> ((b, b) -> Bool) ->
+  (a -> P b, (a -> P b, P (b, b)))
+maxUnivMonadic h f unrhd = (lhs, rhs)
+  where lhs = h `sse` (max_unlhd . f)
+        rhs = (conj1, conj2)
+        conj1 = h `sse` f
+        conj2 = (do x <- any
+                    y1 <- h x
+                    y0 <- f x
+                    return (y1, y0)) `sse`
+                 (do (y1, y0) <- any
+                     filt unrhd (y1, y0))
+\end{code}
+%endif
 In \eqref{eq:max-univ-monadic} and from now on we abuse the notation a bit,
 using |filt unrhd| to denote |filt (\(y,z) -> y `unrhd` z)|.
 The large pair of parentheses in \eqref{eq:max-univ-monadic} relates two monadic values. On the lefthand side we generate a pair of values |y1| and |y0|, which are respectively results of |h| and |f| for the same, arbitrarily generated input |x|. The inclusion says that |(y1, y0)| must be contained by the monad on the righthand side, which consists of all pairs |(y1, y0)| as long as |y1 `unrhd` y0|.
@@ -623,8 +665,8 @@ The first conjunct is immediate:
 For the second conjunct, we assume the righthand side of \eqref{eq:max-monotonic-monadic} and reason:
 %if False
 \begin{code}
-minMonoPf :: Ord b => (a -> P b) -> (a -> P b) -> P (b, b)
-minMonoPf f g =
+minMonoPf :: Ord b => (a -> P b) -> (a -> P b) -> ((b,b) -> Bool) -> P (b, b)
+minMonoPf f g unrhd =
 \end{code}
 %endif
 \begin{code}
@@ -702,6 +744,12 @@ where |maxlist| is some implementation of maximum on non-empty lists, e.g.
   maxlist (x : y : xs) = x `bmax` maxlist (y : ys) {-"~~,"-}
    where x `bmax` y  =if x `unrhd` y then x else y {-"~~."-}
 \end{spec}
+%if False
+\begin{code}
+maxlist :: List a -> a
+maxlist = undefined
+\end{code}
+%endif
 That |unlhd| being total guarantees that maximum exists for non-empty |xs|.
 The function |maxlist| may decide how to resolve a tie --- in the implementation above, for example, |maxlist| prefers elements that appears earlier in the list.
 

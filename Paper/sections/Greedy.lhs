@@ -1,5 +1,18 @@
 \section{The Greedy Theorem}
 
+%if False
+\begin{code}
+module Greedy where
+
+import Prelude hiding (max, any)
+import GHC.Base (Alternative, (<|>))
+import Control.Monad
+
+import Common
+import Prelim
+\end{code}
+%endif
+
 As stated in Section \ref{sec:intro}, this article focuses on problems of the form:
 \begin{spec}
   max_unlhd . (filt p <=< foldR f e) {-"~~,"-}
@@ -261,8 +274,14 @@ The reason for reviewing an old problem is to see whether our usual pattern of p
 factor segment problems into prefix-of-suffix problems, introducing a ``scan'', etc,
 adapt smoothly into our new setting.
 
+%if False
+\begin{code}
+max_leqs :: P (List Int) -> P (List Int)
+max_leqs = max
+\end{code}
+%endif
 Let |geqs| be defined by |xs `geqs` ys = sum xs >= sum ys|, therefore
-|max_leqs : P (List Int) -> P (List Int)| choose those lists having the largest sum.
+|max_leqs :: P (List Int) -> P (List Int)| choose those lists having the largest sum.
 The \emph{maximum segment sum} problem can be defined by:
 \begin{code}
 mss :: List Int -> P (List Int)
@@ -273,7 +292,7 @@ mss = max_leqs . (prefix <=< suffix) {-"~~."-}
 The main derivation goes:
 %if False
 \begin{code}
--- derMSSMain :: (a -> b -> P b) -> P b -> a -> List a -> P b
+derMSSMain :: List Int -> P (List Int)
 derMSSMain =
 \end{code}
 %endif
@@ -355,8 +374,8 @@ Such an informal explanation is often sufficient.
 The monadic approach, however, provides a framework in which one can formally prove the monotonicity condition when it is desired. For the MSS problem, the proof goes:
 %if False
 \begin{code}
--- derMSSMain :: (a -> b -> P b) -> P b -> a -> List a -> P b
-proofMonoMSS x =
+proofMonoMSS :: a -> ((List a, List a) -> Bool) -> P (List a, List a)
+proofMonoMSS x geqs =
 \end{code}
 %endif
 \begin{code}

@@ -1,5 +1,19 @@
 \section{Thinning Algorithms}
 
+%if False
+\begin{code}
+module Thinning where
+
+import Prelude hiding (max, any)
+import GHC.Base (Alternative, (<|>))
+import Control.Monad
+
+import Common
+import Prelim
+import Greedy
+\end{code}
+%endif
+
 Consider again our generic problem speficication: |max_unlhd . foldR f e|.
 For many problems, the monotonicity condition \eqref{eq:monotonicity} is a lot to demand --- it is not always the case that |f| satisfies \eqref{eq:monotonicity} with respect to |unlhd|.
 It is more common that |f| satisfies \eqref{eq:monotonicity} with respect to some other ordering, say, |preceq|, a stronger variation of |unlhd|.
@@ -18,30 +32,52 @@ The aim is to choose a subset of these items such that the total value is maximi
 Let |Val|, |Wgt| respectively denote the types of values and weights.
 The input can be abstractly represented as a list of pairs |List (Val, Wgt)|.
 Also, define:
-\begin{spec}
+%if False
+\begin{code}
+type Val = Int
+type Wgt = Int
+\end{code}
+%endif
+\begin{code}
+type Item = (Val, Wgt)
 val  = sum . map fst {-"~~,"-}
 wgt  = sum . map snd {-"~~."-}
-\end{spec}
+\end{code}
 The function |subseq| non-deterministically computes a subsequence of the input list:
-\begin{spec}
+\begin{code}
 subseq :: List a -> P (List a)
 subseq []      = return []
 subseq (x:xs)  = subseq xs <|> ((x:) <$> subseq xs) {-"~~."-}
-\end{spec}
+\end{code}
 For example, |subseq "abc"| returns
 the empty string |""|, |"c"|, |"b"|, |"bc"|, |"a"|, |"ac"|, |"ab"|, and |"abc"|.
 The function |subseq| can also be written as a |foldR|:
-\begin{spec}
-subseq = foldR subs (return []) {-"~~,"-}
+%format subseq' = "\Varid{subseq}"
+\begin{code}
+subseq' = foldR subs (return []) {-"~~,"-}
   where subs x y = return y <|> return (x:y) {-"~~."-}
-\end{spec}
+\end{code}
+%if False
+\begin{code}
+subs x y = return y <|> return (x:y)
+\end{code}
+%endif
 
 Having the ingredients ready, the \emph{0-1 knapsack} problem can be specified by:
-\begin{spec}
-knapsack :: List (Val, Wgt) -> P (List (Val, Wgt))
+\begin{code}
+knapsack :: List Item -> P (List Item)
 knapsack = max_leqv . (filt ((w >) . wgt) <=< subseq) {-"~~."-}
-\end{spec}
+\end{code}
 where |xs `leqv` ys = val xs <= val ys|.
+%if False
+\begin{code}
+max_leqv :: P (List Item) -> P (List Item)
+max_leqv = undefined
+
+w :: Wgt
+w = undefined
+\end{code}
+%endif
 
 %format subsw = "\Varid{subs}_{w}"
 \paragraph*{Fusion.}~
@@ -55,6 +91,13 @@ if we manange to construct some function |subsw| that satisfies the fusion condi
  |subsw x =<< (filt ((w>).wgt) =<< m) {-"~"-}`sse`{-"~"-} filt ((w>).wgt) =<< (subs x =<< m) {-"~~,"-}|
  \label{eq:filtSubseqFusionCond}
 \end{equation}
+%if False
+\begin{code}
+filtSubseqFusionCond x m =
+  subsw x =<< (filt ((w>).wgt) =<< m) `sse`
+   filt ((w>).wgt) =<< (subs x =<< m)
+\end{code}
+%endif
 we will have
 \begin{spec}
   foldR subsw (return []) {-"~"-}`sse`{-"~"-} filt ((w >) . wgt) <=< subseq {-"~~."-}
@@ -62,13 +105,14 @@ we will have
 (For the second argument to |foldR|, |filt ((w >) . wgt) [] = return []| holds because |w| is non-negative.)
 To construct |subsw|, one may start from the righthand side of \eqref{eq:filtSubseqFusionCond} and try to distribute |filt ((w>).wgt)| inside until it is applied to |m|.
 One will eventually construct:
-\begin{spec}
-  subsw x ys = return ys <|> filt ((w>).wgt) (x:ys) {-"~~."-}
-\end{spec}
+\begin{code}
+subsw x ys = return ys <|> filt ((w>).wgt) (x:ys) {-"~~."-}
+\end{code}
 The details are left to the reader as an exercise. The specification is now:
-\begin{spec}
-  knapsack = max_leqv . foldR subsw (return [])  {-"~~."-}
-\end{spec}
+%format knapsack' = "\Varid{knapsack}"
+\begin{code}
+knapsack' = max_leqv . foldR subsw (return [])  {-"~~."-}
+\end{code}
 
 \paragraph*{Failing Monotonicity.}~
 It turns out, however, that |subsw| does not meet \eqref{eq:monotonicity} with respect to |geqv|.
@@ -140,6 +184,14 @@ We assume two operators:
 mem      :: T a -> P a {-"~~,"-}
 collect  :: P a -> T a {-"~~,"-}
 \end{spec}
+%if False
+\begin{code}
+mem      :: T a -> P a {-"~~,"-}
+mem = undefined
+collect  :: P a -> T a {-"~~,"-}
+collect = undefined
+\end{code}
+%endif
 where |mem| non-deterministically yields an element in |T|, while |collect m| collects the results of |m| and stores them in the data structure |T|.
 Both |T| and |P| represent sets. If we let |T = P|, we would have |mem = collect = id|, and some notations could be much simplified.
 However, we prefer to treat |T| and |P| as different types, since they serve different purposes: |P| denotes non-determinism, while |T| denotes a \emph{finite} collection of potential solutions.
@@ -147,6 +199,15 @@ However, we prefer to treat |T| and |P| as different types, since they serve dif
 Given a preorder |preceq| on some type |b| that is not necessarily connected, and a table |xs :: T b|,
 |thinT_preceq xs| computes a table that is possibly smaller, but still contains necessary elements that leads to an optimal solution.
 There could be many such tables, therefore we let |thinT_preceq| have type |T b -> P (T b)|. It non-deterministically computes a table that meets the following criteria :
+%if False
+\begin{code}
+thinT :: T b -> P (T b)
+thinT = undefined
+thin :: P b -> P (T b)
+thin = thinT . collect
+thinT_preceq = thinT
+\end{code}
+%endif
 \begin{equation}
 |ys `inn` thinT_preceq xs {-"~"-}<==>{-"~"-} ys `sse` xs && (forall x `inn` xs : (exists y `inn` ys : y `succeq` x)) {-"~~."-}|
 \label{eq:thin-def-set}
@@ -186,9 +247,9 @@ for all |f :: a -> P b| and |h :: a -> P (T b)|,
 \end{equation}
 %if False
 \begin{code}
-propThinUniv :: forall a (b :: Type) . (a -> P (T b)) -> (a -> P b) -> a -> P (T b)
-propThinUniv h f =
-    h `sse` thin_Q . collect . f
+propThinUniv :: (a -> P (T b)) -> (a -> P b) -> ((b, b) -> Bool) -> a -> P (T b)
+propThinUniv h f succeq =
+    h `sse` thinT . collect . f
  where pre0 = (mem <=< h) `sse` f
        pre1 = (do x <- any
                   t1 <- h x
@@ -196,7 +257,7 @@ propThinUniv h f =
                   return (t1, y0)) `sse`
                (do (t1, y0) <- any
                    y1 <- mem t1
-                   filt_Q (y1, y0)
+                   filt succeq (y1, y0)
                    return (t1, y0))
 \end{code}
 %endif
@@ -206,10 +267,10 @@ there must exists an elememt |y1| in |t1| such that |y1 `succeq` y0|.
 In |thinT_preceq. collect . f|, the results of |f| is collected into a table of type |T b| and passed to |thinT_preceq|.
 Since |thinT_preceq| and |collect| often appear together, we will use the following abbreviation.
 Given a preorder |(`preceq`)| on some type |b|, define
-\begin{spec}
+\begin{code}
 thin_preceq :: P b -> P (T b)
 thin_preceq = thinT_preceq . collect {-"~~."-}
-\end{spec}
+\end{code}
 
 Letting |h := thin_preceq| and |f := id| in \eqref{eq:thin-univ-monadic}, we get
 \begin{equation}
@@ -235,9 +296,15 @@ Letting |h := thin_preceq . f| in \eqref{eq:thin-univ-monadic}, we get the cance
 
 The \emph{|thin| introduction law} assures us that thinning is safe ---
 thinning the set of solutions before taking maximum still yields legistimate results:
-\begin{spec}
-(max_unlhd . mem) <=< thin_preceq {-"\,"-}`sse`{-"\,"-} max_unlhd {-"~~."-}
-\end{spec}
+%if False
+\begin{code}
+-- thinIntro :: P a -> P a
+thinIntro =
+\end{code}
+%endif
+\begin{code}
+  (max_unlhd . mem) <=< thin_preceq {-"\,"-}`sse`{-"\,"-} max_unlhd {-"~~."-}
+\end{code}
 
 The thinning theorem is given by:
 \begin{theorem}[Thinning Theorem]
@@ -258,9 +325,8 @@ If |f x| is monotonic on |succeq| for all |x|, we have
 \begin{code}
 thmThinning :: (a -> b -> P b) -> P b -> List a -> P (T b)
 thmThinning f e =
-  thin_Q . collect . foldR f e `spse`
-    foldR (\x -> thin_Q. collect . (f x <=< mem))
-       (thin_Q (collect e))
+  thin . foldR f e `spse`
+    foldR (\x -> thin . (f x <=< mem)) (thin e)
 \end{code}
 %endif
 \end{theorem}
@@ -276,19 +342,24 @@ knapsackDer w =
 \end{code}
 %endif
 \begin{code}
-         max_v . (filt ((w >) . wgt) <=< subseq)
+         max_leqv . (filt ((w >) . wgt) <=< subseq)
  `spse`    {- |foldR|-fusion -}
-         max_v . foldR subsw (return [])
+         max_leqv . foldR subsw (return [])
  `spse`    {- introducing |thin| -}
-         ((max_v . mem) <=< thin_preceq) . foldR subsw (return []) {-"~~."-}
+         ((max_leqv . mem) <=< thin_preceq) . foldR subsw (return []) {-"~~."-}
  ===       {- |(f <=< g) . h = f <=< (g . h)|-}
-         (max_v . mem) <=< (thin_preceq . foldR subsw (return []))
+         (max_leqv . mem) <=< (thin_preceq . foldR subsw (return []))
  `spse`    {- thinning theorem -}
-         (max_v . mem) <=< foldR (\x -> thin_preceq . (subsw x <=< mem)) (thin_preceq (return [])) {-"~~."-}
+         (max_leqv . mem) <=< foldR (\x -> thin_preceq . (subsw x <=< mem)) (thin_preceq (return [])) {-"~~."-}
 \end{code}
 
 We now need to choose a representation of |T|.
 We let |T| be a list of packings, \emph{sorted by descending weights}.
+%if False
+\begin{code}
+type T a = List a
+\end{code}
+%endif
 \begin{spec}
 collect (t <|> u) = mergeT (collect t) (collect u) {-"~~,"-}
 \end{spec}
@@ -303,11 +374,13 @@ mergeT (xs:t)  (ys:u)  | wgt xs >= wgt ys  = xs : mergeT t (ys:u)
 With this representation, thinning can be performed by comparing values of adjacent solutions in the list, and drop those elements that are not more valuable, and yet not lighter:
 \begin{code}
 thinlist :: T (List Item) -> T (List Item)
-thinlist [] = []
-thinlist [xs] = [xs]
-thinlist (xs:ys:xss)  | val xs > val ys = xs : thinlist (ys:xss)
-                      | otherwise       = thinlist (ys:xss) {-"~~."-}
+thinlist []    = []
+thinlist [xs]  = [xs]
+thinlist (xs:ys:xss)  | val xs > val ys  = xs : thinlist (ys:xss)
+                      | otherwise        = thinlist (ys:xss) {-"~~."-}
 \end{code}
+
+%format addw = "\Varid{add}_{w}"
 
 We have |return (thinlist t) `sse` thinT_preceq t| for table |t|.
 To refine |thin_preceq . (subsw x <=< mem)|, we reason:
@@ -323,9 +396,9 @@ tstepDer x t =
  ===       {- definition of |subsw|, |(=<<)| distributes into |(<||>)|, monad laws -}
          thin (mem t <|> ((filt ((w>) . wgt) . (x:)) =<< mem t))
  ===       {- definition of |thin|, |collect| distributes into |(<||>)|, |collect . mem = id| -}
- ===     thinT (mergeT t (collect ((filt ((w>) . wgt) . (x:)) =<< mem t)))
+         thinT (mergeT t (collect ((filt ((w>) . wgt) . (x:)) =<< mem t)))
  ===     thinT (mergeT t (addw x t))
- `spse`  return (thinlist (mergeT t (addw x t)))
+ `spse`  return (thinlist (mergeT t (addw x t))) {-"~~."-}
 \end{code}
 
 Consider the subexpression |collect ((filt ((w>) . wgt) . (x:)) =<< mem t|.
@@ -343,17 +416,23 @@ knapsackDer2 w =
 \end{code}
 %endif
 \begin{code}
-         (max_v . mem) <=< foldR (\x -> thin_preceq . (subsw x <=< mem)) (thin_preceq (return []))
+         (max_leqv . mem) <=< foldR (\x -> thin_preceq . (subsw x <=< mem)) (thin_preceq (return []))
  `spse`     {-  -}
-         (max_v . mem) <=< foldR (\x t -> return (thinlist (mergeT t (addw x t)))) (return [[]])
+         (max_leqv . mem) <=< foldR (\x t -> return (thinlist (mergeT t (addw x t)))) (return [[]])
  ===        {- -}
-         (max_v . mem) <=< (return . foldr (\x t -> thinlist (mergeT t (addw x t))) [[]])
+         (max_leqv . mem) <=< (return . foldr (\x t -> thinlist (mergeT t (addw x t))) [[]])
  ===        {- monad laws -}
-         max_v . mem . foldr (\x t -> thinlist (mergeT t (addw x t))) [[]]
+         max_leqv . mem . foldr (\x t -> thinlist (mergeT t (addw x t))) [[]]
  ===        {- -}
          return . head . foldr (\x t -> thinlist (mergeT t (addw x t))) [[]] {-"~~."-}
 \end{code}
 
-\begin{spec}
-   knapsack = return . head . foldr (\x t -> thinlist (mergeT t (addw x t))) [[]] {-"~~."-}
-\end{spec}
+%format knapsack'' = "\Varid{knapsack}"
+%if False
+\begin{code}
+knapsack'' :: List Item -> P (List Item)
+\end{code}
+%endif
+\begin{code}
+knapsack'' = return . head . foldr (\x t -> thinlist (mergeT t (addw x t))) [[]] {-"~~."-}
+\end{code}
