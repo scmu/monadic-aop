@@ -10,7 +10,8 @@ import Cubical.HITs.PropositionalTruncation.Monad as TruncMonad
 open import Cubical.Data.Sum.Base using (_⊎_)
 open import Cubical.Foundations.Powerset as P using (ℙ; _∈_; _⊆_)
 open import Sets
-open import PowersetExt
+-- open import PowersetExt
+open import Cubical.Data.Empty using (isProp⊥; isProp⊥* ; ⊥* ; elim*)
 
 private
   variable
@@ -19,6 +20,8 @@ private
     Y : Type ℓ₂
     Z : Type ℓ₃
 
+∅ : ℙ X
+∅ x = ⊥* , isProp⊥*
 
 id : ∀ {l} {X : Set l} → X → X
 id x = x
@@ -163,6 +166,13 @@ _<=<_ : {X Y Z : Type ℓ} → (Y → ℙ Z) → (X → ℙ Y) → (X → ℙ Z)
 _<$>_ : {X Y : Type ℓ} → (X → Y) → ℙ X → ℙ Y
 f <$> m  = m >>= λ x → return (f x)      -- _<$>_ = map
 
+_>>_ : {X Y : Type ℓ} → ℙ X → ℙ Y → ℙ Y
+m >> n = m >>= (λ _ → n)
+
+_<<_ : {X Y : Type ℓ} → ℙ X → ℙ Y → ℙ X
+m << n = m >>= (λ x → n >>= λ _ → return x)
+
+
 fmap : {X Y : Type ℓ} → (X → Y) → ℙ X → ℙ Y
 fmap f m = m >>= λ x → return (f x)
 
@@ -231,6 +241,76 @@ R-trans R = ∀ x y z → y ∈ R x → z ∈ R y → z ∈ R x
 <=<-assoc-right : {X : Type ℓ} → (R S T : X → ℙ X) → R <=< (S <=< T) ⊑ (R <=< S) <=< T
 <=<-assoc-right R S T x x' x'∈lhs = rec squash₁ (λ {(z , z∈S<=<Tx , x'∈Rz) → rec squash₁ (λ z₁ → ∣ z₁ .fst , z₁ .snd .fst , ∣ z , z₁ .snd .snd , x'∈Rz ∣₁ ∣₁) z∈S<=<Tx}) x'∈lhs
 
+
+-- non-determinism monad
+
+-- (λ x → f x ∪ g x) =<< m ≡ (f =<< m) ∪ (g =<< m)
+=<<-∪-dist-right : {X Y : Type ℓ} → (f g : X → ℙ Y) → (m : ℙ X) 
+                 → ((λ x → f x ∪ g x) =<< m) ≡ ((f =<< m) ∪ (g =<< m))
+=<<-∪-dist-right f g m = P.⊆-extensionality _ _ (lhs , rhs)
+  where
+    lhs : ((λ x → f x ∪ g x) =<< m) ⊆ ((f =<< m) ∪ (g =<< m))
+    lhs y y∈L = rec squash₁ (λ { (x , x∈m , y∈f∪g) → 
+      rec squash₁ (λ { (_⊎_.inl y∈f) → ∣ _⊎_.inl ∣ x , x∈m , y∈f ∣₁ ∣₁
+                     ; (_⊎_.inr y∈g) → ∣ _⊎_.inr ∣ x , x∈m , y∈g ∣₁ ∣₁ }) y∈f∪g }) y∈L
+
+    rhs : ((f =<< m) ∪ (g =<< m)) ⊆ ((λ x → f x ∪ g x) =<< m)
+    rhs y y∈R = rec squash₁ (λ { 
+      (_⊎_.inl y∈fm) → rec squash₁ (λ { (x , x∈m , y∈f) → ∣ x , x∈m , ∣ _⊎_.inl y∈f ∣₁ ∣₁ }) y∈fm ; 
+      (_⊎_.inr y∈gm) → rec squash₁ (λ { (x , x∈m , y∈g) → ∣ x , x∈m , ∣ _⊎_.inr y∈g ∣₁ ∣₁ }) y∈gm }) y∈R
+
+=<<-∪-dist-left : {X Y : Type ℓ} → (f : X → ℙ Y) → (m n : ℙ X) 
+                → (f =<< (m ∪ n)) ≡ ((f =<< m) ∪ (f =<< n))
+=<<-∪-dist-left f m n = P.⊆-extensionality _ _ (lhs , rhs)
+  where
+    lhs : (f =<< (m ∪ n)) ⊆ ((f =<< m) ∪ (f =<< n))
+    lhs y y∈L = rec squash₁ (λ { (x , x∈m∪n , y∈f) → 
+      rec squash₁ (λ { (_⊎_.inl x∈m) → ∣ _⊎_.inl ∣ x , x∈m , y∈f ∣₁ ∣₁
+                     ; (_⊎_.inr x∈n) → ∣ _⊎_.inr ∣ x , x∈n , y∈f ∣₁ ∣₁ }) x∈m∪n }) y∈L
+
+    rhs : ((f =<< m) ∪ (f =<< n)) ⊆ (f =<< (m ∪ n))
+    rhs y y∈R = rec squash₁ (λ { 
+      (_⊎_.inl y∈fm) → rec squash₁ (λ { (x , x∈m , y∈f) → ∣ x , ∣ _⊎_.inl x∈m ∣₁ , y∈f ∣₁ }) y∈fm ; 
+      (_⊎_.inr y∈fn) → rec squash₁ (λ { (x , x∈n , y∈f) → ∣ x , ∣ _⊎_.inr x∈n ∣₁ , y∈f ∣₁ }) y∈fn }) y∈R
+
+=<<-∅ : {X Y : Type ℓ} → (f : X → ℙ Y) → (f =<< ∅) ≡ ∅
+=<<-∅ f = P.⊆-extensionality _ _ (lhs , rhs)
+  where
+    lhs : (f =<< ∅) ⊆ ∅
+    lhs y y∈L = rec isProp⊥* (λ { (x , x∈∅ , y∈f) → elim* x∈∅ }) y∈L
+
+    rhs : ∅ ⊆ (f =<< ∅)
+    rhs y y∈∅ = elim* y∈∅
+
+>>-∅ : {X Y : Type ℓ} → (m : ℙ X) → (m >> (∅ {ℓ} {Y})) ≡ ∅
+>>-∅ m = P.⊆-extensionality _ _ (lhs , rhs)
+  where
+    lhs : (m >> ∅) ⊆ ∅
+    lhs y y∈L = rec isProp⊥* (λ { (x , x∈m , y∈∅) → elim* y∈∅ }) y∈L
+    
+    rhs : ∅ ⊆ (m >> ∅)
+    rhs y y∈∅ = elim* y∈∅
+
+∅-<< : {X Y : Type ℓ} → (m : ℙ Y) → ((∅ {ℓ} {X}) << m) ≡ ∅
+∅-<< m = P.⊆-extensionality _ _ (lhs , rhs)
+  where
+    lhs : (∅ << m) ⊆ ∅
+    lhs x x∈L = rec isProp⊥* (λ { (x' , x∈∅ , _) → elim* x∈∅ }) x∈L
+
+    rhs : ∅ ⊆ (∅ << m)
+    rhs x x∈∅ = elim* x∈∅
+
+-- m ⊆ n → f =<< m ⊆ f =<< n
+=<<-⊆-right : {X Y : Type ℓ} → {m n : ℙ X} → {f : X → ℙ Y} 
+            → m ⊆ n → (f =<< m) ⊆ (f =<< n)
+=<<-⊆-right {m = m} {n = n} {f = f} m⊆n y y∈fm = 
+  rec squash₁ (λ { (x , x∈m , y∈fx) → ∣ x , m⊆n x x∈m , y∈fx ∣₁ }) y∈fm
+
+-- f ⊑ g → f =<< m ⊆ g =<< m
+=<<-⊑-left : {X Y : Type ℓ} → {f g : X → ℙ Y} → {m : ℙ X} 
+           → f ⊑ g → (f =<< m) ⊆ (g =<< m)
+=<<-⊑-left {f = f} {g = g} {m = m} f⊑g y y∈fm = 
+  rec squash₁ (λ { (x , x∈m , y∈fx) → ∣ x , x∈m , f⊑g x y y∈fx ∣₁ }) y∈fm
 
 
 -- [ Helper Functions ]

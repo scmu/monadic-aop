@@ -54,6 +54,19 @@ foldrM-fixed-point-properties-⇒ f e h base step (x ∷ xs) b b∈hxss =
         trans = P.⊆-trans (h (x ∷ xs)) (f x =<< h xs) (f x =<< foldrM f e xs) (step x xs) ind
     in trans b b∈hxss
 
+foldrM-fixed-point-properties-eq : 
+  (f : A → B → ℙ B)
+  → (e : ℙ B)
+  → (h : List A → ℙ B)
+  → (h ≡ foldrM f e) → (h [] ≡ e) × (∀ x → ∀ xs →  (h (x ∷ xs)) ≡ f x =<< h xs )
+foldrM-fixed-point-properties-eq f e h eq = (p1 , p2)
+    where
+        p1 : h [] ≡ e
+        p1 = λ i → eq i []
+
+        p2 : ∀ x xs → h (x ∷ xs) ≡ f x =<< h xs
+        p2 x xs = (λ i → eq i (x ∷ xs)) ∙ (λ i → f x =<< eq (~ i) xs)
+
 foldrM-fusion :
     (g : A → B → ℙ B)
     → (f : A → B → ℙ B)
