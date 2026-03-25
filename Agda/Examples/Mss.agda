@@ -2,13 +2,10 @@
 module Examples.Mss where
 
 open import Data.List hiding (foldr; head)
-open import Cubical.Foundations.HLevels
-open import Cubical.Foundations.Structure
 open import Cubical.Foundations.Prelude
 open import Cubical.HITs.PropositionalTruncation as PT
 open import Cubical.Foundations.Powerset as P using (ℙ; _∈_; _⊆_)
 open import Cubical.Data.Sigma.Base using (_×_) 
-open import Cubical.Functions.Logic
 open import Cubical.Data.Sum.Base using (_⊎_) 
 open import Cubical.Data.Int using (ℤ)
 open import Cubical.Data.Empty
@@ -16,7 +13,6 @@ open import Cubical.Data.Empty
 open import Monad_v2
 open import Fold 
 open import Sets 
-open import Table
 
 prefix : ∀ {ℓ} {A : Type ℓ} → List A → ℙ (List A) 
 prefix []       = return []
@@ -43,14 +39,6 @@ scanR :
 scanR f e [] = wrap <$> e
 scanR f e (x ∷ xs) = scanR f e xs >>= λ ys → f x (head _ ys) >>= λ z → return (z ∷ ys)
 
-postulate
-    max : ℙ (List ℤ) → ℙ (List ℤ)
-    -- Universal property axioms:
-    max-join :
-        {xss : T (ℙ (List ℤ))} → max (joinT  xss) ≡ max (joinT (fmap max xss))
-
-mss : List ℤ → ℙ (List ℤ)
-mss = max ∘ prefix <=< suffix
 
 -- lems
 a∈returna : ∀ {ℓ} {A : Type ℓ} → ∀ {a : A} → a ∈ return a

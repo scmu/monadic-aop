@@ -2,17 +2,12 @@
 module Examples.Prefix where
     
 open import Data.List hiding (foldr; head)
--- open import Cubical.Foundations.HLevels
-open import Cubical.Foundations.Structure
 open import Cubical.Foundations.Prelude
--- open import Cubical.HITs.PropositionalTruncation as PT
 open import Cubical.Foundations.Powerset as P using (ℙ; _∈_; _⊆_)
 open import Cubical.Data.Sigma.Base using (_×_) 
 open import Cubical.Functions.Logic
 open import Cubical.Data.Sum.Base using (_⊎_) 
--- open import Cubical.Data.Int using (ℤ)
-open import Cubical.HITs.PropositionalTruncation.Base
-open import Cubical.HITs.PropositionalTruncation.Properties
+open import Cubical.HITs.PropositionalTruncation
 open import Cubical.Data.Empty using (isProp⊥; isProp⊥* ; ⊥* ; elim*)
 
 open import Monad_v2

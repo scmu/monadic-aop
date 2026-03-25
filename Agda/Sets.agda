@@ -4,10 +4,8 @@ module Sets where
 open import Cubical.Foundations.Prelude 
 open import Cubical.Foundations.HLevels
 open import Cubical.Data.Sigma.Base using (_×_) 
-open import Cubical.Foundations.Structure using (⟨_⟩)
 open import Cubical.Functions.Logic
 open import Cubical.HITs.PropositionalTruncation as PT hiding (map)
-import Cubical.HITs.PropositionalTruncation.Monad as TruncMonad
 open import Cubical.Foundations.Powerset as P using (ℙ; _∈_; _⊆_)
 open import Cubical.Data.Sum.Base using (_⊎_)    
 open import PowersetExt

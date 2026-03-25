@@ -2,7 +2,6 @@
 module Fold where
 
 open import Data.List hiding (foldr)
-open import Cubical.Foundations.HLevels
 open import Cubical.Foundations.Prelude
 open import Cubical.HITs.PropositionalTruncation as PT
 open import Cubical.Foundations.Powerset as P using (ℙ; _∈_; _⊆_)
@@ -22,15 +21,6 @@ foldrM f e (x ∷ xs) = f x =<< foldrM f e xs
 foldr : (A → B → B) → B → List A → B
 foldr f e []       = e 
 foldr f e (x ∷ xs) = f x (foldr f e xs)
-
--- tools, [todo : move to other files]
-
-⊆-elim :
-  ∀ {ℓ : Level} {A : Type ℓ} {ys xs : ℙ A} {m : A}
-  → ys ⊆ xs
-  → m ∈ ys
-  → m ∈ xs
-⊆-elim {ℓ} {A} {ys} {xs} {m} = λ z → z m
 
 foldrM-fixed-point-properties-⇐ :
   (f : A → B → ℙ B)
@@ -60,7 +50,7 @@ foldrM-fixed-point-properties-⇒ f e h base step [] b b∈h[] = base b b∈h[]
 foldrM-fixed-point-properties-⇒ f e h base step (x ∷ xs) b b∈hxss = 
     let 
         ind : (f x =<< h xs) ⊆ (f x =<< foldrM f e xs) 
-        ind = =<<-monotonic-right (h xs) (foldrM f e xs) (f x) (foldrM-fixed-point-properties-⇒  f e h base step xs)
+        ind = =<<-monotonic-right (f x) (h xs) (foldrM f e xs) (foldrM-fixed-point-properties-⇒  f e h base step xs)
         trans = P.⊆-trans (h (x ∷ xs)) (f x =<< h xs) (f x =<< foldrM f e xs) (step x xs) ind
     in trans b b∈hxss
 
@@ -75,7 +65,7 @@ foldrM-fusion g f e h p [] b q = q
 foldrM-fusion g f e h p (y ∷ ys) b q = 
     let
         ind : (g y =<< foldrM g (h e) ys) ⊆ (g y =<< (h ∘ foldrM f e) ys)
-        ind = =<<-monotonic-right (foldrM g (h e) ys) ((h ∘ foldrM f e) ys) (g y) (foldrM-fusion g f e h p ys)
+        ind = =<<-monotonic-right (g y) (foldrM g (h e) ys) ((h ∘ foldrM f e) ys) (foldrM-fusion g f e h p ys) 
 
         trans = P.⊆-trans (g y =<< foldrM g (h e) ys) (g y =<< (h ∘ foldrM f e) ys) (h (foldrM f e (y ∷ ys)))
                 ind (p y (foldrM f e ys)) b q
