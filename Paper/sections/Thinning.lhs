@@ -15,8 +15,9 @@ import Greedy
 %endif
 
 Consider again our generic problem speficication: |max_unlhd . foldR f e|.
-For many problems, the monotonicity condition \eqref{eq:monotonicity} is a lot to demand --- it is not always the case that |f| satisfies \eqref{eq:monotonicity} with respect to |unlhd|.
-It is more common that |f| satisfies \eqref{eq:monotonicity} with respect to some other ordering, say, |preceq|, a stronger variation of |unlhd|.
+For many problems, wishing that |f| satisfies the monotonicity condition \eqref{eq:monotonicity}
+with respect to |unlhd| is asking for a lot.
+It is more common that |f| satisfies \eqref{eq:monotonicity} with respect to some other ordering, say, |preceq|, that is a stronger variation of |unlhd|.
 The catch, however, is that |preceq| is not total.
 The Greedy Theorem still holds, but refines the specification to a monadic program that does not return results for most if not all inputs.
 For such situations we need another theorem.
@@ -26,12 +27,12 @@ Let us look at an example.
 \subsection{Example: 0-1 Knapsack}
 \label{sec:ex:0-1-knapsack}
 
-In the famous \emph{0-1 knapsack} problem, we are given a collection of items, each having a value and a weight --- for simplity we assume that both are natural numbers.
+In the famous \emph{0-1 knapsack} problem, we are given a collection of items, each having a value and a weight --- for simplicity we assume that both are natural numbers.
 The aim is to choose a subset of these items such that the total value is maximised, while the total weight does not exceed a given weight limit |w|
 (it is assumed that |w| is non-negative).
 Let |Val|, |Wgt| respectively denote the types of values and weights.
-The input can be abstractly represented as a list of pairs |List (Val, Wgt)|.
-Also, define:
+An |Item|, abstractly, is a pair |(Val, Wgt)|, and the input is a list of |Item|s.
+Define:
 %if False
 \begin{code}
 type Val = Int
@@ -142,21 +143,24 @@ for which we do have |ys1 `geqv` ys0|.
 With |ys0| being a lesser solution, if (\ref{eq:monotonicity}') holds, we could use a greedy algorithm, dropping |ys0| and keeping only |ys1|.
 Let |x = (3,3)|.
 The two possible values of |zs0| are |[(4,6)]| and |[(3,3),(4,6)]|.
-The inclusion demands that |(y1, z0)| be a result of the righthand side as well.
-In particular, the righthand side must be able to yield |([5,8], [(3,3),(4,6)])| as a result.
-However, with |ys1| fixed as |[(5,8)]| on the righthand side, the only possible value of |zs1| is |[(5,8)]| --- since |[(3,3),(5,8)]| exceeds the weight limit!
+The inclusion demands that the same |(ys1, zs0)| be a result of the righthand side as well.
+In particular, the righthand side must be able to yield |([(5,8)], [(3,3),(4,6)])| as a result.
+Let us examine the righthand side, assuming that |ys1 = [(5,8)]| and |zs0 = [(3,3),(4,6)]|.
+With this value of |ys1|,
+the only possible value of |zs1| is also |[(5,8)]| --- since |[(3,3),(5,8)]| exceeds the weight limit!
 And we do not have |[(5,8)] `geqv` [(3,3),(4,6)]|.
-Therefore (\ref{eq:monotonicity}') fails.
+Therefore the righthand side cannot return |([(5,8)], [(3,3),(4,6)])|, and thus (\ref{eq:monotonicity}') fails.
 
 Notice that, comparing to traditional arguments using first-order logic, in the reasoning above we have expressions to execute with.
 Notice also how the |return (ys1, zs0)| on the lefthand side forces the value of |ys1| and |zs0| on the righthand side.
 
 The lesson we have just learned is that we cannot throw away a solution, such as |[(4,6)]|, simply because it is not the most valuable.
 In fact, one may want to keep |[(4,6)]| for its being lighter, which implies potential for adding more items later.
+
 Meanwhile, if a solution is neither more valuable, nor lighter, we may safely drop it without losing anything.
 This observation inspires us to use the following ordering:
 \begin{spec}
-xs `leqvw` ys = val xs <= val ys && wgt xs >= wgt ys {-"~~,"-}
+xs `leqvw` ys = val xs <= val ys && wgt xs >= wgt ys {-"~~."-}
 \end{spec}
 One may prove that |subsw| is indeed monotonic on |geqvw|.
 However, |leqvw| is not connected. For example, neither |[(10,9)] `leqvw` [(9,10)]| nor |[(10,9)] `geqvw` [(9,10)]| holds, and |max_leqvw| |{[(10,9)], [(9,10)]}| yields the empty set.
@@ -168,11 +172,11 @@ For example, if at one point the algorithm computes a collection of solutions
 Meanwhile, |[(4,8)]|, which is less valuable than |[(5,8)]| and heavier |[(4,6)]|, need not be kept.
 This process of ``keeping useful solutions, while possibly dropping those useless ones'' is called \emph{thinning} in the terminology of \citet{BirddeMoor:97:Algebra}.
 
-Note our wording: |[(4,6)]| need not be kept, but it does not mean that we \emph{have to} drop it.
+Note our wording: |[(4,8)]| need not be kept, but it does not mean that we \emph{have to} drop it.
 An algorithm should have the flexibility of deciding how much thinning it needs to do.
-Doing a full thinning keeps the set of solutions small, but could be time consuming,
+Doing a full thinning keeps the set of solutions small, but the thinning itself could be time consuming,
 and it may be beneficial to remove some but not all of the useless solutions.
-Our specification of a thinning algorithm should allow such flexibility.
+A general specification of thinning algorithms should allow such flexibility.
 
 \subsection{Thinning}
 
