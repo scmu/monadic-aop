@@ -201,7 +201,7 @@ Both |T| and |P| represent sets. If we let |T = P|, we would have |mem = collect
 However, we prefer to treat |T| and |P| as different types, since they serve different purposes: |P| denotes non-determinism, while |T| denotes a \emph{finite} collection of potential solutions.
 
 Given a preorder |preceq| on some type |b| that is not necessarily connected, and a table |xs :: T b|,
-|thinT_preceq xs| computes a table that is possibly smaller, but still contains necessary elements that leads to an optimal solution.
+|thinT_preceq xs| computes a table that is possibly smaller, but still contains necessary elements that lead to an optimal solution.
 There could be many such tables, therefore we let |thinT_preceq| have type |T b -> P (T b)|. It non-deterministically computes a table that meets the following criteria :
 %if False
 \begin{code}
@@ -217,12 +217,12 @@ thinT_preceq = thinT
 \label{eq:thin-def-set}
 \end{equation}
 That is, |thin_preceq xs| contains all the table |ys| that is a sub-table of |xs|
-(we overload the subset relation |(`sse`)| to tables), and for every element in |xs| there exists some element in |ys| that is at least as good.
+(we overload the subset relation |(`sse`)| and membership relation |(`inn`)| to tables), and for every element in |xs| there exists some element in |ys| that is at least as good.
 The monadic function |thin_preceq| can be seen as a specification that contains all possible ways to thin a table,
 of which the actual algorithm that maintains the table is a refinement.
 The algorithm may aggressively remove all candidates that are not needed in each step.
 It may also remove some but not all the redundant candidates, if that turns out to be more efficient.
-In particular, |xs| itself is in |thin_preceq xs|, meaning that the algorithm may sometimes just keep the table unchanged.
+In particular, we have |xs `inn` thin_preceq xs|, meaning that the algorithm may sometimes just keep the table unchanged.
 
 Property \eqref{eq:thin-def-set} can be wrapped into the following universal property:
 for all |f :: a -> P b| and |h :: a -> P (T b)|,
@@ -265,22 +265,28 @@ propThinUniv h f succeq =
                    return (t1, y0))
 \end{code}
 %endif
-The monadic inclusion in the big bracket encodes the existential quantification:
+The monadic inclusion in the big brackets encodes the combination of universal and existential quantification in \eqref{eq:thin-def-set}:
 for all table |t1| returned by |h|, and for all |y0| returned by |f|,
 there must exists an elememt |y1| in |t1| such that |y1 `succeq` y0|.
 In |thinT_preceq. collect . f|, the results of |f| is collected into a table of type |T b| and passed to |thinT_preceq|.
-Since |thinT_preceq| and |collect| often appear together, we will use the following abbreviation.
-Given a preorder |(`preceq`)| on some type |b|, define
+Since |thinT_preceq| and |collect| often appear together, we will use the following abbreviation:
+given a preorder |(`preceq`)| on some type |b|, define
 \begin{code}
 thin_preceq :: P b -> P (T b)
 thin_preceq = thinT_preceq . collect {-"~~."-}
 \end{code}
 
 Letting |h := thin_preceq| and |f := id| in \eqref{eq:thin-univ-monadic}, we get
-\begin{equation}
-    |mem <=< thin_preceq `sse` id|
-\end{equation}
-Letting |h := thin_preceq . f| in \eqref{eq:thin-univ-monadic}, we get the cancelation law:
+%if False
+\begin{code}
+-- memThinId :: P c -> P c
+memThinId =
+\end{code}
+%endif
+\begin{code}
+    mem <=< thin_preceq `sse` id {-"~~."-}
+\end{code}
+Letting |h := thin_preceq . f| in \eqref{eq:thin-univ-monadic}, we get the |thin|-cancelation law:
 \begin{equation}
 \setlength{\jot}{-1pt}
   \begin{aligned}
@@ -297,6 +303,21 @@ Letting |h := thin_preceq . f| in \eqref{eq:thin-univ-monadic}, we get the cance
         & |return (t1, y0)|
   \end{aligned}
 \end{equation}
+\end{equation}
+%if False
+\begin{code}
+propThinCancel :: (a -> P b) -> ((b, b) -> Bool) -> P (T b, b)
+propThinCancel f succeq =
+    (do x <- any
+        t1 <- thin_preceq (f x)
+        y0 <- f x
+        return (t1, y0))
+      `sse`   (do (t1, y0) <- any
+                  y1 <- mem t1
+                  filt succeq (y1, y0)
+                  return (t1, y0))
+\end{code}
+%endif
 
 The \emph{|thin| introduction law} assures us that thinning is safe ---
 thinning the set of solutions before taking maximum still yields legistimate results:
