@@ -8,10 +8,8 @@ open import Cubical.Data.Sum.Base using (_⊎_)
 
 open import Data.List
 open import Sets
-open import Monad
-open import Cubical.Foundations.HLevels
+open import Monad_v2
 open import Reasoning
-open import PowersetExt 
 
 private
   variable
@@ -34,31 +32,31 @@ sublists⊇[] : (xs : List X) → return [] ⊆ sublists xs
 sublists⊇[] [] _ x∈return[] = x∈return[]
 sublists⊇[] (x ∷ xs) ys ys∈return[] = ∣ _⊎_.inl (sublists⊇[] xs ys ys∈return[]) ∣₁
 
-sublists⊒evnsublists : ∀ {X} → sublists {X} ⊒ evnsublists {X}
-sublists⊒evnsublists {X} [] = λ x z → z
-sublists⊒evnsublists {X} (x ∷ []) = λ x₁ z → ∣ _⊎_.inl z ∣₁
-sublists⊒evnsublists {X} (x ∷ y ∷ xs) = reasoning (
-  ⊆begin
-  evnsublists {X} (x ∷ (y ∷ xs))
-  ⊆⟨ ⊆'-refl ⟩ 
-  evnsublists {X} xs ∪ (_∷_ x) <$> ((_∷_ y) <$> evnsublists xs)
-  ⊆⟨ ⊆-∪-monotonic-left (evnsublists {X} xs) (sublists xs) ((_∷_ x) <$> ((_∷_ y) <$> evnsublists xs)) (incl (evnsublists xs) (sublists xs) (sublists⊒evnsublists xs)) ⟩ 
-  sublists xs ∪ (_∷_ x) <$> ((_∷_ y) <$> evnsublists xs)
-  ⊆⟨ ⊆-∪-monotonic-right (((_∷_ x) <$> ((_∷_ y) <$> evnsublists xs))) (((_∷_ x) <$> ((_∷_ y) <$> sublists xs))) (sublists xs) (<$>-monotonic (_∷_ x) (<$>-monotonic (_∷_ y) (incl (evnsublists xs) (sublists xs) (sublists⊒evnsublists xs)))) ⟩ 
-  sublists xs ∪ (_∷_ x) <$> ((_∷_ y) <$> sublists xs)
-  ⊆⟨ ⊆-∪-monotonic-right (_∷_ x <$> (_∷_ y <$> sublists xs))
-    (_∷_ x <$> (sublists xs ∪ (_∷_ y <$> sublists xs))) (sublists xs) (>>=-monotonic (λ ys → return (x ∷ ys))  (incl (((_∷_ y) <$> sublists xs)) (sublists xs ∪ (_∷_ y) <$> sublists xs) (λ x₁ z → ∣ _⊎_.inr z ∣₁))) ⟩ 
-  sublists xs ∪ (_∷_ x) <$> (sublists xs ∪ (_∷_ y) <$> sublists xs)
-  ⊆⟨ ⊆'-refl ⟩ 
-  sublists xs ∪ (_∷_ x) <$> (sublists (y ∷ xs))
-  ⊆⟨ ⊆-∪-monotonic-left (sublists xs) ((sublists xs ∪ (_∷_ y) <$> sublists xs)) ((_∷_ x) <$> (sublists (y ∷ xs))) (incl (sublists xs) (sublists xs ∪ (_∷_ y <$> sublists xs)) (λ x₁ z → ∣ _⊎_.inl z ∣₁)) ⟩ 
-  (sublists xs ∪ (_∷_ y) <$> sublists xs) ∪ (_∷_ x) <$> (sublists (y ∷ xs))
-  ⊆⟨ ⊆'-refl ⟩ 
-  sublists (y ∷ xs) ∪ (_∷_ x) <$> (sublists (y ∷ xs))
-  ⊆⟨ ⊆'-refl ⟩ 
-  sublists (x ∷ y ∷ xs)
-  ⊆∎
-  ) 
+-- sublists⊒evnsublists : ∀ {X} → sublists {X} ⊒ evnsublists {X}
+-- sublists⊒evnsublists {X} [] = λ x z → z
+-- sublists⊒evnsublists {X} (x ∷ []) = λ x₁ z → ∣ _⊎_.inl z ∣₁
+-- sublists⊒evnsublists {X} (x ∷ y ∷ xs) = reasoning (
+--   ⊆begin
+--   evnsublists {X} (x ∷ (y ∷ xs))
+--   ⊆⟨ ⊆'-refl ⟩ 
+--   evnsublists {X} xs ∪ (_∷_ x) <$> ((_∷_ y) <$> evnsublists xs)
+--   ⊆⟨ ⊆-∪-monotonic-left (evnsublists {X} xs) (sublists xs) ((_∷_ x) <$> ((_∷_ y) <$> evnsublists xs)) (incl (evnsublists xs) (sublists xs) (sublists⊒evnsublists xs)) ⟩ 
+--   sublists xs ∪ (_∷_ x) <$> ((_∷_ y) <$> evnsublists xs)
+--   ⊆⟨ ⊆-∪-monotonic-right (((_∷_ x) <$> ((_∷_ y) <$> evnsublists xs))) (((_∷_ x) <$> ((_∷_ y) <$> sublists xs))) (sublists xs) (<$>-monotonic (_∷_ x) (<$>-monotonic (_∷_ y) (incl (evnsublists xs) (sublists xs) (sublists⊒evnsublists xs)))) ⟩ 
+--   sublists xs ∪ (_∷_ x) <$> ((_∷_ y) <$> sublists xs)
+--   ⊆⟨ ⊆-∪-monotonic-right (_∷_ x <$> (_∷_ y <$> sublists xs))
+--     (_∷_ x <$> (sublists xs ∪ (_∷_ y <$> sublists xs))) (sublists xs) (>>=-monotonic (λ ys → return (x ∷ ys))  (incl (((_∷_ y) <$> sublists xs)) (sublists xs ∪ (_∷_ y) <$> sublists xs) (λ x₁ z → ∣ _⊎_.inr z ∣₁))) ⟩ 
+--   sublists xs ∪ (_∷_ x) <$> (sublists xs ∪ (_∷_ y) <$> sublists xs)
+--   ⊆⟨ ⊆'-refl ⟩ 
+--   sublists xs ∪ (_∷_ x) <$> (sublists (y ∷ xs))
+--   ⊆⟨ ⊆-∪-monotonic-left (sublists xs) ((sublists xs ∪ (_∷_ y) <$> sublists xs)) ((_∷_ x) <$> (sublists (y ∷ xs))) (incl (sublists xs) (sublists xs ∪ (_∷_ y <$> sublists xs)) (λ x₁ z → ∣ _⊎_.inl z ∣₁)) ⟩ 
+--   (sublists xs ∪ (_∷_ y) <$> sublists xs) ∪ (_∷_ x) <$> (sublists (y ∷ xs))
+--   ⊆⟨ ⊆'-refl ⟩ 
+--   sublists (y ∷ xs) ∪ (_∷_ x) <$> (sublists (y ∷ xs))
+--   ⊆⟨ ⊆'-refl ⟩ 
+--   sublists (x ∷ y ∷ xs)
+--   ⊆∎
+--   ) 
 
 
 

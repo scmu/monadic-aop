@@ -4,10 +4,8 @@ module Sets where
 open import Cubical.Foundations.Prelude 
 open import Cubical.Foundations.HLevels
 open import Cubical.Data.Sigma.Base using (_×_) 
-open import Cubical.Foundations.Structure using (⟨_⟩)
 open import Cubical.Functions.Logic
 open import Cubical.HITs.PropositionalTruncation as PT hiding (map)
-import Cubical.HITs.PropositionalTruncation.Monad as TruncMonad
 open import Cubical.Foundations.Powerset as P using (ℙ; _∈_; _⊆_)
 open import Cubical.Data.Sum.Base using (_⊎_)    
 open import PowersetExt
@@ -34,6 +32,7 @@ infixl 6 _∪_
 
 _∪_ : ℙ X → ℙ X → ℙ X
 _∪_ = ∪-op
+
 
 -- Union is commutative
 ∪-comm : (A B : ℙ X) → A ∪ B ≡ B ∪ A
@@ -113,3 +112,25 @@ _∩_ A B x = ((x ∈ A) × (x ∈ B)) , isProp× (P.∈-isProp A x) (P.∈-isPr
 
 ⊆-∪-monotonic-right : (A B C : ℙ X) → A ⊆' B → (C ∪ A) ⊆' (C ∪ B)
 ⊆-∪-monotonic-right A B C (incl .A .B A⊆B) = incl (C ∪ A) (C ∪ B) (λ x₁ x₂ → rec squash₁ (λ { (_⊎_.inl x∈C) → ∣ _⊎_.inl x∈C ∣₁ ; (_⊎_.inr x∈A) → ∣ _⊎_.inr (A⊆B x₁ x∈A) ∣₁ }) x₂)
+
+
+∪-⊆-both : (A B C : ℙ X) → A ⊆ C → B ⊆ C → (A ∪ B) ⊆ C
+∪-⊆-both A B C A⊆C B⊆C x x∈A∪B = 
+  rec (P.∈-isProp C x) 
+      (λ { (_⊎_.inl x∈A) → A⊆C x x∈A ; (_⊎_.inr x∈B) → B⊆C x x∈B }) 
+      x∈A∪B
+
+⊆-to-∪-≡ : (A B : ℙ X) → A ⊆ B → A ∪ B ≡ B
+⊆-to-∪-≡ A B A⊆B = P.⊆-antisym (A ∪ B) B lhs rhs
+  where
+    lhs : (A ∪ B) ⊆ B
+    lhs = ∪-⊆-both A B B A⊆B (λ _ x∈B → x∈B)
+    
+    rhs : B ⊆ (A ∪ B)
+    rhs = ⊆-∪-right A B
+
+∪-≡-to-⊆ : (A B : ℙ X) → A ∪ B ≡ B → A ⊆ B
+∪-≡-to-⊆ A B eq x x∈A = 
+  let x∈A∪B : x ∈ A ∪ B
+      x∈A∪B = ⊆-∪-left A B x x∈A
+  in subst (λ S → x ∈ S) eq x∈A∪B
