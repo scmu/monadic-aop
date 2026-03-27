@@ -147,9 +147,9 @@ _⊔_ : (X → ℙ Y) → (X → ℙ Y) → (X → ℙ Y)
               → r ⊔ s ⊑ t → r ⊑ t × s ⊑ t
 ⊔-universal-⇒ = λ r⊔s⊑t → (λ x y y∈rx → r⊔s⊑t x y ∣ _⊎_.inl y∈rx ∣₁) , λ x y y∈sx → r⊔s⊑t x y ∣ _⊎_.inr y∈sx ∣₁
 
-⊔-universal-⇐ : {r s t : X → ℙ Y}
+⊔-universal-⇐ : (r s t : X → ℙ Y)
               → r ⊑ t × s ⊑ t → r ⊔ s ⊑ t
-⊔-universal-⇐ {t = t} r⊑t×s⊑t x y c∈r⊔s'b = rec (P.∈-isProp (t x) y) (λ {(_⊎_.inl l) → r⊑t×s⊑t .fst x y l ; (_⊎_.inr r) → r⊑t×s⊑t .snd x y r}) c∈r⊔s'b 
+⊔-universal-⇐ r s t r⊑t×s⊑t x y c∈r⊔s'b = rec (P.∈-isProp (t x) y) (λ {(_⊎_.inl l) → r⊑t×s⊑t .fst x y l ; (_⊎_.inr r) → r⊑t×s⊑t .snd x y r}) c∈r⊔s'b 
 
 ⊔-monotonic : {r s t u : X → ℙ Y}
               → r ⊑ t → s ⊑ u → r ⊔ s ⊑ t ⊔ u
@@ -329,3 +329,7 @@ singleton_sub_elem A y p = p y (y∈[y] y)
 
 elem_subset_singleton : (A : ℙ Y) → (y : Y) → y ∈ A → (return y ⊆ A) 
 elem_subset_singleton A y y∈A = λ x x∈[y] → rec (P.∈-isProp A x) (λ eq → subst (λ v → v ∈ A) eq y∈A) x∈[y]
+
+return-∪-∅ : (x : X) → return x ∪ ∅ ≡ return x
+return-∪-∅ x = P.⊆-antisym _ _ (λ x₁ x₂ → rec squash₁ (λ { (_⊎_.inl ev) → ev ; (_⊎_.inr no) → elim* no }) x₂) 
+  (⊆-∪-left (return x) ∅)
