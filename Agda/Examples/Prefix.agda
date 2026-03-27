@@ -60,31 +60,20 @@ lem x A = P.⊆-antisym _ _
 
 
 prefix-is-foldrM : prefix {X = X} ≡ foldrM pre (return [])
-prefix-is-foldrM = funExt go
+prefix-is-foldrM = foldrM-fixed-point-properties-eq⇐ pre (return []) prefix (refl , p)
   where
-    go : (xs : List X) → prefix xs ≡ foldrM pre (return []) xs
-    go [] = refl
-    go (x ∷ xs) = 
-      prefix (x ∷ xs)
-      ≡⟨ refl ⟩ 
-      return [] ∪ (_∷_ x) <$> (prefix xs)
-      ≡⟨ {!   !} ⟩ 
-      (return [] ∪ return [ x ]) ∪ (_∷_ x) <$> (prefix xs)
-      ≡⟨ lem x (prefix xs) ⟩ 
-      (return [] ∪ return [ x ]) ∪ pre x =<< prefix xs
-      ≡⟨ {!   !} ⟩ 
-      return [] ∪ return [ x ] ∪ pre x =<< prefix xs
-      ≡⟨ sym (cong (λ w → w ∪ pre x =<< prefix xs) (ret-left-id [] (pre x))) ⟩ 
-      pre x =<< return [] ∪ pre x =<< prefix xs
-      ≡⟨ sym (=<<-∪-dist-left (pre x) (return []) (prefix xs)) ⟩
-      pre x =<< (return [] ∪ prefix xs)
-      ≡⟨ {!   !} ⟩ 
-      pre x =<< prefix xs
-      ≡⟨ cong (pre x =<<_) (go xs) ⟩ 
-      pre x =<< foldrM pre (return []) xs
-      ≡⟨ refl ⟩
-      foldrM pre (return []) (x ∷ xs)
-      ∎
+    p : (x : X) (xs : List X) → return [] ∪ (_∷_ x) <$> prefix xs ≡ pre x =<< prefix xs
+    p x xs = P.⊆-antisym _ _
+      (λ zs → rec squash₁ λ {
+        (_⊎_.inl zs≡[]) → ∣ [] , nil∈prefix xs , ∣ _⊎_.inl zs≡[] ∣₁ ∣₁ ;
+        (_⊎_.inr m) → rec squash₁ (λ { (ys , ys∈pfx , eq) → ∣ ys , ys∈pfx , ∣ _⊎_.inr eq ∣₁ ∣₁ }) m 
+      })
+      (λ zs → rec squash₁ λ {
+        (ys , ys∈pfx , zs∈prexys) → rec squash₁ (λ {
+          (_⊎_.inl zs≡[]) → ∣ _⊎_.inl zs≡[] ∣₁ ;
+          (_⊎_.inr zs≡x∷ys) → ∣ _⊎_.inr ∣ ys , ys∈pfx , zs≡x∷ys ∣₁ ∣₁
+        }) zs∈prexys
+      })
 
 lem1 : const (return []) ⊔ prefix+ {X = X} ≡ prefix
 lem1 = 
