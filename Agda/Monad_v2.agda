@@ -301,15 +301,15 @@ R-trans R = ∀ x y z → y ∈ R x → z ∈ R y → z ∈ R x
     rhs x x∈∅ = elim* x∈∅
 
 -- m ⊆ n → f =<< m ⊆ f =<< n
-=<<-⊆-right : {X Y : Type ℓ} → {m n : ℙ X} → {f : X → ℙ Y} 
+=<<-⊆-right : {X Y : Type ℓ} → (m n : ℙ X) → (f : X → ℙ Y)
             → m ⊆ n → (f =<< m) ⊆ (f =<< n)
-=<<-⊆-right {m = m} {n = n} {f = f} m⊆n y y∈fm = 
+=<<-⊆-right m n f m⊆n y y∈fm = 
   rec squash₁ (λ { (x , x∈m , y∈fx) → ∣ x , m⊆n x x∈m , y∈fx ∣₁ }) y∈fm
 
 -- f ⊑ g → f =<< m ⊆ g =<< m
-=<<-⊑-left : {X Y : Type ℓ} → {f g : X → ℙ Y} → {m : ℙ X} 
+=<<-⊑-left : {X Y : Type ℓ} → (f g : X → ℙ Y) → (m : ℙ X)
            → f ⊑ g → (f =<< m) ⊆ (g =<< m)
-=<<-⊑-left {f = f} {g = g} {m = m} f⊑g y y∈fm = 
+=<<-⊑-left f g m f⊑g y y∈fm = 
   rec squash₁ (λ { (x , x∈m , y∈fx) → ∣ x , x∈m , f⊑g x y y∈fx ∣₁ }) y∈fm
 
 
