@@ -75,6 +75,9 @@ where |xs `leqv` ys = val xs <= val ys|.
 max_leqv :: P (List Item) -> P (List Item)
 max_leqv = undefined
 
+thin_leqvw :: P (List Item) -> P (T (List Item))
+thin_leqvw = undefined
+
 w :: Wgt
 w = undefined
 \end{code}
@@ -117,7 +120,7 @@ knapsack' = max_leqv . foldR subsw (return [])  {-"~~."-}
 
 \paragraph*{Failing Monotonicity.}~
 It turns out, however, that |subsw| does not meet \eqref{eq:monotonicity} with respect to |geqv|.
-To see that, let us construct a counter example.
+To see that, let us construct a counterexample.
 For the convenience of our readers, we recite and instantiate \eqref{eq:monotonicity} here:
 \begin{equation*}
 \setlength{\jot}{-1pt}
@@ -145,19 +148,21 @@ Let |x = (3,3)|.
 The two possible values of |zs0| are |[(4,6)]| and |[(3,3),(4,6)]|.
 The inclusion demands that the same |(ys1, zs0)| be a result of the righthand side as well.
 In particular, the righthand side must be able to yield |([(5,8)], [(3,3),(4,6)])| as a result.
-Let us examine the righthand side, assuming that |ys1 = [(5,8)]| and |zs0 = [(3,3),(4,6)]|.
+Let us examine the righthand side, assuming that from |any| we draw |ys1 = [(5,8)]| and |zs0 = [(3,3),(4,6)]|.
 With this value of |ys1|,
 the only possible value of |zs1| is also |[(5,8)]| --- since |[(3,3),(5,8)]| exceeds the weight limit!
 And we do not have |[(5,8)] `geqv` [(3,3),(4,6)]|.
 Therefore the righthand side cannot return |([(5,8)], [(3,3),(4,6)])|, and thus (\ref{eq:monotonicity}') fails.
 
 Notice that, comparing to traditional arguments using first-order logic, in the reasoning above we have expressions to execute with.
-Notice also how the |return (ys1, zs0)| on the lefthand side forces the value of |ys1| and |zs0| on the righthand side.
+Notice also how the |return (ys1, zs0)| on the lefthand side forces the value of |(ys1, zs0) <- any| on the righthand side.
 
 The lesson we have just learned is that we cannot throw away a solution, such as |[(4,6)]|, simply because it is not the most valuable.
-In fact, one may want to keep |[(4,6)]| for its being lighter, which implies potential for adding more items later.
+Therefore a greedy algorithm would not work for this problem.
+In fact, one may want to keep |[(4,6)]| for its being lighter, which implies potential for adding more items (in our example, |(3,3)|) later.
 
 Meanwhile, if a solution is neither more valuable, nor lighter, we may safely drop it without losing anything.
+If the two solution candidates were |[(5,8)]| and |[(4,8)]|, we can safely drop the latter, since any items one may add to |[(4,8)]| may also be added to |[(5,8)]| without exceeding the weight limit |w|.
 This observation inspires us to use the following ordering:
 \begin{spec}
 xs `leqvw` ys = val xs <= val ys && wgt xs >= wgt ys {-"~~."-}
@@ -218,7 +223,7 @@ thinT_preceq = thinT
 \end{equation}
 That is, |thin_preceq xs| contains all the table |ys| that is a sub-table of |xs|
 (we overload the subset relation |(`sse`)| and membership relation |(`inn`)| to tables), and for every element in |xs| there exists some element in |ys| that is at least as good.
-The monadic function |thin_preceq| can be seen as a specification that contains all possible ways to thin a table,
+The monadic function |thinT_preceq| can be seen as a specification that contains all possible ways to thin a table,
 of which the actual algorithm that maintains the table is a refinement.
 The algorithm may aggressively remove all candidates that are not needed in each step.
 It may also remove some but not all the redundant candidates, if that turns out to be more efficient.
@@ -265,10 +270,12 @@ propThinUniv h f succeq =
                    return (t1, y0))
 \end{code}
 %endif
+Think of |f| as a function that non-deterministically generates some solution candidates, and |h| a function that non-deterministically builds a table of possibly useful solutions.
+In |thinT_preceq. collect . f|, the results of |f| is collected into a table of type |T b| and passed to |thinT_preceq|.
 The monadic inclusion in the big brackets encodes the combination of universal and existential quantification in \eqref{eq:thin-def-set}:
 for all table |t1| returned by |h|, and for all |y0| returned by |f|,
 there must exists an elememt |y1| in |t1| such that |y1 `succeq` y0|.
-In |thinT_preceq. collect . f|, the results of |f| is collected into a table of type |T b| and passed to |thinT_preceq|.
+
 Since |thinT_preceq| and |collect| often appear together, we will use the following abbreviation:
 given a preorder |(`preceq`)| on some type |b|, define
 \begin{code}
@@ -303,7 +310,6 @@ Letting |h := thin_preceq . f| in \eqref{eq:thin-univ-monadic}, we get the |thin
         & |return (t1, y0)|
   \end{aligned}
 \end{equation}
-\end{equation}
 %if False
 \begin{code}
 propThinCancel :: (a -> P b) -> ((b, b) -> Bool) -> P (T b, b)
@@ -319,19 +325,24 @@ propThinCancel f succeq =
 \end{code}
 %endif
 
-The \emph{|thin| introduction law} assures us that thinning is safe ---
-thinning the set of solutions before taking maximum still yields legistimate results:
+The form of problem specifications we consider in this article ends with a |max_unlhd| for some ordering |unlhd|.
+The following \emph{|thin| introduction law} says that
+thinning the set of solutions with respect to |preceq| before taking maximum still yields legitimate results,
+provided that |preceq| is a sub-ordering of |unlhd|:
 %if False
 \begin{code}
 -- thinIntro :: P a -> P a
-thinIntro =
+thinIntro = (max_unlhd . mem) <=< thin_preceq {-"\,"-}`sse`{-"\,"-} max_unlhd {-"~~."-}
 \end{code}
 %endif
-\begin{code}
-  (max_unlhd . mem) <=< thin_preceq {-"\,"-}`sse`{-"\,"-} max_unlhd {-"~~."-}
-\end{code}
+\begin{equation}
+  |(max_unlhd . mem) <=< thin_preceq {-"\,"-}`sse`{-"\,"-} max_unlhd|
+    ~~~\Leftarrow~~~ |filt succeq `sse` filt unrhd| \mbox{~~,}
+    \label{eq:thin-intro}
+\end{equation}
+where |filt succeq `sse` filt unrhd| is another way of saying that |(forall x y : x `succeq` y ==> x `unrhd` y)|.
 
-The thinning theorem is given by:
+With all the ingredients ready, we present the Thinning Theorem:
 \begin{theorem}[Thinning Theorem]
 \label{thm:thinning}
 {\rm Let |preceq| be a binary relation on |b| that is reflexive and transitive,
@@ -355,11 +366,14 @@ thmThinning f e =
 \end{code}
 %endif
 \end{theorem}
+On the righthand side of |(`sse`)|, |foldR f e| computes all potential solutions before they are collected into a table and thinned by |thin|.
+The theorem says that we may also, as seen in the lefthand side, distribute the thinning into each stage of the |foldR|, maintaining a smaller set of solutions, which may lead to an algorithm having a smaller time complexity.
+With |x :: a|, the subexpression |thin . (f x <=< mem)| has type |T b -> P (T b)|.
 
 \subsection{Solving knapsack}
 
 Now we try to solve the 0-1 knapsack problem by thinning.
-Start from the fused specification, we introduce |thin|, and apply the thinning theorem:
+Starting from the fused specification, we introduce |thin|, and apply the Thinning Theorem:
 %if False
 \begin{code}
 knapsackDer :: Wgt -> List Item -> P (List Item)
@@ -370,25 +384,28 @@ knapsackDer w =
          max_leqv . (filt ((w >) . wgt) <=< subseq)
  `spse`    {- |foldR|-fusion -}
          max_leqv . foldR subsw (return [])
- `spse`    {- introducing |thin| -}
-         ((max_leqv . mem) <=< thin_preceq) . foldR subsw (return []) {-"~~."-}
+ `spse`    {- introducing |thin_leqvw| \eqref{eq:thin-intro} -}
+         ((max_leqv . mem) <=< thin_leqvw) . foldR subsw (return []) {-"~~."-}
  ===       {- |(f <=< g) . h = f <=< (g . h)|-}
-         (max_leqv . mem) <=< (thin_preceq . foldR subsw (return []))
- `spse`    {- thinning theorem -}
-         (max_leqv . mem) <=< foldR (\x -> thin_preceq . (subsw x <=< mem)) (thin_preceq (return [])) {-"~~."-}
+         (max_leqv . mem) <=< (thin_leqvw . foldR subsw (return []))
+ `spse`    {- Thinning Theorem \eqref{eq:thinning} -}
+         (max_leqv . mem) <=< foldR (\x -> thin_leqvw . (subsw x <=< mem)) (thin_leqvw (return [])) {-"~~."-}
 \end{code}
+In the second step we may introduce |thin_leqvw| because |xs `leqvw` ys ==> xs `leqv` ys|.
 
 We now need to choose a representation of |T|.
-We let |T| be a list of packings, \emph{sorted by descending weights}.
+We let |T| be a list of |List Item|, \emph{sorted by descending weights}.
 %if False
 \begin{code}
 type T a = List a
 \end{code}
 %endif
+Therefore we have:
 \begin{spec}
-collect (t <|> u) = mergeT (collect t) (collect u) {-"~~,"-}
+collect (return xs)  = [xs] {-"~~,"-}
+collect (t <|> u)    = mergeT (collect t) (collect u) {-"~~,"-}
 \end{spec}
-where |mergeT| is defined by:
+where |mergeT| merges two sorted lists of |List Item|:
 \begin{code}
 mergeT :: T (List Item) -> T (List Item) -> T (List Item)
 mergeT []      u       = u
@@ -404,11 +421,26 @@ thinlist [xs]  = [xs]
 thinlist (xs:ys:xss)  | val xs > val ys  = xs : thinlist (ys:xss)
                       | otherwise        = thinlist (ys:xss) {-"~~."-}
 \end{code}
+We have |return (thinlist t) `sse` thinT_leqvw t| for table |t :: T (List Item)|.
 
 %format addw = "\Varid{add}_{w}"
 
-We have |return (thinlist t) `sse` thinT_preceq t| for table |t|.
-To refine |thin_preceq . (subsw x <=< mem)|, we reason:
+Now we try to refine
+\begin{spec}
+ foldR (\x -> thin_leqvw . (subsw x <=< mem)) (thin_leqvw (return [])) {-"~~."-}
+\end{spec}
+%if False
+\begin{code}
+thinReturnDer =
+         thin_leqvw (return [])
+ ===     thinT (collect (return []))
+ ===     thinT [[]]
+ `spse`  return (thinlist [[]])
+ ===     return [[]]
+\end{code}
+%endif
+That |thin_leqvw (return []) `spse` return [[]]| is a routine calculation.
+To refine |thin_leqvw . (subsw x <=< mem)|, we reason:
 %if False
 \begin{code}
 tstepDer x t =
@@ -420,13 +452,18 @@ tstepDer x t =
          thin (subsw x =<< mem t)
  ===       {- definition of |subsw|, |(=<<)| distributes into |(<||>)|, monad laws -}
          thin (mem t <|> ((filt ((w>) . wgt) . (x:)) =<< mem t))
- ===       {- definition of |thin|, |collect| distributes into |(<||>)|, |collect . mem = id| -}
+ ===       {- definition of |thin|, |collect| distributes into |(<||>)| -}
+         thinT (mergeT (collect (mem t)) (collect ((filt ((w>) . wgt) . (x:)) =<< mem t)))
+ ===       {-  |collect . mem = id| -}
          thinT (mergeT t (collect ((filt ((w>) . wgt) . (x:)) =<< mem t)))
- ===     thinT (mergeT t (addw x t))
- `spse`  return (thinlist (mergeT t (addw x t))) {-"~~."-}
+ ===       {- construct |collect ((filt ((w>) . wgt) . (x:)) =<< mem t) = addw x t| -}
+         thinT (mergeT t (addw x t))
+ `spse`    {- |return (thinlist u) `sse` thinT_leqvw u| -}
+         return (thinlist (mergeT t (addw x t))) {-"~~."-}
 \end{code}
 
-Consider the subexpression |collect ((filt ((w>) . wgt) . (x:)) =<< mem t|.
+Consider the subexpression |collect ((filt ((w>) . wgt) . (x:)) =<< mem t)|.
+\todo{Explain or derive this.}
 \begin{code}
 addw :: Item -> T (List Item) -> T (List Item)
 addw x = map (x:) . dropWhile (((snd x + w) >) . wgt)
@@ -442,13 +479,13 @@ knapsackDer2 w =
 %endif
 \begin{code}
          (max_leqv . mem) <=< foldR (\x -> thin_preceq . (subsw x <=< mem)) (thin_preceq (return []))
- `spse`     {-  -}
+ `spse`     {- refinements above -}
          (max_leqv . mem) <=< foldR (\x t -> return (thinlist (mergeT t (addw x t)))) (return [[]])
- ===        {- -}
+ ===        {- by \eqref{eq:foldr-foldR} -}
          (max_leqv . mem) <=< (return . foldr (\x t -> thinlist (mergeT t (addw x t))) [[]])
  ===        {- monad laws -}
          max_leqv . mem . foldr (\x t -> thinlist (mergeT t (addw x t))) [[]]
- ===        {- -}
+ `spse`     {- |T| is a sorted list -}
          return . head . foldr (\x t -> thinlist (mergeT t (addw x t))) [[]] {-"~~."-}
 \end{code}
 
