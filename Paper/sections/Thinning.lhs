@@ -75,6 +75,9 @@ where |xs `leqv` ys = val xs <= val ys|.
 max_leqv :: P (List Item) -> P (List Item)
 max_leqv = undefined
 
+thin_leqvw :: P (List Item) -> P (T (List Item))
+thin_leqvw = undefined
+
 w :: Wgt
 w = undefined
 \end{code}
@@ -335,10 +338,11 @@ thinIntro = (max_unlhd . mem) <=< thin_preceq {-"\,"-}`sse`{-"\,"-} max_unlhd {-
 \begin{equation}
   |(max_unlhd . mem) <=< thin_preceq {-"\,"-}`sse`{-"\,"-} max_unlhd|
     ~~~\Leftarrow~~~ |filt succeq `sse` filt unrhd| \mbox{~~,}
+    \label{eq:thin-intro}
 \end{equation}
 where |filt succeq `sse` filt unrhd| is another way of saying that |(forall x y : x `succeq` y ==> x `unrhd` y)|.
 
-With all the ingredients ready, we present the thinning theorem:
+With all the ingredients ready, we present the Thinning Theorem:
 \begin{theorem}[Thinning Theorem]
 \label{thm:thinning}
 {\rm Let |preceq| be a binary relation on |b| that is reflexive and transitive,
@@ -369,7 +373,7 @@ With |x :: a|, the subexpression |thin . (f x <=< mem)| has type |T b -> P (T b)
 \subsection{Solving knapsack}
 
 Now we try to solve the 0-1 knapsack problem by thinning.
-Starting from the fused specification, we introduce |thin|, and apply the thinning theorem:
+Starting from the fused specification, we introduce |thin|, and apply the Thinning Theorem:
 %if False
 \begin{code}
 knapsackDer :: Wgt -> List Item -> P (List Item)
@@ -380,25 +384,28 @@ knapsackDer w =
          max_leqv . (filt ((w >) . wgt) <=< subseq)
  `spse`    {- |foldR|-fusion -}
          max_leqv . foldR subsw (return [])
- `spse`    {- introducing |thin| -}
-         ((max_leqv . mem) <=< thin_preceq) . foldR subsw (return []) {-"~~."-}
+ `spse`    {- introducing |thin_leqvw| \eqref{eq:thin-intro} -}
+         ((max_leqv . mem) <=< thin_leqvw) . foldR subsw (return []) {-"~~."-}
  ===       {- |(f <=< g) . h = f <=< (g . h)|-}
-         (max_leqv . mem) <=< (thin_preceq . foldR subsw (return []))
- `spse`    {- thinning theorem -}
-         (max_leqv . mem) <=< foldR (\x -> thin_preceq . (subsw x <=< mem)) (thin_preceq (return [])) {-"~~."-}
+         (max_leqv . mem) <=< (thin_leqvw . foldR subsw (return []))
+ `spse`    {- Thinning Theorem \eqref{eq:thinning} -}
+         (max_leqv . mem) <=< foldR (\x -> thin_leqvw . (subsw x <=< mem)) (thin_leqvw (return [])) {-"~~."-}
 \end{code}
+In the second step we may introduce |thin_leqvw| because |xs `leqvw` ys ==> xs `leqv` ys|.
 
 We now need to choose a representation of |T|.
-We let |T| be a list of packings, \emph{sorted by descending weights}.
+We let |T| be a list of |List Item|, \emph{sorted by descending weights}.
 %if False
 \begin{code}
 type T a = List a
 \end{code}
 %endif
+Therefore we have:
 \begin{spec}
-collect (t <|> u) = mergeT (collect t) (collect u) {-"~~,"-}
+collect (return xs)  = [xs] {-"~~,"-}
+collect (t <|> u)    = mergeT (collect t) (collect u) {-"~~,"-}
 \end{spec}
-where |mergeT| is defined by:
+where |mergeT| merges two sorted lists of |List Item|:
 \begin{code}
 mergeT :: T (List Item) -> T (List Item) -> T (List Item)
 mergeT []      u       = u
@@ -414,11 +421,26 @@ thinlist [xs]  = [xs]
 thinlist (xs:ys:xss)  | val xs > val ys  = xs : thinlist (ys:xss)
                       | otherwise        = thinlist (ys:xss) {-"~~."-}
 \end{code}
+We have |return (thinlist t) `sse` thinT_leqvw t| for table |t :: T (List Item)|.
 
 %format addw = "\Varid{add}_{w}"
 
-We have |return (thinlist t) `sse` thinT_preceq t| for table |t|.
-To refine |thin_preceq . (subsw x <=< mem)|, we reason:
+Now we try to refine
+\begin{spec}
+ foldR (\x -> thin_leqvw . (subsw x <=< mem)) (thin_leqvw (return [])) {-"~~."-}
+\end{spec}
+%if False
+\begin{code}
+thinReturnDer =
+         thin_leqvw (return [])
+ ===     thinT (collect (return []))
+ ===     thinT [[]]
+ `spse`  return (thinlist [[]])
+ ===     return [[]]
+\end{code}
+%endif
+That |thin_leqvw (return []) `spse` return [[]]| is a routine calculation.
+To refine |thin_leqvw . (subsw x <=< mem)|, we reason:
 %if False
 \begin{code}
 tstepDer x t =
@@ -430,13 +452,18 @@ tstepDer x t =
          thin (subsw x =<< mem t)
  ===       {- definition of |subsw|, |(=<<)| distributes into |(<||>)|, monad laws -}
          thin (mem t <|> ((filt ((w>) . wgt) . (x:)) =<< mem t))
- ===       {- definition of |thin|, |collect| distributes into |(<||>)|, |collect . mem = id| -}
+ ===       {- definition of |thin|, |collect| distributes into |(<||>)| -}
+         thinT (mergeT (collect (mem t)) (collect ((filt ((w>) . wgt) . (x:)) =<< mem t)))
+ ===       {-  |collect . mem = id| -}
          thinT (mergeT t (collect ((filt ((w>) . wgt) . (x:)) =<< mem t)))
- ===     thinT (mergeT t (addw x t))
- `spse`  return (thinlist (mergeT t (addw x t))) {-"~~."-}
+ ===       {- construct |collect ((filt ((w>) . wgt) . (x:)) =<< mem t) = addw x t| -}
+         thinT (mergeT t (addw x t))
+ `spse`    {- |return (thinlist u) `sse` thinT_leqvw u| -}
+         return (thinlist (mergeT t (addw x t))) {-"~~."-}
 \end{code}
 
-Consider the subexpression |collect ((filt ((w>) . wgt) . (x:)) =<< mem t|.
+Consider the subexpression |collect ((filt ((w>) . wgt) . (x:)) =<< mem t)|.
+\todo{Explain or derive this.}
 \begin{code}
 addw :: Item -> T (List Item) -> T (List Item)
 addw x = map (x:) . dropWhile (((snd x + w) >) . wgt)
@@ -452,13 +479,13 @@ knapsackDer2 w =
 %endif
 \begin{code}
          (max_leqv . mem) <=< foldR (\x -> thin_preceq . (subsw x <=< mem)) (thin_preceq (return []))
- `spse`     {-  -}
+ `spse`     {- refinements above -}
          (max_leqv . mem) <=< foldR (\x t -> return (thinlist (mergeT t (addw x t)))) (return [[]])
- ===        {- -}
+ ===        {- by \eqref{eq:foldr-foldR} -}
          (max_leqv . mem) <=< (return . foldr (\x t -> thinlist (mergeT t (addw x t))) [[]])
  ===        {- monad laws -}
          max_leqv . mem . foldr (\x t -> thinlist (mergeT t (addw x t))) [[]]
- ===        {- -}
+ `spse`     {- |T| is a sorted list -}
          return . head . foldr (\x t -> thinlist (mergeT t (addw x t))) [[]] {-"~~."-}
 \end{code}
 

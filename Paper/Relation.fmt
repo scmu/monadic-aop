@@ -8,6 +8,8 @@
 %format max_leqvw = "\mathit{max}_{\leq_{\mathit{vw}}}"
 %format thin_preceq = "\mathit{thin}_{\preceq}"
 %format thinT_preceq = "\mathit{thinT}_{\preceq}"
+%format thin_leqvw = "\mathit{thin}_{\leq_{\mathit{vw}}}"
+%format thinT_leqvw = "\mathit{thinT}_{\leq_{\mathit{vw}}}"
 %format `shrink` = "\!\upharpoonright\!"
 
 %format `bmin` = "\mathbin{\downarrow}"
