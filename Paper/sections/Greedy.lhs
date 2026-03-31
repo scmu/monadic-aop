@@ -2,11 +2,14 @@
 
 %if False
 \begin{code}
+{-# OPTIONS_GHC -Wno-x-partial #-}
 module Greedy where
 
 import Prelude hiding (max, any)
 import GHC.Base (Alternative, (<|>))
 import Control.Monad
+
+import Test.QuickCheck hiding ((===))
 
 import Common
 import Prelim
@@ -277,7 +280,15 @@ adapt smoothly into our new setting.
 %if False
 \begin{code}
 max_leqs :: P (List Int) -> P (List Int)
-max_leqs = max
+max_leqs (P xss) = P (maxleqs xss)
+  where maxleqs [] = []
+        maxleqs [xs] = [xs]
+        maxleqs (xs:xss) | sxs > sys  = [xs]
+                         | sxs == sys = xs:yss
+                         | otherwise  = yss
+          where yss = maxleqs xss
+                sxs = sum xs
+                sys = sum (head yss)
 \end{code}
 %endif
 Let |geqs| be defined by |xs `geqs` ys = sum xs >= sum ys|, therefore
@@ -326,9 +337,16 @@ The result would still meet the specification.
 The first two |(`spse`)| steps need |max| to be monotonic. Since what follows them are sub-monads of |(max . prefix) <=< suffix|, they all return maximum elements only, and satisfy the first law in Section~\ref{sec:max-monotonic}.
 
 The final one-liner algorithm:
-\begin{spec}
-  maxlist . scanr zplus [] {-"~~,"-}
-\end{spec}
+%if False
+\begin{code}
+mssFinal :: List Int -> List Int
+mssFinal =
+\end{code}
+%endif
+%format maxlistSum = "\Varid{maxlist}"
+\begin{code}
+  maxlistSum . scanr zplus [] {-"~~,"-}
+\end{code}
 is the famous linear-time algorithm for the maximum segment sum problem ---
 if we assume that |sum ys| can be computed in constant time, which could be done by a datatype refinement storing the sum together with the list.
 
@@ -411,3 +429,22 @@ proofMonoMSS x geqs =
 \end{code}
 Note that case analysis on |pre| is performed by expanding its definition and using distributivity of |(>>=)|, and that monad laws
 \todo{review the proof above and explain a bit.}
+
+
+%if False
+\begin{code}
+maxlistSum :: List (List Int) -> List Int
+maxlistSum [x] = x
+maxlistSum (x : y : xs) = x `bmax` maxlistSum (y : xs) {-"~~,"-}
+   where x `bmax` y  =if sum x >= sum y then x else y {-"~~."-}
+
+genItem :: Gen Int
+genItem = do Small x <- arbitrary
+             return x
+             
+propMSSCorrect n = forAll (listNoLongerThan n genItem) $ \ (xs :: List Int) ->
+  let sols = unP $ mss xs
+      opt  = mssFinal xs
+  in  all ((sum opt ==) . sum) sols
+\end{code}
+%endif

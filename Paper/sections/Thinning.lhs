@@ -2,11 +2,14 @@
 
 %if False
 \begin{code}
+{-# OPTIONS_GHC -Wno-x-partial #-}
 module Thinning where
 
 import Prelude hiding (max, any)
 import GHC.Base (Alternative, (<|>))
 import Control.Monad
+
+import Test.QuickCheck hiding ((===), collect)
 
 import Common
 import Prelim
@@ -73,13 +76,21 @@ where |xs `leqv` ys = val xs <= val ys|.
 %if False
 \begin{code}
 max_leqv :: P (List Item) -> P (List Item)
-max_leqv = undefined
+max_leqv (P xss) = P (maxleqv xss)
+  where maxleqv [] = []
+        maxleqv [xs] = [xs]
+        maxleqv (xs:xss) | vxs > vys  = [xs]
+                         | vxs == vys = xs:yss
+                         | otherwise  = yss
+          where yss = maxleqv xss
+                vxs = val xs
+                vys = val (head yss)
 
 thin_leqvw :: P (List Item) -> P (T (List Item))
 thin_leqvw = undefined
 
 w :: Wgt
-w = undefined
+w = 20
 \end{code}
 %endif
 
@@ -418,9 +429,18 @@ With this representation, thinning can be performed by comparing values of adjac
 thinlist :: T (List Item) -> T (List Item)
 thinlist []    = []
 thinlist [xs]  = [xs]
-thinlist (xs:ys:xss)  | val xs > val ys  = xs : thinlist (ys:xss)
-                      | otherwise        = thinlist (ys:xss) {-"~~."-}
+thinlist (xs:ys:xss)  |  wgt xs == wgt ys    = thinlist (xs `maxval` ys :xss)
+                      |  wgt xs > wgt ys &&
+                         val xs > val ys     = xs : thinlist (ys:xss)
+                      |  wgt xs > wgt ys &&
+                         val xs <= val ys    = thinlist (ys:xss) {-"~~."-}
 \end{code}
+%if False
+\begin{code}
+  where xs `maxval` ys  | val xs >= val ys  = xs
+                        | otherwise         = ys
+\end{code}
+%endif
 We have |return (thinlist t) `sse` thinT_leqvw t| for table |t :: T (List Item)|.
 
 %format addw = "\Varid{add}_{w}"
@@ -466,7 +486,7 @@ Consider the subexpression |collect ((filt ((w>) . wgt) . (x:)) =<< mem t)|.
 \todo{Explain or derive this.}
 \begin{code}
 addw :: Item -> T (List Item) -> T (List Item)
-addw x = map (x:) . dropWhile (((snd x + w) >) . wgt)
+addw x = dropWhile ((w <=) . wgt) . map (x:)
 \end{code}
 We have |collect ((filt ((w>) . wgt) . (x:)) =<< mem t = addw x t|.
 
@@ -498,3 +518,51 @@ knapsack'' :: List Item -> P (List Item)
 \begin{code}
 knapsack'' = return . head . foldr (\x t -> thinlist (mergeT t (addw x t))) [[]] {-"~~."-}
 \end{code}
+
+
+%if False
+\begin{code}
+knapsackT :: List Item -> T (List Item)
+knapsackT = foldr (\x t -> thinlist (mergeT t (addw x t))) [[]] {-"~~."-}
+
+valwgt xs = (val xs, wgt xs)
+
+thinmerge :: T (List Item) -> T (List Item) -> T (List Item)
+thinmerge []      u       = u
+thinmerge t       []      = t
+thinmerge (xs:t)  (ys:u)
+   | wxs >  wys && vxs <= vys = thinmerge t (ys:u)
+   | wxs >  wys && vxs >  vys = xs : thinmerge t (ys:u)
+   | wxs == wys && vxs <  vys = thinmerge t (ys:u)
+   | wxs == wys && vxs >= vys = thinmerge (xs:t) u
+   | wxs <  wys && vxs <  vys = ys : thinmerge (xs:t) u
+   | wxs <  wys && vxs >= vys = thinmerge (xs:t) u
+  where (wxs, wys) = (wgt xs, wgt ys)
+        (vxs, vys) = (val xs, val ys)
+
+alltables :: List Item -> List (T (List Item))
+alltables = scanr (\x t -> thinmerge t (addw x t)) [[]]
+
+knapsack3 :: List Item -> List Item
+knapsack3 = head . foldr (\x t -> thinmerge t (addw x t)) [[]]
+
+genItem :: Gen Item
+genItem = do v <- atMost 10
+             w <- atMost 10
+             return (v,w)
+
+propTSorted n = forAll (listNoLongerThan n genItem) $ \ (xs :: List Item) ->
+    all vwSorted (alltables xs)
+vwSorted xs = sorted (map val xs) && sorted (map wgt xs)
+
+sorted []       = True
+sorted [x]      = True
+sorted (x:y:xs) = x > y && sorted (y:xs)
+
+propKnapsackCorrect n = forAll (listNoLongerThan n genItem) $ \ (xs :: List Item) ->
+  let sols = unP $ knapsack xs
+      opt  = knapsack3 xs
+  in  all ((val opt ==) . val) sols
+
+\end{code}
+%endif

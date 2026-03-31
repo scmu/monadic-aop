@@ -3,6 +3,7 @@
 
 %if False
 \begin{code}
+{-# OPTIONS_GHC -Wno-x-partial #-}
 module Prelim where
 
 import Prelude hiding (max, any)
@@ -97,7 +98,7 @@ For the rest of the paper we take |M = P|.
 
 The set |any :: P a| contains all elements having type |a|.
 Computationally, it creates an arbitrary element of its type.
-The command |filt : (a -> Bool) -> a -> P a| is defined by
+The command |filt :: (a -> Bool) -> a -> P a| is defined by
 \begin{code}
 filt p x  | p x        = return x
           | otherwise  = mzero {-"~~."-}
@@ -739,9 +740,9 @@ If |unlhd| is total (that is, for all |x| and |y| of the right type, at least on
 \end{equation}
 where |maxlist| is some implementation of maximum on non-empty lists, e.g.
 \begin{spec}
-  maxlist :: List a -> a
-  maxlist [x] = x
-  maxlist (x : y : xs) = x `bmax` maxlist (y : ys) {-"~~,"-}
+maxlist :: List a -> a
+maxlist [x] = x
+maxlist (x : y : xs) = x `bmax` maxlist (y : xs) {-"~~,"-}
    where x `bmax` y  =if x `unrhd` y then x else y {-"~~."-}
 \end{spec}
 %if False
