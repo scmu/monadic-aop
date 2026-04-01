@@ -34,8 +34,7 @@ In the famous \emph{0-1 knapsack} problem, we are given a collection of items, e
 The aim is to choose a subset of these items such that the total value is maximised, while the total weight does not exceed a given weight limit |w|
 (it is assumed that |w| is non-negative).
 Let |Val|, |Wgt| respectively denote the types of values and weights.
-An |Item|, abstractly, is a pair |(Val, Wgt)|, and the input is a list of |Item|s.
-Define:
+An |Item|, abstractly, is a pair |(Val, Wgt)|. Define:
 %if False
 \begin{code}
 type Val = Int
@@ -47,6 +46,10 @@ type Item = (Val, Wgt)
 val  = sum . map fst {-"~~,"-}
 wgt  = sum . map snd {-"~~."-}
 \end{code}
+The input and output of our algorithm have type |List Item|.
+One may refine the data structure, tupling each |List Item| with its value and weight, thereby making |val| and |wgt| constant operations.
+For clarity we will keep using |List Item| but assume that |val| and |wgt| can be computed in constant time.
+
 The function |subseq| non-deterministically computes a subsequence of the input list:
 \begin{code}
 subseq :: List a -> P (List a)
@@ -384,28 +387,9 @@ With |x :: a|, the subexpression |thin . (f x <=< mem)| has type |T b -> P (T b)
 \subsection{Solving knapsack}
 
 Now we try to solve the 0-1 knapsack problem by thinning.
-Starting from the fused specification, we introduce |thin|, and apply the Thinning Theorem:
-%if False
-\begin{code}
-knapsackDer :: Wgt -> List Item -> P (List Item)
-knapsackDer w =
-\end{code}
-%endif
-\begin{code}
-         max_leqv . (filt ((w >) . wgt) <=< subseq)
- `spse`    {- |foldR|-fusion -}
-         max_leqv . foldR subsw (return [])
- `spse`    {- introducing |thin_leqvw| \eqref{eq:thin-intro} -}
-         ((max_leqv . mem) <=< thin_leqvw) . foldR subsw (return []) {-"~~."-}
- ===       {- |(f <=< g) . h = f <=< (g . h)|-}
-         (max_leqv . mem) <=< (thin_leqvw . foldR subsw (return []))
- `spse`    {- Thinning Theorem \eqref{eq:thinning} -}
-         (max_leqv . mem) <=< foldR (\x -> thin_leqvw . (subsw x <=< mem)) (thin_leqvw (return [])) {-"~~."-}
-\end{code}
-In the second step we may introduce |thin_leqvw| because |xs `leqvw` ys ==> xs `leqv` ys|.
 
-\paragraph*{Representing |T| by sorted lists.}
-We now need to choose a representation of |T|.
+\paragraph*{Representing |T|.}
+We need to choose a representation of |T|.
 We let |T (List Item)| be |List (List Item)|, \emph{sorted by decreasing weights}.
 If we can fully thin the list, the weights are strictly decreasing because for each weight we need to keep only one solution --- the one that yields maximum value for this weight.
 That means the lists in |T| also come in \emph{strictly decreasing values},
@@ -422,11 +406,22 @@ collect (return xs)  = [xs] {-"~~,"-}
 collect (t <|> u)    = mergeT (collect t) (collect u) {-"~~,"-}
 \end{spec}
 where |mergeT| merges two lists sorted by decreasing weights.
-We omit its definition, but instead present a function that performs merging and thinning in one go:
+%if False
+\begin{code}
+mergeT :: T (List Item) -> T (List Item) -> T (List Item)
+mergeT []      u       = u
+mergeT t       []      = t
+mergeT (xs:t)  (ys:u)  | wgt xs >= wgt ys  = xs : mergeT t (ys:u)
+                       | otherwise         = ys : mergeT (xs:t) u {-"~~."-}
+\end{code}
+%endif
+We omit its definition, but instead present below a function |thinmerge| that merges two lists sorted by decreasing weights,
+before removing solutions that are not needed:
 %format vxs = "\Varid{v}_{\Varid{xs}}"
 %format vys = "\Varid{v}_{\Varid{ys}}"
 %format wxs = "\Varid{w}_{\Varid{xs}}"
 %format wys = "\Varid{w}_{\Varid{ys}}"
+%if False
 \begin{code}
 thinmerge :: T (List Item) -> T (List Item) -> T (List Item)
 thinmerge []      u       = u
@@ -440,23 +435,56 @@ thinmerge (xs:t)  (ys:u)  | wxs >  wys  && vxs <= vys  = thinmerge t (ys:u)
   where  (wxs, wys)  = (wgt xs, wgt ys)
          (vxs, vys)  = (val xs, val ys) {-"~~."-}
 \end{code}
-\todo{explanations.}
-We have, for |xss, yss :: T (List Item)| sorted by decreasing weights, that
+%endif
 \begin{spec}
-return (thinmerge xss yss) `sse` thinT (mergeT xss yss) {-"~~."-}
+thinmerge :: T (List Item) -> T (List Item) -> T (List Item)
+thinmerge []      u       = u
+thinmerge t       []      = t
+thinmerge (xs:t)  (ys:u)  | xs `gtw` ys  && xs `leqv` ys  = thinmerge t (ys:u)
+                          | xs `gtw` ys  && xs `gtv` ys   = xs : thinmerge t (ys:u)
+                          | xs `eqw` ys  && xs `ltv` ys   = thinmerge t (ys:u)
+                          | xs `eqw` ys  && xs `geqv` ys  = thinmerge (xs:t) u
+                          | xs `ltw` ys  && xs `ltv` ys   = ys : thinmerge (xs:t) u
+                          | xs `ltw` ys  && xs `geqv` ys  = thinmerge (xs:t) u  {-"~~."-}
 \end{spec}
-
-% \begin{code}
-% mergeT :: T (List Item) -> T (List Item) -> T (List Item)
-% mergeT []      u       = u
-% mergeT t       []      = t
-% mergeT (xs:t)  (ys:u)  | wgt xs >= wgt ys  = xs : mergeT t (ys:u)
-%                        | otherwise         = ys : mergeT (xs:t) u {-"~~."-}
-% \end{code}
+In the inductive case, the first two clauses deal with situations where |xs| is heavier than |ys|,
+for which we keep |xs| only when it is strictly more valuable.
+The last two clauses are symmetrical.
+When |xs| and |ys| weigh the same, we keep the more valuable one, and arbitrary choose to keep |xs| in case of a tie.
+The function runs in time linear to the sum of the lengths of the two lists.
+We have, for |xss, yss :: T (List Item)| sorted by decreasing weights, that
+\begin{equation}
+|return (thinmerge xss yss) `sse` thinT (mergeT xss yss)| \mbox{~~.}
+\label{eq:thinmerge-refine}
+\end{equation}
 
 %format addw = "\Varid{add}_{w}"
 
-\paragraph*{Back to the derivation.} Now we try to refine
+\paragraph*{The Derivation.}
+Now it is time to calculate |knapsack|.
+Starting from the fused specification, we introduce |thin|, and apply the Thinning Theorem:
+%if False
+\begin{code}
+knapsackDer :: Wgt -> List Item -> P (List Item)
+knapsackDer w =
+\end{code}
+%endif
+\begin{code}
+         knapsack
+ ===       {-  Section~\ref{sec:ex:0-1-knapsack} -}
+         max_leqv . (filt ((w >) . wgt) <=< subseq)
+ `spse`    {- |foldR|-fusion -}
+         max_leqv . foldR subsw (return [])
+ `spse`    {- introducing |thin_leqvw| \eqref{eq:thin-intro} -}
+         ((max_leqv . mem) <=< thin_leqvw) . foldR subsw (return []) {-"~~."-}
+ ===       {- |(f <=< g) . h = f <=< (g . h)|-}
+         (max_leqv . mem) <=< (thin_leqvw . foldR subsw (return []))
+ `spse`    {- Thinning Theorem \eqref{eq:thinning} -}
+         (max_leqv . mem) <=< foldR (\x -> thin_leqvw . (subsw x <=< mem)) (thin_leqvw (return [])) {-"~~."-}
+\end{code}
+In the second step we may introduce |thin_leqvw| because |xs `leqvw` ys ==> xs `leqv` ys|.
+
+We try to refine the monadic fold:
 \begin{spec}
  foldR (\x -> thin_leqvw . (subsw x <=< mem)) (thin_leqvw (return [])) {-"~~."-}
 \end{spec}
@@ -466,11 +494,10 @@ thinReturnDer =
          thin_leqvw (return [])
  ===     thinT (collect (return []))
  ===     thinT [[]]
- `spse`  return (thinlist [[]])
- ===     return [[]]
+ `spse`  return [[]]
 \end{code}
 %endif
-That |thin_leqvw (return []) `spse` return [[]]| is a routine calculation.
+It takes only a routine calculation to show that |thin_leqvw (return []) `spse` return [[]]|.
 To refine |thin_leqvw . (subsw x <=< mem)|, we reason:
 %if False
 \begin{code}
@@ -489,7 +516,7 @@ tstepDer x t =
          thinT (mergeT t (collect ((filt ((w>) . wgt) . (x:)) =<< mem t)))
  ===       {- construct |collect ((filt ((w>) . wgt) . (x:)) =<< mem t) = addw x t| -}
          thinT (mergeT t (addw x t))
- `spse`    {- |return (thinlist u) `sse` thinT_leqvw u| -}
+ `spse`    {- by \eqref{eq:thinmerge-refine} -}
          return (thinmerge t (addw x t)) {-"~~."-}
 \end{code}
 
@@ -501,7 +528,7 @@ addw x = dropWhile ((w <=) . wgt) . map (x:)
 \end{code}
 We have |collect ((filt ((w>) . wgt) . (x:)) =<< mem t = addw x t|.
 
-Back to the derivation:
+Back to the main derivation:
 %if False
 \begin{code}
 knapsackDer2 :: Wgt -> List Item -> P (List Item)
@@ -511,15 +538,17 @@ knapsackDer2 w =
 \begin{code}
          (max_leqv . mem) <=< foldR (\x -> thin_preceq . (subsw x <=< mem)) (thin_preceq (return []))
  `spse`     {- refinements above -}
-         (max_leqv . mem) <=< foldR (\x t -> return (thinlist (mergeT t (addw x t)))) (return [[]])
+         (max_leqv . mem) <=< foldR (\x t -> return (thinmerge t (addw x t))) (return [[]])
  ===        {- by \eqref{eq:foldr-foldR} -}
-         (max_leqv . mem) <=< (return . foldr (\x t -> thinlist (mergeT t (addw x t))) [[]])
+         (max_leqv . mem) <=< (return . foldr (\x t -> thinmerge t (addw x t)) [[]])
  ===        {- monad laws -}
-         max_leqv . mem . foldr (\x t -> thinlist (mergeT t (addw x t))) [[]]
+         max_leqv . mem . foldr (\x t -> thinmerge t (addw x t)) [[]]
  `spse`     {- |T| is a sorted list -}
-         return . head . foldr (\x t -> thinlist (mergeT t (addw x t))) [[]] {-"~~."-}
+         return . head . foldr (\x t -> thinmerge t (addw x t)) [[]] {-"~~."-}
 \end{code}
+In the last step, |max_leqv . mem| refines to |return . head| be cause |T| is a list sorted by decreasing value, therefore the solution having maximum value must be in the head position.
 
+In summary, we have derived:
 %format knapsack'' = "\Varid{knapsack}"
 %if False
 \begin{code}
@@ -527,15 +556,12 @@ knapsack'' :: List Item -> P (List Item)
 \end{code}
 %endif
 \begin{code}
-knapsack'' = return . head . foldr (\x t -> thinlist (mergeT t (addw x t))) [[]] {-"~~."-}
+knapsack'' = return . head . foldr (\x t -> thinmerge t (addw x t)) [[]] {-"~~."-}
 \end{code}
 
 
 %if False
 \begin{code}
-knapsackT :: List Item -> T (List Item)
-knapsackT = foldr (\x t -> thinlist (mergeT t (addw x t))) [[]] {-"~~."-}
-
 valwgt xs = (val xs, wgt xs)
 
 alltables :: List Item -> List (T (List Item))

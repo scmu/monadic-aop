@@ -438,11 +438,11 @@ maxlistSum [x] = x
 maxlistSum (x : y : xs) = x `bmax` maxlistSum (y : xs) {-"~~,"-}
    where x `bmax` y  =if sum x >= sum y then x else y {-"~~."-}
 
-genItem :: Gen Int
-genItem = do Small x <- arbitrary
+genElem :: Gen Int
+genElem = do Small x <- arbitrary
              return x
-             
-propMSSCorrect n = forAll (listNoLongerThan n genItem) $ \ (xs :: List Int) ->
+
+propMSSCorrect n = forAll (listNoLongerThan n genElem) $ \ (xs :: List Int) ->
   let sols = unP $ mss xs
       opt  = mssFinal xs
   in  all ((sum opt ==) . sum) sols
