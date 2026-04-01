@@ -404,48 +404,59 @@ knapsackDer w =
 \end{code}
 In the second step we may introduce |thin_leqvw| because |xs `leqvw` ys ==> xs `leqv` ys|.
 
+\paragraph*{Representing |T| by sorted lists.}
 We now need to choose a representation of |T|.
-We let |T| be a list of |List Item|, \emph{sorted by descending weights}.
+We let |T (List Item)| be |List (List Item)|, \emph{sorted by decreasing weights}.
+If we can fully thin the list, the weights are strictly decreasing because for each weight we need to keep only one solution --- the one that yields maximum value for this weight.
+That means the lists in |T| also come in \emph{strictly decreasing values},
+since a strictly heavier solution must have a strictly higher value to be worth keeping.
 %if False
 \begin{code}
 type T a = List a
 \end{code}
 %endif
-Therefore we have:
+
+Consider how |collect| interacts with |return| and |(<||)>|:
 \begin{spec}
 collect (return xs)  = [xs] {-"~~,"-}
 collect (t <|> u)    = mergeT (collect t) (collect u) {-"~~,"-}
 \end{spec}
-where |mergeT| merges two sorted lists of |List Item|:
+where |mergeT| merges two lists sorted by decreasing weights.
+We omit its definition, but instead present a function that performs merging and thinning in one go:
+%format vxs = "\Varid{v}_{\Varid{xs}}"
+%format vys = "\Varid{v}_{\Varid{ys}}"
+%format wxs = "\Varid{w}_{\Varid{xs}}"
+%format wys = "\Varid{w}_{\Varid{ys}}"
 \begin{code}
-mergeT :: T (List Item) -> T (List Item) -> T (List Item)
-mergeT []      u       = u
-mergeT t       []      = t
-mergeT (xs:t)  (ys:u)  | wgt xs >= wgt ys  = xs : mergeT t (ys:u)
-                       | otherwise         = ys : mergeT (xs:t) u {-"~~."-}
+thinmerge :: T (List Item) -> T (List Item) -> T (List Item)
+thinmerge []      u       = u
+thinmerge t       []      = t
+thinmerge (xs:t)  (ys:u)  | wxs >  wys  && vxs <= vys  = thinmerge t (ys:u)
+                          | wxs >  wys  && vxs >  vys  = xs : thinmerge t (ys:u)
+                          | wxs == wys  && vxs <  vys  = thinmerge t (ys:u)
+                          | wxs == wys  && vxs >= vys  = thinmerge (xs:t) u
+                          | wxs <  wys  && vxs <  vys  = ys : thinmerge (xs:t) u
+                          | wxs <  wys  && vxs >= vys  = thinmerge (xs:t) u  {-"~~,"-}
+  where  (wxs, wys)  = (wgt xs, wgt ys)
+         (vxs, vys)  = (val xs, val ys) {-"~~."-}
 \end{code}
-With this representation, thinning can be performed by comparing values of adjacent solutions in the list, and drop those elements that are not more valuable, and yet not lighter:
-\begin{code}
-thinlist :: T (List Item) -> T (List Item)
-thinlist []    = []
-thinlist [xs]  = [xs]
-thinlist (xs:ys:xss)  |  wgt xs == wgt ys    = thinlist (xs `maxval` ys :xss)
-                      |  wgt xs > wgt ys &&
-                         val xs > val ys     = xs : thinlist (ys:xss)
-                      |  wgt xs > wgt ys &&
-                         val xs <= val ys    = thinlist (ys:xss) {-"~~."-}
-\end{code}
-%if False
-\begin{code}
-  where xs `maxval` ys  | val xs >= val ys  = xs
-                        | otherwise         = ys
-\end{code}
-%endif
-We have |return (thinlist t) `sse` thinT_leqvw t| for table |t :: T (List Item)|.
+\todo{explanations.}
+We have, for |xss, yss :: T (List Item)| sorted by decreasing weights, that
+\begin{spec}
+return (thinmerge xss yss) `sse` thinT (mergeT xss yss) {-"~~."-}
+\end{spec}
+
+% \begin{code}
+% mergeT :: T (List Item) -> T (List Item) -> T (List Item)
+% mergeT []      u       = u
+% mergeT t       []      = t
+% mergeT (xs:t)  (ys:u)  | wgt xs >= wgt ys  = xs : mergeT t (ys:u)
+%                        | otherwise         = ys : mergeT (xs:t) u {-"~~."-}
+% \end{code}
 
 %format addw = "\Varid{add}_{w}"
 
-Now we try to refine
+\paragraph*{Back to the derivation.} Now we try to refine
 \begin{spec}
  foldR (\x -> thin_leqvw . (subsw x <=< mem)) (thin_leqvw (return [])) {-"~~."-}
 \end{spec}
@@ -479,7 +490,7 @@ tstepDer x t =
  ===       {- construct |collect ((filt ((w>) . wgt) . (x:)) =<< mem t) = addw x t| -}
          thinT (mergeT t (addw x t))
  `spse`    {- |return (thinlist u) `sse` thinT_leqvw u| -}
-         return (thinlist (mergeT t (addw x t))) {-"~~."-}
+         return (thinmerge t (addw x t)) {-"~~."-}
 \end{code}
 
 Consider the subexpression |collect ((filt ((w>) . wgt) . (x:)) =<< mem t)|.
@@ -526,19 +537,6 @@ knapsackT :: List Item -> T (List Item)
 knapsackT = foldr (\x t -> thinlist (mergeT t (addw x t))) [[]] {-"~~."-}
 
 valwgt xs = (val xs, wgt xs)
-
-thinmerge :: T (List Item) -> T (List Item) -> T (List Item)
-thinmerge []      u       = u
-thinmerge t       []      = t
-thinmerge (xs:t)  (ys:u)
-   | wxs >  wys && vxs <= vys = thinmerge t (ys:u)
-   | wxs >  wys && vxs >  vys = xs : thinmerge t (ys:u)
-   | wxs == wys && vxs <  vys = thinmerge t (ys:u)
-   | wxs == wys && vxs >= vys = thinmerge (xs:t) u
-   | wxs <  wys && vxs <  vys = ys : thinmerge (xs:t) u
-   | wxs <  wys && vxs >= vys = thinmerge (xs:t) u
-  where (wxs, wys) = (wgt xs, wgt ys)
-        (vxs, vys) = (val xs, val ys)
 
 alltables :: List Item -> List (T (List Item))
 alltables = scanr (\x t -> thinmerge t (addw x t)) [[]]
