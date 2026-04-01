@@ -3,13 +3,9 @@
 %format maxlist_unlhd = "\mathit{maxlist}_{\unlhd}"
 %format max_unlhd = "\mathit{max}_{\unlhd}"
 %format min_unrhd = "\mathit{min}_{\unrhd}"
-%format max_leqs = "\mathit{max}_{\leq_{s}}"
-%format max_leqv = "\mathit{max}_{\leq_{v}}"
-%format max_leqvw = "\mathit{max}_{\leq_{\mathit{vw}}}"
 %format thin_preceq = "\mathit{thin}_{\preceq}"
 %format thinT_preceq = "\mathit{thinT}_{\preceq}"
-%format thin_leqvw = "\mathit{thin}_{\leq_{\mathit{vw}}}"
-%format thinT_leqvw = "\mathit{thinT}_{\leq_{\mathit{vw}}}"
+
 %format `shrink` = "\!\upharpoonright\!"
 
 %format `bmin` = "\mathbin{\downarrow}"
@@ -70,18 +66,5 @@
 %format `preceq` = "\preceq"
 %format succeq = "(\succeq)"
 %format `succeq` = "\succeq"
-
-%format leqs = "(\leq_{s})"
-%format `leqs` = "\leq_{s}"
-%format geqs = "(\geq_{s})"
-%format `geqs` = "\geq_{s}"
-%format leqv = "(\leq_{v})"
-%format `leqv` = "\leq_{v}"
-%format geqv = "(\geq_{v})"
-%format `geqv` = "\geq_{v}"
-%format leqvw = "(\leq_{\mathit{vw}})"
-%format `leqvw` = "\leq_{\mathit{vw}}"
-%format geqvw = "(\geq_{\mathit{vw}})"
-%format `geqvw` = "\geq_{\mathit{vw}}"
 
 %format Sum = "\Sigma"
