@@ -514,17 +514,22 @@ tstepDer x t =
          thinT (mergeT (collect (mem t)) (collect ((filt ((w>) . wgt) . (x:)) =<< mem t)))
  ===       {-  |collect . mem = id| -}
          thinT (mergeT t (collect ((filt ((w>) . wgt) . (x:)) =<< mem t)))
- ===       {- construct |collect ((filt ((w>) . wgt) . (x:)) =<< mem t) = addw x t| -}
+ ===       {- construct |addw x t = collect ((filt ((w>) . wgt) . (x:)) =<< mem t)| -}
          thinT (mergeT t (addw x t))
  `spse`    {- by \eqref{eq:thinmerge-refine} -}
          return (thinmerge t (addw x t)) {-"~~."-}
 \end{code}
-
-Consider the subexpression |collect ((filt ((w>) . wgt) . (x:)) =<< mem t)|.
-\todo{Explain or derive this.}
+In the penultimate step, one may define
+\begin{spec}
+  addw x t = collect ((filt ((w>) . wgt) . (x:)) =<< mem t) {-"~~."-}
+\end{spec}
+Letting |mem = collect = id|, this is an executable program.
+But given that |t :: T (List Item)| is sorted by decreasing weights and values, we can come up with a slightly more efficient implementation.
+The expression above picks each list from |t|, extend it with |x|, and keeps only those whose total weights do not exceed |w|.
+Omitting the |P| monad in the middle, |(... (x:) =<< mem t)| can be implemented by |map (x:)|, and since |t| is sorted by weight, |filt ((w>) . wgt)| and |collect| can be implemented by a |dropWhile|. Define:
 \begin{code}
 addw :: Item -> T (List Item) -> T (List Item)
-addw x = dropWhile ((w <=) . wgt) . map (x:)
+addw x = dropWhile ((w <=) . wgt) . map (x:) {-"~~,"-}
 \end{code}
 We have |collect ((filt ((w>) . wgt) . (x:)) =<< mem t = addw x t|.
 
@@ -548,15 +553,11 @@ knapsackDer2 w =
 \end{code}
 In the last step, |max_leqv . mem| refines to |return . head| be cause |T| is a list sorted by decreasing value, therefore the solution having maximum value must be in the head position.
 
-In summary, we have derived:
-%format knapsack'' = "\Varid{knapsack}"
-%if False
+In summary, we have derived |knapsack `spse` return . knapsackImpl|, where
+%%format knapsack'' = "\Varid{knapsack}"
 \begin{code}
-knapsack'' :: List Item -> P (List Item)
-\end{code}
-%endif
-\begin{code}
-knapsack'' = return . head . foldr (\x t -> thinmerge t (addw x t)) [[]] {-"~~."-}
+knapsackImpl :: List Item -> List Item
+knapsackImpl = head . foldr (\x t -> thinmerge t (addw x t)) [[]] {-"~~."-}
 \end{code}
 
 
@@ -566,9 +567,6 @@ valwgt xs = (val xs, wgt xs)
 
 alltables :: List Item -> List (T (List Item))
 alltables = scanr (\x t -> thinmerge t (addw x t)) [[]]
-
-knapsack3 :: List Item -> List Item
-knapsack3 = head . foldr (\x t -> thinmerge t (addw x t)) [[]]
 
 genItem :: Gen Item
 genItem = do v <- atMost 10
@@ -585,7 +583,7 @@ sorted (x:y:xs) = x > y && sorted (y:xs)
 
 propKnapsackCorrect n = forAll (listNoLongerThan n genItem) $ \ (xs :: List Item) ->
   let sols = unP $ knapsack xs
-      opt  = knapsack3 xs
+      opt  = knapsackImpl xs
   in  all ((val opt ==) . val) sols
 
 \end{code}

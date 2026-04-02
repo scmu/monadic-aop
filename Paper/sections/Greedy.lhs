@@ -336,18 +336,13 @@ The result would still meet the specification.
 
 The first two |(`spse`)| steps need |max| to be monotonic. Since what follows them are sub-monads of |(max . prefix) <=< suffix|, they all return maximum elements only, and satisfy the first law in Section~\ref{sec:max-monotonic}.
 
-The final one-liner algorithm:
-%if False
-\begin{code}
-mssFinal :: List Int -> List Int
-mssFinal =
-\end{code}
-%endif
+We have thus derived |mss `spse` return . mssImpl|, where
 %format maxlistSum = "\Varid{maxlist}"
 \begin{code}
-  maxlistSum . scanr zplus [] {-"~~,"-}
+mssImpl :: List Int -> List Int
+mssImpl = maxlistSum . scanr zplus [] {-"~~."-}
 \end{code}
-is the famous linear-time algorithm for the maximum segment sum problem ---
+This one-liner is the famous linear-time algorithm for the maximum segment sum problem ---
 if we assume that |sum ys| can be computed in constant time, which could be done by a datatype refinement storing the sum together with the list.
 
 \paragraph*{The Monotonicity Condition.}~
