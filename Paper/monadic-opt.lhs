@@ -34,9 +34,7 @@
 %include sections/Prelim.lhs
 %include sections/Greedy.lhs
 %include sections/Thinning.lhs
-
-
-\section{Conclusions}
+%include sections/Conclusions.lhs
 
 \bibliographystyle{ACM-Reference-Format}
 \bibliography{monadic-opt.bib}
