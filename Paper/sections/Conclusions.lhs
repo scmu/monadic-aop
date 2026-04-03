@@ -16,3 +16,11 @@ Meanwhile, monads are a general way to model effects, including non-determinism,
 Talking about these problems also demonstrates the importance of monad laws.
 
 \paragraph{Related work.}
+
+\cite{GibbonsHinze:11:Just}
+\cite{MuKoJansson:09:Algebra}
+\cite{Affeldt:19:Hierarchy}
+\cite{Mu:19:Equational}
+\cite{MuChiang:20:Deriving}
+\cite{Pinho:22:Greedy}
+\cite{MuOliveira:12:Programming}
