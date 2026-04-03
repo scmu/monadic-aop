@@ -299,7 +299,7 @@ mss :: List Int -> P (List Int)
 mss = max_leqs . (prefix <=< suffix) {-"~~."-}
 \end{code}
 
-\paragraph*{The Main Derivation.}~
+\paragraph{The Main Derivation.}~
 The main derivation goes:
 %if False
 \begin{code}
@@ -345,7 +345,7 @@ mssImpl = maxlistSum . scanr zplus [] {-"~~."-}
 This one-liner is the famous linear-time algorithm for the maximum segment sum problem ---
 if we assume that |sum ys| can be computed in constant time, which could be done by a datatype refinement storing the sum together with the list.
 
-\paragraph*{The Monotonicity Condition.}~
+\paragraph{The Monotonicity Condition.}~
 The greedy theorem helped to establish that
 %if False
 \begin{code}

@@ -98,7 +98,7 @@ w = 20
 %endif
 
 %format subsw = "\Varid{subs}_{w}"
-\paragraph*{Fusion.}~
+\paragraph{Fusion.}~
 To transform to the specification to our generic form, we try to fuse |filt ((w >) . wgt) <=< subseq| into one |foldR|.
 Accroding to the |foldR| fusion rule \eqref{eq:foldRFusion}:
 \begin{equation*}
@@ -132,7 +132,7 @@ The details are left to the reader as an exercise. The specification is now:
 knapsack' = max_leqv . foldR subsw (return [])  {-"~~."-}
 \end{code}
 
-\paragraph*{Failing Monotonicity.}~
+\paragraph{Failing Monotonicity.}~
 It turns out, however, that |subsw| does not meet \eqref{eq:monotonicity} with respect to |geqv|.
 To see that, let us construct a counterexample.
 For the convenience of our readers, we recite and instantiate \eqref{eq:monotonicity} here:
@@ -388,7 +388,7 @@ With |x :: a|, the subexpression |thin . (f x <=< mem)| has type |T b -> P (T b)
 
 Now we try to solve the 0-1 knapsack problem by thinning.
 
-\paragraph*{Representing |T|.}
+\paragraph{Representing |T|.}
 We need to choose a representation of |T|.
 We let |T (List Item)| be |List (List Item)|, \emph{sorted by decreasing weights}.
 If we can fully thin the list, the weights are strictly decreasing because for each weight we need to keep only one solution --- the one that yields maximum value for this weight.
@@ -460,7 +460,7 @@ We have, for |xss, yss :: T (List Item)| sorted by decreasing weights, that
 
 %format addw = "\Varid{add}_{w}"
 
-\paragraph*{The Derivation.}
+\paragraph{The Derivation.}
 Now it is time to calculate |knapsack|.
 Starting from the fused specification, we introduce |thin|, and apply the Thinning Theorem:
 %if False
