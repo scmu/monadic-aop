@@ -16,11 +16,20 @@ Meanwhile, monads are a general way to model effects, including non-determinism,
 Talking about these problems also demonstrates the importance of monad laws.
 
 \paragraph{Related work.}
+\citet{GibbonsHinze:11:Just} is a pioneering work showing that one does not have to give up equational reasoning with the presence of side effects.
+On the contrary, monadic programs are very suitable for reasoning using monad laws and properties of effect operators.
+Inspired, \citet{Mu:19:Equational} modelled Spark aggregation using non-determinism monad, in order to prove it properties.
+\citet{MuChiang:20:Deriving} then explored how to derive programs from monadic specifications.
+List sorting was specified using non-determinism monad, from which a pure quicksort on lists was derived.
+The article went further to explore mixing of effects --- the quicksort algorithm on mutable arrays, defined using state monad, was also derived.
 
-\cite{GibbonsHinze:11:Just}
-\cite{MuKoJansson:09:Algebra}
-\cite{Affeldt:19:Hierarchy}
-\cite{Mu:19:Equational}
-\cite{MuChiang:20:Deriving}
+\citet{MuKoJansson:09:Algebra} encoded the relational instance of the calculus of \citet{BirddeMoor:97:Algebra} in Agda.
+The intention was to use the interactive interface of Agda to carry out program derivations while having them formally checked.
+As the scenario got more complicated, the details one has to provide in an Agda proof got more massive, thus in this article we no longer promote Agda as an ideal interface to derive program with.
+Still, we use Agda to verify the correctness of our theory.
+\cite{Affeldt:19:Hierarchy} presented an Coq/Rocq formalisation of monads and effects, the purpose being to formally model effects hierarchy and the properties of each effects.
+Having built the formalisation, they verified a number of previous work on reasoning about monads and corrected many bugs.
+
+ \citet{MuOliveira:12:Programming}
+
 \cite{Pinho:22:Greedy}
-\cite{MuOliveira:12:Programming}
