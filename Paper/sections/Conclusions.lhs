@@ -30,6 +30,8 @@ Still, we use Agda to verify the correctness of our theory.
 \cite{Affeldt:19:Hierarchy} presented an Coq/Rocq formalisation of monads and effects, the purpose being to formally model effects hierarchy and the properties of each effects.
 Having built the formalisation, they verified a number of previous work on reasoning about monads and corrected many bugs.
 
- \citet{MuOliveira:12:Programming}
+In \citet{BirddeMoor:97:Algebra} and in this article, |max| is a relation/function that takes a set as its input. Alternatively, \citet{MuOliveira:12:Programming} proposed a ``shrink'' operator $(\upharpoonright)$ that is applied directly to relations --- given $S :: A \rightarrow B$, the relation ${S\!\upharpoonright} :: A \rightarrow B$ is included in $S$ but keeps only those outputs that are optimal.
+Using $(\upharpoonright)$ led to a more streamlined formalisation of optimisation problems by avoiding an intermediate set.
+As a future work, it remains to investigate whether the advantage also applies to our setting.
 
 \cite{Pinho:22:Greedy}
