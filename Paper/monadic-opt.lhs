@@ -32,7 +32,8 @@ while subsequent pointwise approaches tend to be ad-hoc and imprecise.
 We propose a notation for non-deterministic program derivation based on non-determinism monad,
 show that it is expressive enough to model concepts including maximum, monotonicity, Greedy/Thinning Theorems,
 and demonstrate how to carry out derivation in this notation.
-One is allowed to use familiar proof techniques such as case analysis and structural induction, as well as fold fusion and universal properties.
+The notation encourages working with symbols,
+and one is allowed to use familiar proof techniques such as case analysis and structural induction, as well as fold fusion and universal properties.
 Key properties of our calculus are verified in Agda.
 \end{abstract}
 

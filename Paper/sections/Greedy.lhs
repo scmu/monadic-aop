@@ -405,7 +405,7 @@ proofMonoMSS x geqs =
         do  (ys1, ys0) <- any
             filt geqs (ys1, ys0)
             return (ys1, []) <|> return (ys1, x : ys0)
- ===       {- |(>>=)| distributes into |mplus|, since |ys1 `geqs` []| -}
+ ===       {- |(=<<)| distributes into |mplus|, since |ys1 `geqs` []| -}
         do  (ys1, ys0) <- any
             (  do { return (ys1, []) } <|>
                do { filt geqs (ys1, ys0); return (ys1, x : ys0) } )
@@ -422,7 +422,7 @@ proofMonoMSS x geqs =
             filt geqs (zs1, zs0)
             return (ys1, zs0)  {-"~~."-}
 \end{code}
-Note that case analysis on |pre| is performed by expanding its definition and using distributivity of |(>>=)|, and that monad laws
+Note that case analysis on |pre| is performed by expanding its definition and using distributivity of |(=<<)|, and that monad laws
 \todo{review the proof above and explain a bit.}
 
 

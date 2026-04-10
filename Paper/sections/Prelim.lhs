@@ -20,55 +20,69 @@ We introduce in this section the building blocks we need.
 \subsection{Nondeterminism Monad}
 \label{sec:non-det-monad}
 
-A monad consists of a type constructor |M| and operators |return :: a -> M a| and |(>>=) :: M a -> (a -> M b) -> M b| that satisfy the \emph{monad laws}:
+A monad consists of a type constructor |M| and operators |return :: a -> M a| and |(=<<) :: (a -> M b) -> M a -> M b| that satisfy the \emph{monad laws}:%
+\footnote{We find the reversed bind |(=<<)| more suitable for this article than the usual bind |(>>=) :: M a -> (a -> M b) -> M b|, and thus introduce only the former.}
 \begin{align*}
-& \mbox{{\bf right identity}:} & |m >>= return| &= |m|  \mbox{~~,}\\
-& \mbox{{\bf left identity}:}  & |return x >>= f| &= |f x| \mbox{~~,}\\
-& \mbox{{\bf associativity}:}  &|(m >>= f) >>= g| &= |m >>= (\x -> f x >>= g)| \mbox{~~.}
+& \mbox{{\bf right identity}:} & |return =<< m| &= |m|  \mbox{~~,}\\
+& \mbox{{\bf left identity}:}  & |f =<< return x| &= |f x| \mbox{~~,}\\
+& \mbox{{\bf associativity}:}  & |f =<< (g =<< m)| &= |(\x -> g =<< f x) =<< m| \mbox{~~.}
 \end{align*}
-The operator |(>>) :: M a -> M b -> M b|, defined by |m >> n = m >>= (\_ -> n)|, ignores the result of |m| before executing |n|.
+The operator |(<<) :: M a -> M b -> M a|, defined by |m << n = (\_ -> m) << n|, ignores the result of |n| before executing |m|.
 A function |a -> b| can be lifted to monad |M| by |fmap|:
 \begin{spec}
 fmap :: (a -> b) -> M a -> M b
-fmap f m = m >>= (return . f) {-"~~."-}
+fmap f m = (return . f) =<< m {-"~~."-}
 \end{spec}
 We also write |fmap f m| infix as |f <$> m|, where the operator |(<$>)| is left-associative like function application.
 It follows from the monad laws that
 |id <$> m = m| and |(f . g) <$> m = f <$> (g <$> m)|, that is, |M| is a functor with |(<$>)| as its functorial map.
 
-In this paper we will also make extensive use of the reverse bind and the Kliseli composition:
+In this paper we will also make extensive use of the Kliseli composition:
 \begin{spec}
-(=<<) :: (a -> M b) -> M a -> M b
-f =<< m = m >>= f {-"~~,"-}
-
 (<=<) :: (b -> M c) -> (a -> M b) -> (a -> M c)
 (f <=< g) x = f =<< g x {-"~~."-}
 \end{spec}
 Kliseli composition |(<=<)| is associative, |(=<<)| is right-associative, and both bind looser than function composition |(.)|.
 We will add parentheses where there might be confusion.
 
-Alternatively, a monad can be defined by three operators: |return :: a -> M a|, |join :: M (M a) -> M a|, and its functorial map |(<$>) :: (a -> b) -> M a -> M b|. The two styles of definitions are equivalent, as |(>>=)| can be defined in terms of |join| and |(<$>)|, and vice versa:
+Alternatively, a monad can be defined by three operators: |return :: a -> M a|, |join :: M (M a) -> M a|, and its functorial map |(<$>) :: (a -> b) -> M a -> M b|. The two styles of definitions are equivalent, as |(=<<)| can be defined in terms of |join| and |(<$>)|, and vice versa:
 \begin{spec}
 join :: M (M a) -> M a
-join m = m >>= id {-"~~,"-}
+join m = id =<< m {-"~~,"-}
 
-(>>=) :: M a -> (a -> M b) -> M b
-m >>= f = join (f <$> m) {-"~~."-}
+(=<<) :: (a -> M b) -> M a -> M b
+f =<< m = join (f <$> m) {-"~~."-}
 \end{spec}
 
 Non-determinism is the only effect we are concerned with in this article: |M a| denotes a non-deterministic computation that may yield zero, one, or more values of type |a|.
 We let |mplus :: M a -> M a -> M a| denote non-deterministic choice and |mzero :: M a| failure. Together they form a monoid (that is, |mplus| is associative with |mzero| as its identity element).
-We demand that |(>>=)| distributes into |mplus| from both sides:
+We demand that |(=<<)| distributes into |mplus| from both sides:
 \begin{align*}
-  |m >>= (\x -> f x `mplus` g x)| &= |(m >>= f) `mplus` (m >>= g)| \mbox{~~,}\\
-  |(m `mplus` n) >>= f| &= |(m >>= f) `mplus` (n >>= f)| \mbox{~~.}
+  |(\x -> f x `mplus` g x) =<< m| &= |(f =<< m) `mplus` (g =<< m)| \mbox{~~,}\\
+  |f =<< (m `mplus` n)| &= |(f =<< m) `mplus` (f =<< n)| \mbox{~~.}
 \end{align*}
-and that |mzero| is a zero of |(>>=)|:
+and that |mzero| is a zero of |(=<<)|:
 \begin{align*}
-  |mzero >>= f| &= |mzero| \mbox{~~,}\\
-  |f >> mzero|  &= |mzero| \mbox{~~.}
+  |f =<< mzero| &= |mzero| \mbox{~~,}\\
+  |mzero << m|  &= |mzero| \mbox{~~.}
 \end{align*}
 Furthermore, |mplus| is commutative (|m `mplus` n = n `mplus` m|) and idempotent (|m `mplus` m = m|).
+
+{\bf Note.} Using monads avoids the confusion mentioned in Section \ref{sec:intro}.
+The expression |(\x -> x - x) (0 `mplus` 1)| of \citet{deMoorGibbons:00:Pointwise} and \citet{BirdRabe:19:How} is written and evaluated in monadic notation as:
+\begin{spec}
+      (\x -> return (x - x)) =<< (return 0 `mplus` return 1)
+ ===    {- |(=<<)| distributes into |mplus| -}
+      ((\x -> return (x - x)) =<< return 0) `mplus` ((\x -> return (x - x)) =<< return 0)
+ ===    {- monad law, $\beta$-reduction -}
+      return (0-0) `mplus` return (1-1)
+ ===    {- arithmetics, idempotency of |mplus| -}
+      return 0 {-"~~."-}
+\end{spec}
+The presence of |(=<<)| makes it clear that one cannot perform $\beta$-reduction too early and must use distributivity to resolve the non-determinism.
+\citet{BirdRabe:19:How} uses additional judgements to determine when a value is pure,
+while pure and non-deterministic values are clearly distinguished by type and syntax in the monadic style.
+{\bf End of note.}
 
 \paragraph*{Containment.}~
 The containment relation of non-determinism monad is defined by:
@@ -93,7 +107,7 @@ The |(.)| operator of Bird and de Moor, denoting composition of relations, corre
 
 \paragraph*{Sets.}~ A structure that supports all the operations above is the set monad: for all type |a|,
 |m :: P a| is a set whose elements are of type |a|,
-|mzero| is the empty set, |mplus| is set union for two sets, |join| is union for a set of sets, |(`sse`)| is set inclusion, |return| forms a singleton set, and |m >>= f| is given by |join {f x || x <- m }|.
+|mzero| is the empty set, |mplus| is set union for two sets, |join| is union for a set of sets, |(`sse`)| is set inclusion, |return| forms a singleton set, and |f =<< m| is given by |join {f x || x <- m }|.
 For the rest of the paper we take |M = P|.
 
 The set |any :: P a| contains all elements having type |a|.
