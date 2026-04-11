@@ -23,8 +23,8 @@ We introduce in this section the building blocks we need.
 A monad consists of a type constructor |M| and operators |return :: a -> M a| and |(=<<) :: (a -> M b) -> M a -> M b| that satisfy the \emph{monad laws}:%
 \footnote{We find the reversed bind |(=<<)| more suitable for this article than the usual bind |(>>=) :: M a -> (a -> M b) -> M b|, and thus introduce only the former.}
 \begin{align*}
-& \mbox{{\bf right identity}:} & |return =<< m| &= |m|  \mbox{~~,}\\
-& \mbox{{\bf left identity}:}  & |f =<< return x| &= |f x| \mbox{~~,}\\
+& \mbox{{\bf left identity}:} & |return =<< m| &= |m|  \mbox{~~,}\\
+& \mbox{{\bf right identity}:}  & |f =<< return x| &= |f x| \mbox{~~,}\\
 & \mbox{{\bf associativity}:}  & |f =<< (g =<< m)| &= |(\x -> g =<< f x) =<< m| \mbox{~~.}
 \end{align*}
 The operator |(<<) :: M a -> M b -> M a|, defined by |m << n = (\_ -> m) << n|, ignores the result of |n| before executing |m|.
@@ -107,7 +107,17 @@ Later in this article we will need monotonicity in more specific cases, where we
 Consider \citet{BirddeMoor:97:Algebra}, for example, the equivalent of our |h . f| should be written as |h . {-"\Lambda\,"-} f| in their formulation, and the $\Lambda$ operator, which collects the results of a relation in a set, is \emph{not} monotonic.
 The |(.)| operator of Bird and de Moor, denoting composition of relations, corresponds to our |(<=<)|, and is indeed monotonic with respect to |(`sse`)|.}
 
-\paragraph*{Sets.}~ A structure that supports all the operations above is the set monad: for all type |a|,
+The following law relates |(<<)| and |(`sse`)|:
+\begin{equation}
+ |n << m {-"~"-}`sse`{-"~"-} n| \mbox{~~.}
+ \label{eq:seq-non-cancel}
+\end{equation}
+Even though |n| does not use |m|, we cannot just drop |m| without changing the value of the expression ---
+the lefthand side reduces to |mzero| when |m = mzero|.
+When |m /= mzero|, we have |n << m = n|.
+
+\vspace{0.3cm}
+\paragraph{Sets.}~ A structure that supports all the operations above is the set monad: for all type |a|,
 |m :: P a| is a set whose elements are of type |a|,
 |mzero| is the empty set, |mplus| is set union for two sets, |join| is union for a set of sets, |(`sse`)| is set inclusion, |return| forms a singleton set, and |f =<< m| is given by |join {f x || x <- m }|.
 For the rest of the paper we take |M = P|.
@@ -159,23 +169,23 @@ We get all segments of a list by |prefix <=< suffix|.
 To ensure that there is indeed a model of our set monad, we built one in Agda.
 A first attempt was to represent a set |P| by its characteristic predicate:
 \begin{spec}
-P : Set -> Set1
-P a = a -> Set {-"~~."-}
+P : Type -> Type 1
+P a = a -> Type {-"~~."-}
 \end{spec}
 Given |x : a|, |P x| is a type, or a proposition, stating the conditions under which |x| is in the set denoted by |P x|.
-Monad operators |return| and |(>>=)| are defined by
+Monad operators |return| and |(=<<)| are defined by
 \begin{spec}
-return : {a : Set} -> a -> P a
+return : {a : Type} -> a -> P a
 return x  = \y ->  x <=> y {-"~~,"-}
-(>>=) : {a b : Set} -> P a -> (a -> P b) -> P b
-m >>= f   = \y -> Sum{-"\!"-}[x `inn` a] (m x * f x y) {-"~~,"-}
+(=<<) : {a b : Type} -> (a -> P b) -> P a -> P b
+f =<< m   = \y -> Sum{-"\!"-}[x `inn` a] (m x * f x y) {-"~~,"-}
 \end{spec}
 where |(<=>)| is propositional equality, and |Sum| denotes dependent pair.
 That is, |y| is a member of the set |return x| exactly when |x <=> y|,
 and |y| is a member of |m >>= f| if there exists a witness |x|, presented in the dependent pair, that is a member of the set |m|, and |y| is a member of the set |f x|.
 
 We would soon get stuck when we try to prove any of its properties.
-To prove the right identity law |m >>= return = m|, for example, amounts to proving that
+To prove the left identity law |return =<< m = m|, for example, amounts to proving that
 \begin{spec}
   (\y -> Sum{-"\!"-}[x `inn` a] (m x * x <=> y)) {-"~"-}<=>{-"~"-} m {-"~~."-}
 \end{spec}
@@ -183,7 +193,39 @@ The righthand side |m| is a function which yields, for each member |y|, a proof 
 while the lefthand side is a function which produces, for each member |y|, a dependent pair consisting of a value |x : a| , a proof that |x| is in |m|, and a proof that |x <=> y|.
 While logically we recognize that they are equivalent, in the type theory of Agda the two sides are different, albeit isomorphic, types.
 
-\todo{Cubical Agda}
+To make the proofs easier we prefer a type theory where such types denote ``the same'' properties are indeed considered equivalent.
+We move to Cubical Agda \cite{Vezzosi:19:Cubical}, and make use of its definition of |P|, in terms of |hprop| (Homotopic Type Theory (HoTT) propositions), which expands to:
+\begin{spec}
+P : Type l -> Type (1+l)
+P a = a -> Sum{-"\!"-}[b `inn` Type _] ((y0 y1 : b) -> y0 <=> y1) {-"~~."-}
+\end{spec}
+That is, given |x| of type |a|, |P x| is a type |b| whose terms are proofs that |x| is in the set |P x|, \emph{paired with a proof that any two terms |y0| and |y1| having type |b| are ``equal''}.
+Here the equality |(<=>)| is defined in the HoTT sense, that there is a path from |y0| to |y1|.
+
+%format squash1 = "\Varid{squash_{1}}"
+%format sem1(e) = "\Vert" e "\Vert_{1}"
+In the terminology of Cubical Agda and HoTT, a \emph{proposition} is a type whose terms are always equal.
+The operator |sem1(_)| converts a type to a proposition, and |squash1| is a proof that any two terms of the said type are equal (that is, there exists a path between them).
+They are defined as constructors of a \emph{higher-order inductive type}, but we omit the details.
+Given them, |return| and |(=<<)| are defined by:
+\begin{spec}
+return : a -> P a
+return x  = \y -> sem1(x <=> y) , squash1 {-"~~,"-}
+
+(=<<) : {a b : Type l} -> (a -> P b) -> P a -> P b
+f =<< m   = \y -> sem1(\Sum _ (\ x -> fst (m x) * fst (f x y))) , squash1 {-"~~."-}
+\end{spec}
+
+Properties such as the left identity can then be proved in Agda:
+%format leftId = "\Varid{left}{\textendash}\Varid{id}"
+\begin{spec}
+leftId : (m : P a) -> (return =<< m) <=> m
+leftId = ...
+\end{spec}
+Proof of these primitive properties typically involves use of functional extensionality,
+the |rec| operator, of type |isProp P -> (b -> P) -> sem1 b -> P|, which says that if every |b| satisfies proposition |P|, every |sem1 b| satissfies |P| as well.
+Interested readers are referred to the accompanying Agda code.
+Other properties may then be established on these primitive properties, without touching these details.
 
 \subsection{Monadic fold}
 
@@ -229,7 +271,6 @@ Evaluating |prefix' [1,2]|, we get:
     return [] <|> return [1] <|> return [] <|> return [1,2] {-"~~,"-}
 \end{spec}
 The difference is due to that, in the case of |prefix'|, nondeterminism of |pre| happens inside |(=<<)|.
-\todo{compare with Oege and Jeremy's early work.}
 In the semantics of our set monad, due to commutativity and idempotency of |mplus|, the two results are seen as the same.
 From now on we equate |prefix| and |prefix'|.
 
@@ -333,8 +374,8 @@ Finally, monadic |foldR| can be refined to pure |foldr| if both of its arguments
 \label{eq:foldr-foldR}
 \end{equation}
 
-\paraskip
-\paragraph{Scan and its properties.}~
+\subsection{Monadic scan and its properties}
+
 Introducing a |scanr| is often a key step in speeding up algorithms related to lists.
 For those who not familiar with it, |scanr :: (a -> b -> b) -> b -> List a -> List b|
 is like |foldr|, but records the intermediate results of each step in a list.
@@ -388,14 +429,15 @@ Our scan lemma for |scanR| goes:
 \begin{code}
 propScanLemmaStmt :: (a -> b -> P b) -> P b -> List a -> P b
 propScanLemmaStmt f e =
-   member <=< scanR f e === foldR f e <=< suffix
+   member <=< scanR f e `sse` foldR f e <=< suffix
 \end{code}
 %endif
 \begin{equation}
-  |member <=< scanR f e === foldR f e <=< suffix | \mbox{~~.}
+  |member <=< scanR f e {-"~"-}`sse`{-"~"-} foldR f e <=< suffix | \mbox{~~.}
   \label{eq:ScanLemma}
 \end{equation}
-That is, every element in any list computed by |scanR| is a result of |foldR| applied to some suffix of the input, and vice versa.
+That is, every element in any list computed by |scanR| is a result of |foldR| applied to some suffix of the input.
+The lefthand side is strictly smaller than the righthande side when |f| returns |mzero| while |e /= mzero|.
 \begin{proof}
 Induction on the input. For the inductive case we reason:
 %if False
@@ -406,24 +448,24 @@ proofScanLemmaInd f e x xs =
 %endif
 \begin{code}
       foldR f e =<< suffix (x : xs)
- ===    {- definition of |suffix| -}
+ ===     {- definition of |suffix| -}
       foldR f e =<< (return (x:xs) <|> suffix xs)
- ===    {- |(=<<)| distributes into |mplus| -}
+ ===     {- |(=<<)| distributes into |mplus| -}
       (foldR f e =<< return (x:xs)) <|> (foldR f e =<< suffix xs)
- ===    {- induction -}
+ ===     {- induction -}
       foldR f e (x : xs) <|> (member =<< scanR f e xs)
- ===    {- definition of |foldR| -}
+ ===     {- definition of |foldR| -}
       (f x =<< foldR f e xs) <|> (member =<< scanR f e xs)
- ===    {- by \eqref{eq:HeadScan}: |head <$> scanR f e xs === foldR f e xs| -}
+ ===     {- by \eqref{eq:HeadScan}: |head <$> scanR f e xs === foldR f e xs| -}
       (f x =<< (head <$> scanR f e xs)) <|> (member =<< scanR f e xs)
- ===    {- distributivity between |(=<<)| and |mplus|, switching to |do|-notation -}
+ ===     {- distributivity between |(=<<)| and |mplus|, switching to |do|-notation -}
       do  ys <- scanR f e xs
           f x (head ys) <|> member ys
- ===    {- monad laws -}
+ `spse`  {- monad laws, \eqref{eq:seq-non-cancel} -}
       do  ys <- scanR f e xs
           z <- f x (head ys)
           return z <|> member ys
- ===    {- definitions of |scanR| and |member| -}
+ ===     {- definitions of |scanR| and |member| -}
       member =<< scanR f e (x : xs) {-"~~."-}
 \end{code}
 \end{proof}
@@ -621,6 +663,8 @@ max_unlhd . f `sse` max_unlhd . g  {-"~"-}<=={-"~"-} f `sse` g && (forall z, y `
 These two laws cover all the cases in this article where we need |max| to be monotonic.
 In particular, the first law automatically is satisfied if |g| has the form |max_unlhd . g'|, that is, |f| is already a refinement of some function that computes maximums.
 
+\todo{Find out whether these are the properties we use, and whether the following proofs should be mentioned at all.}
+
 The two laws translate to the monadic language as:
 \begin{equation*}
 |max_unlhd . f `sse` max_unlhd . g|\mbox{~~}|<==|\mbox{~~} |f `sse` g &&|~
@@ -726,12 +770,14 @@ propMaxJoin xss = max (join xss) === max (join (fmap max xss))
    \label{eq:MaxJoin}
 \end{equation}
 Consider an input |xss :: P (P a)|, a set of sets, as the input for both sides. On the lefthand side, |xss| is joined into a single set, from which we keep the minimums. It is equivalent to the righthand side, where we choose the minimums of each of the sets in |xss|, before keeping their minimums.
-With \eqref{eq:MaxJoin} and the definition of |(>>=)| by |join| we can show how |max| promotes into |(=<<)| or |(<=<)|:
+With \eqref{eq:MaxJoin} and the definition of |(=<<)| by |join| we can show how |max| promotes into |(=<<)| or |(<=<)|:
 \begin{equation}
   |max . (f <=< g) === max . ((max . f) <=< g)| \mbox{~~,}
    \label{eq:MaxKComp}
 \end{equation}
 or |max (f =<< g x) === max ((max . f) =<< g x)| for all |x|.
+
+\todo{Verify this. And probably drop |join| if we do not need it.}
 %The proof goes:
 %%if False
 %\begin{code}
@@ -772,10 +818,6 @@ maxlist = undefined
 That |unlhd| being total guarantees that maximum exists for non-empty |xs|.
 The function |maxlist| may decide how to resolve a tie --- in the implementation above, for example, |maxlist| prefers elements that appears earlier in the list.
 
-\subsubsection{In the Agda model}
-
-we implement |min| by:
-
-\todo{more here.}
-
-It is then proved in Agda that the above implementation satisfies \eqref{eq:max-univ-monadic}.
+\paraskip
+\paragraph{In the Agda model}
+We assume that |max| is a value satisfying a universal property that more closely resembles that of \citet{BirddeMoor:97:Algebra}, which essentially expands to \eqref{eq:max-univ-monadic}, from which we prove the rest of the properties.
