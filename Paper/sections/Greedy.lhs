@@ -269,7 +269,7 @@ By the universal property of |max|, we ought to prove:
 % \end{spec}
 The first step can be carried out by |max|-cancelation with |f := id|. The rest is the same.
 
-\subsection{Example: Segments Having Maximum Sum}
+\subsection{Example: segments having maximum sum}
 
 To see an application of the Greedy Theorem, we consider the classical maximum segment sum again,
 but return the list instead of the sum.
@@ -299,7 +299,8 @@ mss :: List Int -> P (List Int)
 mss = max_leqs . (prefix <=< suffix) {-"~~."-}
 \end{code}
 
-\paragraph{The Main Derivation.}~
+\paraskip
+\paragraph{The main derivation.}~
 The main derivation goes:
 %if False
 \begin{code}
@@ -345,7 +346,7 @@ mssImpl = maxlistSum . scanr zplus [] {-"~~."-}
 This one-liner is the famous linear-time algorithm for the maximum segment sum problem ---
 if we assume that |sum ys| can be computed in constant time, which could be done by a datatype refinement storing the sum together with the list.
 
-\paragraph{The Monotonicity Condition.}~
+\paragraph{The monotonicity condition.}~
 The greedy theorem helped to establish that
 %if False
 \begin{code}

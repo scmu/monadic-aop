@@ -15,6 +15,7 @@ Introducing relations or multi-functions seems to be an overkill for these ``cor
 Meanwhile, monads are a general way to model effects, including non-determinism, which ought to be taught in any intermediate level functional programming course anyway.
 Talking about these problems also demonstrates the importance of monad laws.
 
+\paraskip
 \paragraph{Related work.}
 \citet{GibbonsHinze:11:Just} is a pioneering work showing that one does not have to give up equational reasoning with the presence of side effects.
 On the contrary, monadic programs are very suitable for reasoning using monad laws and properties of effect operators.

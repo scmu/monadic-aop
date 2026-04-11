@@ -17,7 +17,7 @@ import Common
 
 We introduce in this section the building blocks we need.
 
-\subsection{Nondeterminism Monad}
+\subsection{Nondeterminism monad}
 \label{sec:non-det-monad}
 
 A monad consists of a type constructor |M| and operators |return :: a -> M a| and |(=<<) :: (a -> M b) -> M a -> M b| that satisfy the \emph{monad laws}:%
@@ -68,7 +68,8 @@ and that |mzero| is a zero of |(=<<)|:
 \end{align*}
 Furthermore, |mplus| is commutative (|m `mplus` n = n `mplus` m|) and idempotent (|m `mplus` m = m|).
 
-{\bf Note.} Using monads avoids the confusion mentioned in Section \ref{sec:intro}.
+
+{\bf Note:} using monads avoids the confusion mentioned in Section \ref{sec:intro}.
 The expression |(\x -> x - x) (0 `mplus` 1)| of \citet{deMoorGibbons:00:Pointwise} and \citet{BirdRabe:19:How} is written and evaluated in monadic notation as:
 \begin{spec}
       (\x -> return (x - x)) =<< (return 0 `mplus` return 1)
@@ -84,7 +85,8 @@ The presence of |(=<<)| makes it clear that one cannot perform $\beta$-reduction
 while pure and non-deterministic values are clearly distinguished by type and syntax in the monadic style.
 {\bf End of note.}
 
-\paragraph*{Containment.}~
+\paraskip
+\paragraph{Containment.}~
 The containment relation of non-determinism monad is defined by:
 \begin{spec}
 m `sse` n = (m `mplus` n = n) {-"~~."-}
@@ -123,7 +125,8 @@ We think the latter name is misleading, and instead use |filt| in this paper.%
  % is a function |guard :: Bool -> M ()| that returns |()| when the input is true and |mzero| otherwise, and |assert p x| is defined by |do { guard (p x); return x }|. In this paper we try to introduce less construct and use only |filt|.
 }
 
-\paragraph*{Example: Prefixes and Suffixes.}~
+\paraskip
+\paragraph{Example: prefixes and suffixes.}~
 The function |prefix| non-deterministically computes a prefix of the given list:
 \begin{code}
 prefix :: List a -> P (List a)
@@ -151,7 +154,7 @@ suffix (x:xs)  = return (x:xs) <|> suffix xs {-"~~."-}
 Evaluating |suffix [1,2,3]| yields |[1,2,3]|, |[2,3]|, |[3]|, and |[]|.
 We get all segments of a list by |prefix <=< suffix|.
 
-\subsection{An Agda Model of Set Monad}
+\subsection{An Agda model of set monad}
 
 To ensure that there is indeed a model of our set monad, we built one in Agda.
 A first attempt was to represent a set |P| by its characteristic predicate:
@@ -182,7 +185,7 @@ While logically we recognize that they are equivalent, in the type theory of Agd
 
 \todo{Cubical Agda}
 
-\subsection{Monadic Fold}
+\subsection{Monadic fold}
 
 We define the monadic fold on lists as:
 \begin{code}
@@ -239,7 +242,8 @@ notPrefixP    = foldR preP mzero  {-"~~,"-}
 \end{code}
 because |pre x =<< mzero| immediately reduces to |mzero|.
 
-\paragraph*{Fixed-Point Properties and Fusion Laws.}~
+\paraskip
+\paragraph{Fixed-point properties and fusion laws.}~
 Given |h :: List a -> P b|, the \emph{fixed-point properties}, that is, sufficient conditions for |h| to contain, be contained by, or equal to |foldR f e|, are given by:
 \begin{align}
 |foldR f e `sse` h| & |{-"~"-}<=={-"~"-} e `sse` h [] {-"\,"-}&&{-"\,"-} f x =<< h xs `sse` h (x:xs)  {-"~~,"-}| \label{eq:foldRPrefixPt} \\
@@ -329,7 +333,8 @@ Finally, monadic |foldR| can be refined to pure |foldr| if both of its arguments
 \label{eq:foldr-foldR}
 \end{equation}
 
-\paragraph*{Scan and Its Properties.}~
+\paraskip
+\paragraph{Scan and its properties.}~
 Introducing a |scanr| is often a key step in speeding up algorithms related to lists.
 For those who not familiar with it, |scanr :: (a -> b -> b) -> b -> List a -> List b|
 is like |foldr|, but records the intermediate results of each step in a list.
@@ -475,7 +480,7 @@ In particular, since |unlhd| is not necessarily anti-symmetric, maximum elements
 The function |max_unlhd :: P a -> P a| takes a set and returns a refined set that keeps all the maximum elements and nothing else.
 In this section we explore its definition and properties.
 
-\subsubsection{Universal Property}
+\subsubsection{Universal property}
 
 In set-theoretical notation, |max_unlhd| can be defined by the following equivalence:
 for all |xs| and |ys|,
@@ -562,7 +567,6 @@ Letting |h = max . f| in \eqref{eq:max-univ-monadic}, we get on the righthand si
  \label{eq:max-cancelation}
 \end{equation}
 
-\noindent
 {\bf Note}: by defining the ``split'' operator |split f g x = do { y <- f x; z <- g x; return (y,z) }|,
 \eqref{eq:max-univ-monadic} can be written more concisely as below:
 \begin{equation*}
@@ -590,7 +594,7 @@ We will discuss about that soon.
 % \end{spec}
 
 
-\subsubsection{Conditional Monotonicity}
+\subsubsection{Conditional monotonicity}
 \label{sec:max-monotonic}
 
 The function |max| is not monotonic with respect to |(`sse`)| ---
@@ -708,7 +712,7 @@ minMonoPf f g unrhd =
 Notice the first step of the calculation: |z <- any| and |y <- g z| match the LHS of |(`sse`)| in the big parentheses in \eqref{eq:max-monotonic-monadic}, allowing us to rewrite them to the RHS of |(`sse`)|.
 It will be a technique we use a lot in such proofs: identifying the lines that matches the LHS of some |(`sse`)|, and rewrite them to the RHS.
 
-\subsubsection{Promotion into Kliseli Composition}
+\subsubsection{Promotion into Kliseli composition}
 
 The function |max| promotes into |join|:
 %if False
@@ -745,7 +749,7 @@ or |max (f =<< g x) === max ((max . f) =<< g x)| for all |x|.
 %      max ((max . f) =<< g xs) {-"~~."-}
 %\end{code}
 
-\subsubsection{Conversion from Lists}
+\subsubsection{Conversion from lists}
 
 In the last few steps of a program calculation we usually want to refine a monadic |max| to a function on lists.
 If |unlhd| is total (that is, for all |x| and |y| of the right type, at least one of |x `unrhd` y| or |y `unrhd` x| holds), and if |xs| is non-empty, we have
@@ -768,7 +772,7 @@ maxlist = undefined
 That |unlhd| being total guarantees that maximum exists for non-empty |xs|.
 The function |maxlist| may decide how to resolve a tie --- in the implementation above, for example, |maxlist| prefers elements that appears earlier in the list.
 
-\subsubsection{In the Agda Model}
+\subsubsection{In the Agda model}
 
 we implement |min| by:
 
