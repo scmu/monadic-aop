@@ -57,7 +57,17 @@ Around two decades later, \citet{BirdRabe:19:How} presented a theoretical backgr
 While \citet{deMoorGibbons:00:Pointwise} interpreted their pointwise calculus by translating expressions to relations, \citet{BirdRabe:19:How} presented a set-theoretic semantics.
 To the users, the two calculus are rather similar. While their foundations are solid, the aforementioned peculiarities makes it harder to reason about programs without making mistakes.
 
-\paragraph*{This article} We propose a monadic notation for specifying optimisation problems and derive from them algorithms. We consider problems having the form:
+Another problem shared by all approaches above, however, is that it is hard to fit them into the curriculum of a functional programming course.
+Imagine a functional programming course with an emphasis on correctness and reasoning,
+covering topics include definition and proof by induction.
+Everything looks fine, until we encounter cases like \todo{polish.}
+Suddenly we have to extend the language, move to a different semantics, be it relations or multifunctions, which seems to challenge one's established understanding of the language and break some rules one relied on, only to cover some ``corner cases.''
+These extensions appear to be invented only for this section of the course, and are then forgotten when we move on to the next part.
+
+Meanwhile, we already have \emph{monads}, a general framework for modelling non-determinsm as well as other effects, which a functional programming course must talk about anyway.
+
+\paraskip
+\paragraph{This article} We propose a monadic notation for specifying optimisation problems and derive from them algorithms. We consider problems having the form:
 \begin{spec}
   max . (filt p <=< foldR f e) {-"~~,"-}
 \end{spec}
