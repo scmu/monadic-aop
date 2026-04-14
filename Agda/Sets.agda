@@ -8,7 +8,6 @@ open import Cubical.Functions.Logic
 open import Cubical.HITs.PropositionalTruncation as PT hiding (map)
 open import Cubical.Foundations.Powerset as P using (ℙ; _∈_; _⊆_)
 open import Cubical.Data.Sum.Base using (_⊎_)    
-open import PowersetExt
 
 private
   variable

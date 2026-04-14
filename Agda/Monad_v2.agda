@@ -241,6 +241,12 @@ R-trans R = ∀ x y z → y ∈ R x → z ∈ R y → z ∈ R x
 <=<-assoc-right : {X : Type ℓ} → (R S T : X → ℙ X) → R <=< (S <=< T) ⊑ (R <=< S) <=< T
 <=<-assoc-right R S T x x' x'∈lhs = rec squash₁ (λ {(z , z∈S<=<Tx , x'∈Rz) → rec squash₁ (λ z₁ → ∣ z₁ .fst , z₁ .snd .fst , ∣ z , z₁ .snd .snd , x'∈Rz ∣₁ ∣₁) z∈S<=<Tx}) x'∈lhs
 
+-- <$> properties
+=<<-<$>-fusion : {X Y Z : Type ℓ} → (f : Y → ℙ Z) → (g : X → Y) → (xs : ℙ X) 
+               → f =<< (g <$> xs) ≡ (f ∘ g) =<< xs 
+=<<-<$>-fusion f g xs = 
+  >>=-assoc xs (λ x → return (g x)) f 
+  ∙ cong (λ k → xs >>= k) (funExt λ x → ret-left-id (g x) f)
 
 -- non-determinism monad
 
