@@ -2,36 +2,40 @@
 
 module Reasoning where
 
-open import Cubical.Foundations.Powerset as P using (ℙ; _∈_; _⊆_)
-open import PowersetExt
-open import Cubical.Foundations.Prelude 
+open import Cubical.Foundations.Powerset as P using (ℙ; _∈_; _⊆_; ⊆-refl-consequence; ⊆-trans)
+open import Cubical.Foundations.Prelude
 
--- Properties of _⊆_
 private
-    variable
-        X : Set
+  variable
+    ℓ : Level
+    X : Type ℓ
 
-trans : ∀ {x y z : ℙ X} → x ⊆ y → y ⊆ z → x ⊆ z
-trans = λ x₁ x₂ x₃ x₄ → x₂ x₃ (x₁ x₃ x₄)
+data _⊆'_ {ℓ : Level} {X : Type ℓ} (A B : ℙ X) : Type ℓ where
+  incl : A ⊆ B → A ⊆' B
 
+⊆'-refl : {ℓ : Level} {X : Type ℓ} {A : ℙ X} → A ⊆' A
+⊆'-refl = incl (λ _ z → z)
 
-module ⊆-Reasoning {X : Set} where
+module ⊆-Reasoning {ℓ} {X : Type ℓ} where
   infix  1 ⊆begin_
-  infixr 2 _⊆⟨_⟩_ 
+  infixr 2 _⊆⟨_⟩_
+  infixr 2 _≡⟨_⟩⊆_
   infix  3 _⊆∎
 
-  ⊆begin_ : ∀ {x y : ℙ X} → x ⊆' y → x ⊆' y
-  ⊆begin x⊆y  =  x⊆y
+  ⊆begin_ : {x y : ℙ X} → x ⊆' y → x ⊆' y
+  ⊆begin x⊆y = x⊆y
 
   _⊆⟨_⟩_ : (x : ℙ X) {y z : ℙ X} → x ⊆' y → y ⊆' z → x ⊆' z
-  x ⊆⟨ incl .x .y x⊆y ⟩ incl y z y⊆z = incl x z (λ x₁ z₁ → y⊆z x₁ (x⊆y x₁ z₁))
+  _⊆⟨_⟩_ x {y} {z} (incl p) (incl q) = incl (⊆-trans x y z p q)
 
-  _⊆∎ : ∀ (xs : ℙ X) → xs ⊆' xs
-  xs ⊆∎ = incl xs xs (λ _ → λ z → z)
+  _≡⟨_⟩⊆_ : (x : ℙ X) {y z : ℙ X} → x ≡ y → y ⊆' z → x ⊆' z
+  _≡⟨_⟩⊆_ x {y} {z} eq (incl q) = incl (⊆-trans x y z (fst (⊆-refl-consequence x y eq)) q)
 
-  reasoning : ∀ {x y : ℙ X} → x ⊆' y → x ⊆ y
-  reasoning (incl _ _ p) = p 
+  _⊆∎ : (x : ℙ X) → x ⊆' x
+  x ⊆∎ = ⊆'-refl
 
-open ⊆-Reasoning public using (⊆begin_; _⊆⟨_⟩_; _⊆∎; reasoning)
+  -- Extract the underlying proof when done
+  reasoning : {x y : ℙ X} → x ⊆' y → x ⊆ y
+  reasoning (incl p) = p
 
-
+open ⊆-Reasoning public using (⊆begin_; _⊆⟨_⟩_; _≡⟨_⟩⊆_; _⊆∎; reasoning)

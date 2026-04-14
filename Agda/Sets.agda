@@ -99,20 +99,28 @@ _∩_ A B x = ((x ∈ A) × (x ∈ B)) , isProp× (P.∈-isProp A x) (P.∈-isPr
 -- ∪-∩-dist A B C = P.⊆-extensionality (A ∪ (B ∩ C)) ((A ∪ B) ∩ (A ∪ C)) ({!   !} , {!   !})
 
 
-⊆-∩-left : (A B : ℙ X) → (A ∩ B) ⊆' A
-⊆-∩-left A B = incl (A ∩ B) A (λ x z → z .fst)
+⊆-∩-left : (A B : ℙ X) → (A ∩ B) ⊆ A
+⊆-∩-left A B = λ x z → z .fst
 
-⊆-∩-right : (A B : ℙ X) → (A ∩ B) ⊆' B
-⊆-∩-right A B = incl (A ∩ B) B (λ x z → z .snd)
-
+⊆-∩-right : (A B : ℙ X) → (A ∩ B) ⊆ B
+⊆-∩-right A B = λ x z → z .snd
 
 -- ∪ and ⊆ 
-⊆-∪-monotonic-left : (A B C : ℙ X) → A ⊆' B → (A ∪ C) ⊆' (B ∪ C)
-⊆-∪-monotonic-left A B C (incl .A .B A⊆B) = incl (A ∪ C) (B ∪ C) (λ x₁ x₂ → rec squash₁ ((λ {(_⊎_.inl x∈A) → ∣ _⊎_.inl (A⊆B x₁ x∈A) ∣₁ ; (_⊎_.inr x∈C) → ∣ _⊎_.inr x∈C ∣₁ })) x₂)
+⊆-∪-monotonic-left : (A B C : ℙ X) → A ⊆ B → (A ∪ C) ⊆ (B ∪ C)
+⊆-∪-monotonic-left A B C A⊆B = λ x x∈A∪C → rec squash₁ 
+    (λ { 
+        (_⊎_.inl x∈A) → ∣ _⊎_.inl (A⊆B x x∈A) ∣₁ ; 
+        (_⊎_.inr x∈C) → ∣ _⊎_.inr x∈C ∣₁ }
+    )
+    x∈A∪C
 
-⊆-∪-monotonic-right : (A B C : ℙ X) → A ⊆' B → (C ∪ A) ⊆' (C ∪ B)
-⊆-∪-monotonic-right A B C (incl .A .B A⊆B) = incl (C ∪ A) (C ∪ B) (λ x₁ x₂ → rec squash₁ (λ { (_⊎_.inl x∈C) → ∣ _⊎_.inl x∈C ∣₁ ; (_⊎_.inr x∈A) → ∣ _⊎_.inr (A⊆B x₁ x∈A) ∣₁ }) x₂)
-
+⊆-∪-monotonic-right : (A B C : ℙ X) → A ⊆ B → (C ∪ A) ⊆ (C ∪ B)
+⊆-∪-monotonic-right A B C A⊆B = λ x x∈C∪A → rec squash₁ 
+    (λ { 
+        (_⊎_.inl x∈C) → ∣ _⊎_.inl x∈C ∣₁ ; 
+        (_⊎_.inr x∈C) → ∣ _⊎_.inr (A⊆B x x∈C) ∣₁
+    }) 
+    x∈C∪A
 
 ∪-⊆-both : (A B C : ℙ X) → A ⊆ C → B ⊆ C → (A ∪ B) ⊆ C
 ∪-⊆-both A B C A⊆C B⊆C x x∈A∪B = 
