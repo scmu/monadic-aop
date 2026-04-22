@@ -2,10 +2,13 @@
 module MonadicList where
 
 open import Cubical.Data.List hiding (foldr; rec)
+open import List+.List+
 open import Cubical.Foundations.Prelude
 open import Cubical.HITs.PropositionalTruncation as PT
 open import Cubical.Foundations.Powerset as P using (ℙ; _∈_; _⊆_)
 open import Cubical.Data.Sigma.Base using (_×_) 
+open import Cubical.Data.Empty using (isProp⊥; isProp⊥* ; ⊥* ; elim*; ⊥)
+open import Cubical.Data.Unit
 open import Reasoning
 
 open import Monad_v2
@@ -52,12 +55,20 @@ pre+ x ys = return [ x ] ∪ return (x ∷ ys)
 prefix' : List X → ℙ (List X) 
 prefix' = foldrM pre (return [])
 
--- 
+-- list operations 
 wrap : X → List X
 wrap x = [ x ]
 
+-- maxlist : List⁺ X → (R : ) → X
+-- -- maxlist [ x ]⁺ = x
+-- maxlist [ x ]⁺ = {!   !}
+-- maxlist (x ∷⁺ xs) = {!   !}
+
+postulate
+  impossible-head : ∀ {ℓ} {X : Type ℓ} → X
+
 head : List X → X
-head [] = {!   !}
+head [] = impossible-head
 head (x ∷ xs) = x
 
 member : List X → ℙ X
@@ -106,7 +117,7 @@ scan-lemma f e [] =
             foldrM f e =<< suffix []
             ∎)
     in fst (P.⊆-refl-consequence (member =<< scanrM f e []) (foldrM f e =<< suffix []) eq)
-scan-lemma f e (x ∷ xs) = reasoning (
+scan-lemma f e (x ∷ xs) = reasoning⊆ (
     ⊆begin 
         (member =<< scanrM f e (x ∷ xs))
         
@@ -187,7 +198,7 @@ scan-lemma f e (x ∷ xs) = reasoning (
           where
             lem : (λ ys → f x (head ys) >>= (λ z → return z ∪ member ys)) ⊑
                   (λ ys → f x (head ys) ∪ member ys)
-            lem ys = reasoning (
+            lem ys = reasoning⊆ (
                 ⊆begin
                 (f x (head ys) >>= (λ z → return z ∪ member ys))
                     
