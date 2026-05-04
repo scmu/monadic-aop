@@ -21,6 +21,11 @@ record MinR {ℓ : Level} {Y : Type ℓ} (R : Y → ℙ Y) : Type (ℓ-suc ℓ) 
     universal-property-⇐ : {X : Type _} → (P f : X → ℙ Y) →
       ((P ⊑ f) × ((P <=< (f °)) ⊑ R)) → (P ⊑ minR ∘ f)
 
+  Hoare-Monotonic : ∀ {ℓ} {Y : Type ℓ} → (R : Y → ℙ Y) → (f : Y → ℙ Y) → Type ℓ
+  Hoare-Monotonic {Y = Y} R f = 
+      ∀ y1 y0 z0 → y1 ∈ R y0 → z0 ∈ f y0 → 
+      ∥ Σ Y (λ z1 → (z1 ∈ f y1) × (z1 ∈ R z0)) ∥₁
+
   mf⊑f : {X : Type _} (f : X → ℙ Y) → minR ∘ f ⊑ f
   mf⊑f f = fst (universal-property-⇒ (minR ∘ f) f (⊑-refl (minR ∘ f)))
 
@@ -83,6 +88,8 @@ record MinR {ℓ : Level} {Y : Type ℓ} (R : Y → ℙ Y) : Type (ℓ-suc ℓ) 
       lem2 : (y₁ : Y) → y₁ ∈ return y → (x : Y) → x ∈ xs → y₁ ∈ R x
       lem2 = λ y₁ y₁∈y x x∈ → rec (P.∈-isProp (R x) y₁) (λ y₁≡y → subst (λ v → v ∈ R x) y₁≡y (p x x∈)) y₁∈y
 
+  minR-property-⇒ : (xs : ℙ Y) (y : Y) → (y ∈ minR xs) → (y ∈ xs) × (∀ x → x ∈ xs → y ∈ R x)
+  minR-property-⇒ xs t y∈Mxs = minR-id xs t y∈Mxs , minR-minimum xs t y∈Mxs
   -- from set property to universal-property
 
   from-set-to-universal⇒ : 
@@ -136,6 +143,97 @@ record MinR {ℓ : Level} {Y : Type ℓ} (R : Y → ℙ Y) : Type (ℓ-suc ℓ) 
                   in R-trans y' x' x (y'∈Rx') x∈Rx'
                 }) 
               (p y' y'∈ys)
+
+  minR-conditional-monotonicity-func : {X : Type ℓ} (f g : X → ℙ Y) 
+    → f ⊑ g 
+    → (p : ∀ k y → y ∈ g k → y ∈ ((R °) =<< f k))
+    → (R-trans : R-trans R)
+    → minR ∘ f ⊑ minR ∘ g
+  minR-conditional-monotonicity-func f g f⊑g p R-trans k x x∈minRfx = 
+    minR-property-⇐ (g k) x x∈gk x-is-bound-for-gk
+    where
+      x∈fx : x ∈ f k
+      x∈fx = minR-id (f k) x x∈minRfx
+
+      x∈gk : x ∈ g k
+      x∈gk = f⊑g k x x∈fx
+
+      x-is-bound-for-gk : ∀ y' → y' ∈ g k → x ∈ R y'
+      x-is-bound-for-gk y' y'∈gk = 
+        rec (P.∈-isProp (R y') x) 
+            (λ { (x' , x'∈fx , y'∈Rx') → 
+                let 
+                  x∈Rx' = minR-minimum (f k) x x∈minRfx x' x'∈fx
+                in R-trans y' x' x (y'∈Rx') x∈Rx'
+              }) 
+            (p k y' y'∈gk)
+
+  minR-conditional-monotonicity-hasmin : {X : Type ℓ} (f g : X → ℙ Y) 
+    → f ⊑ g 
+    → (minR ∘ g) ⊑ f
+    → (hasmin : ∀ k → ∥ Σ Y (λ y' → y' ∈ minR (g k)) ∥₁)
+    → (R-trans : R-trans R)
+    → minR ∘ f ⊑ minR ∘ g
+  minR-conditional-monotonicity-hasmin f g f⊑g ming⊑f hasmin R-trans k x x∈minRfk = 
+    minR-property-⇐ (g k) x x∈gk x-is-min-for-gk
+    where
+      x∈fk : x ∈ f k
+      x∈fk = minR-id (f k) x x∈minRfk
+
+      x∈gk : x ∈ g k
+      x∈gk = f⊑g k x x∈fk
+
+      x-is-min-for-gk : ∀ y' → y' ∈ g k → x ∈ R y'
+      x-is-min-for-gk y' y'∈gk = 
+        rec (P.∈-isProp (R y') x) 
+            (λ { (m , m∈mingk) → 
+                let 
+                  m∈fk : m ∈ f k
+                  m∈fk = ming⊑f k m m∈mingk
+
+                  xRm : x ∈ R m
+                  xRm = minR-minimum (f k) x x∈minRfk m m∈fk
+
+                  mRy' : m ∈ R y'
+                  mRy' = minR-minimum (g k) m m∈mingk y' y'∈gk
+                in R-trans y' m x mRy' xRm
+              }) 
+            (hasmin k)
+      
+  -- Intuition of `hasmin-f`
+  -- When g z is non-empty, there exists some minimum in g z
+  minR-refinement-monotonicity : {X Z : Type ℓ} (f g : Z → ℙ Y) (h : X → ℙ Z)
+    → f ⊑ minR ∘ g
+    → (hasmin-f : ∀ z → ∥ Σ Y (λ y → y ∈ g z) ∥₁ → ∥ Σ Y (λ y → y ∈ f z) ∥₁)
+    → R-trans R
+    → minR ∘ (f <=< h) ⊑ minR ∘ (g <=< h)
+  minR-refinement-monotonicity f g h f⊑ming hasmin-f R-trans x y y∈minF = 
+    minR-property-⇐ (g =<< h x) y y∈Gh pf2
+    where
+      y∈Fh : y ∈ (f =<< h x)
+      y∈Fh = minR-id (f =<< h x) y y∈minF
+
+      y∈Gh : y ∈ (g =<< h x)
+      y∈Gh = rec squash₁ (λ { (z , z∈hx , y∈fz) → 
+          let y∈min_gz = f⊑ming z y y∈fz
+              y∈gz = minR-id (g z) y y∈min_gz
+          in ∣ z , z∈hx , y∈gz ∣₁ 
+        }) y∈Fh
+
+      pf2 : ∀ y' → y' ∈ (g =<< h x) → y ∈ R y'
+      pf2 y' y'∈Gh = rec (P.∈-isProp (R y') y) (λ { (z' , z'∈hx , y'∈gz') → 
+          rec (P.∈-isProp (R y') y) (λ { (z , z∈hx , y∈fz) → 
+            rec (P.∈-isProp (R y') y) (λ { (y_tmp , y_tmp∈fz') → 
+              let 
+                y_tmp∈min_gz' = f⊑ming z' y_tmp y_tmp∈fz'
+                y_tmpRy' = minR-minimum (g z') y_tmp y_tmp∈min_gz' y' y'∈gz'
+                yRy_tmp = minR-minimum (f =<< h x) y y∈minF y_tmp ∣ z' , z'∈hx , y_tmp∈fz' ∣₁
+              in R-trans y' y_tmp y y_tmpRy' yRy_tmp
+            }) (hasmin-f z' ∣ y' , y'∈gz' ∣₁)
+          }) y∈Fh
+        }) y'∈Gh
+
+
 
   -- [todo] : delete or move it to somewhere 
   uname0 : (A B : ℙ Y) → (f : ℙ Y → ℙ Y) → (∀ X Y → X ⊆ Y → f Y ⊆ f X) → f (A ∪ B) ⊆ (f A ∪ f B)
