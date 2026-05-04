@@ -1,7 +1,7 @@
 {-# OPTIONS --cubical #-}
 module Greedy where
     
-open import Data.List hiding (foldr; head)
+open import Cubical.Data.List hiding (rec)
 open import Cubical.Foundations.Prelude
 open import Cubical.Foundations.Powerset as P using (ℙ; _∈_; _⊆_)
 open import Cubical.Data.Sigma.Base using (_×_) 
@@ -10,14 +10,9 @@ open import Cubical.HITs.PropositionalTruncation
 open import Cubical.Data.Empty using (isProp⊥; isProp⊥* ; ⊥* ; elim*)
 
 open import Monad_v2
-open import Fold
+open import MonadicList
 open import Sets
 open import Min
-
-Hoare-Monotonic : ∀ {ℓ} {Y : Type ℓ} → (R : Y → ℙ Y) → (f : Y → ℙ Y) → Type ℓ
-Hoare-Monotonic {Y = Y} R f = 
-    ∀ y1 y0 z0 → y1 ∈ R y0 → z0 ∈ f y0 → 
-    ∥ Σ Y (λ z1 → (z1 ∈ f y1) × (z1 ∈ R z0)) ∥₁
 
 module _ {ℓ : Level} {Y : Type ℓ} (R : Y → ℙ Y) (M : MinR R) where
   
@@ -25,7 +20,7 @@ module _ {ℓ : Level} {Y : Type ℓ} (R : Y → ℙ Y) (M : MinR R) where
     open MinR M
     greedy_thm-proved-by-induction : {X : Type ℓ} (f : X → Y → ℙ Y) 
         → (hoare : ∀ x → Hoare-Monotonic R (f x))
-        → (trans : ∀ a b c → a ∈ R b → b ∈ R c → a ∈ R c) 
+        → (trans : R-trans R) 
         → (e : ℙ Y) → 
         foldrM (λ x → minR ∘ f x) (minR e) ⊑ minR ∘ foldrM f e
     
@@ -66,7 +61,7 @@ module _ {ℓ : Level} {Y : Type ℓ} (R : Y → ℙ Y) (M : MinR R) where
                  b1-R-b0 = minR-minimum Q_xs b1 b1-in-minQ b0 b0-in-Q
               in rec (P.∈-isProp (R y0) y1) (λ { (z1 , z1-in-f-b1 , z1-R-y0) → 
                  let y1-R-z1 = minR-minimum (f x b1) y1 y1-in-min z1 z1-in-f-b1
-                 in trans y1 z1 y0 y1-R-z1 z1-R-y0
+                 in trans y0 z1 y1 z1-R-y0 y1-R-z1
                }) (hoare x b1 b0 y0 b1-R-b0 y0-in-normal)
             }) y0-in
           }) y1-in
@@ -74,12 +69,12 @@ module _ {ℓ : Level} {Y : Type ℓ} (R : Y → ℙ Y) (M : MinR R) where
         -- applying the set-level universal property of minR
         in set-property-⇐ xs_full ys ys⊆xs_full c2 y y∈
     
-    greedy_thm-proved-by-foldR-fusion : {X : Type ℓ} (f : X → Y → ℙ Y) 
+    greedy_thm : {X : Type ℓ} (f : X → Y → ℙ Y) 
         → (hoare : ∀ x → Hoare-Monotonic R (f x))
-        → (trans : ∀ a b c → a ∈ R b → b ∈ R c → a ∈ R c) 
+        → (trans : R-trans R) 
         → (e : ℙ Y) → 
         foldrM (λ x → minR ∘ f x) (minR e) ⊑ minR ∘ foldrM f e
-    greedy_thm-proved-by-foldR-fusion {X} f hoare trans e = foldrM-fixed-point-properties-⇐ (λ x → minR ∘ f x) (minR e)
+    greedy_thm {X} f hoare trans e = foldrM-fixed-point-properties-⇐ (λ x → minR ∘ f x) (minR e)
       (minR ∘ foldrM f e) (P.⊆-refl (minR e)) pf2
       where 
         pf2 : (x : X) → ((minR ∘ f x) <=< (minR ∘ foldrM f e)) ⊑ minR ∘ (f x <=< foldrM f e) 
@@ -104,7 +99,7 @@ module _ {ℓ : Level} {Y : Type ℓ} (R : Y → ℙ Y) (M : MinR R) where
                 step2 y1 y0 b1 b0 b1-R-b0 l1 l3 = 
                     rec (P.∈-isProp (R y0) y1) (λ { (z1 , z1-in-f-b1 , z1-R-y0) → 
                       let y1-R-z1 = minR-minimum (f x b1) y1 l1 z1 z1-in-f-b1
-                      in trans y1 z1 y0 y1-R-z1 z1-R-y0
+                      in trans y0 z1 y1 z1-R-y0 y1-R-z1
                     }) (hoare x b1 b0 y0 b1-R-b0 l3) 
 
                 -- Expend the lefthand side
