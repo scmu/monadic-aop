@@ -2,11 +2,11 @@
 module MonadicList where
 
 open import Cubical.Data.List hiding (foldr; rec)
-open import List+.List+
 open import Cubical.Foundations.Prelude
 open import Cubical.HITs.PropositionalTruncation as PT
 open import Cubical.Foundations.Powerset as P using (ℙ; _∈_; _⊆_)
 open import Cubical.Data.Sigma.Base using (_×_) 
+open import Cubical.Data.Sum.Base using (_⊎_)
 open import Cubical.Data.Empty using (isProp⊥; isProp⊥* ; ⊥* ; elim*; ⊥)
 open import Cubical.Data.Unit
 open import Reasoning
@@ -88,199 +88,6 @@ scanrM f e (x ∷ xs) = do
     ys ← scanrM f e xs
     z ← f x (head ys)
     return (z ∷ ys)
-
--- scan properties
-scan-lemma : ∀ {ℓ} {A B : Type ℓ} (f : A → B → ℙ B) (e : ℙ B) → 
-              member <=< scanrM f e ⊑ foldrM f e <=< suffix
-scan-lemma f e [] = 
-    let eq = (
-            member =<< scanrM f e []
-            ≡⟨ refl ⟩ 
-            member =<< (wrap <$> e)
-            ≡⟨ refl ⟩ 
-            ((e >>= λ x → return [ x ]) >>= member)
-            ≡⟨ >>=-assoc e (λ x → return [ x ]) member ⟩ 
-            (e >>= λ x → return [ x ] >>= member)
-            ≡⟨ cong (λ k → e >>= k) (funExt (λ x → ret-left-id [ x ] member)) ⟩
-            (e >>= λ x → member [ x ])
-            ≡⟨ refl ⟩ 
-            (e >>= λ x → return x ∪ ∅)
-            ≡⟨ cong (λ x → e >>= x) (funExt λ x → return-∪-∅ x) ⟩ 
-            (e >>= return)
-            ≡⟨ ret-right-id e ⟩
-            e
-            ≡⟨ refl ⟩ 
-            foldrM f e []
-            ≡⟨ sym (ret-left-id [] (foldrM f e)) ⟩ 
-            (foldrM f e =<< return []) 
-            ≡⟨ refl ⟩
-            foldrM f e =<< suffix []
-            ∎)
-    in fst (P.⊆-refl-consequence (member =<< scanrM f e []) (foldrM f e =<< suffix []) eq)
-scan-lemma f e (x ∷ xs) = reasoning⊆ (
-    ⊆begin 
-        (member =<< scanrM f e (x ∷ xs))
-        
-        -- Expand the defintion of scanrM
-        ≡⟨ refl ⟩⊆ 
-        (member =<< ((λ ys → (λ z → return (z ∷ ys)) =<< f x (head ys)) =<< scanrM f e xs))
-        
-        -- Apply monad associativity
-        ≡⟨ (>>=-assoc (scanrM f e xs) (λ ys → (λ z → return (z ∷ ys)) =<< f x (head ys)) member) ⟩⊆
-        (λ ys → member =<< ((λ z → return (z ∷ ys)) =<< f x (head ys))) =<< scanrM f e xs
-        
-        -- Use helper-1 to distribute member into the inner return
-        ≡⟨ cong (λ k → k =<< scanrM f e xs) (funExt λ ys → sym (helper-1 ys)) ⟩⊆  
-        ((λ ys → f x (head ys) >>= (λ z → return z ∪ member ys)) =<< scanrM f e xs)
-            
-        ⊆⟨ incl helper-⊆-union ⟩
-        ((λ ys → f x (head ys) ∪ member ys) =<< scanrM f e xs)
-            
-        -- Distribute the bind over the union
-        ≡⟨ =<<-∪-dist-right (f x ∘ head) member (scanrM f e xs) ⟩⊆
-        ((f x ∘ head) =<< scanrM f e xs) ∪ (member =<< scanrM f e xs)
-        
-        -- Un-fuse the map over the head
-        ≡⟨ sym (cong (λ w → w ∪ (member =<< scanrM f e xs)) (=<<-<$>-fusion (f x) head (scanrM f e xs))) ⟩⊆
-        (f x =<< (head <$> scanrM f e xs)) ∪ (member =<< scanrM f e xs)
-        
-        -- head <$> scanR f e xs = foldR f e xs 
-        ⊆⟨ incl (⊆-∪-monotonic-left 
-                (f x =<< (head <$> scanrM f e xs)) 
-                (f x =<< foldrM f e xs) 
-                (member =<< scanrM f e xs) 
-                (=<<-monotonic-right (f x) (head <$> scanrM f e xs) (foldrM f e xs)
-                    (fst 
-                            (P.⊆-refl-consequence 
-                                (head <$> scanrM f e xs) 
-                                (foldrM f e xs) 
-                                (scanrM-head-is-foldrM xs)
-                            )
-                        )
-                )
-            ) 
-        ⟩
-        (f x =<< foldrM f e xs) ∪ (member =<< scanrM f e xs)
-        
-        -- Induction
-        ⊆⟨ incl (⊆-∪-monotonic-right 
-            (member =<< scanrM f e xs) 
-            (foldrM f e =<< suffix xs) 
-            (f x =<< foldrM f e xs)
-            (scan-lemma f e xs)) 
-        ⟩ 
-        (f x =<< foldrM f e xs) ∪ (foldrM f e =<< suffix xs)
-        
-        -- Monad law, definition of foldrM
-        ≡⟨ cong (λ k → k ∪ (foldrM f e =<< suffix xs)) (sym (ret-left-id (x ∷ xs) (foldrM f e))) ⟩⊆
-        (foldrM f e =<< return (x ∷ xs)) ∪ (foldrM f e =<< suffix xs)
-
-        -- Distributivity between (=<<) and (∪)
-        ≡⟨ sym (=<<-∪-dist-left (foldrM f e) (return (x ∷ xs)) (suffix xs)) ⟩⊆
-        (foldrM f e =<< (return (x ∷ xs) ∪ suffix xs))
-    ⊆∎)
-    where
-        helper-1 : ∀ ys → (f x (head ys) >>= (λ z → return z ∪ member ys)) ≡ ((f x (head ys) >>= (λ z → return (z ∷ ys))) >>= member)
-        helper-1 ys =  
-            (f x (head ys) >>= (λ z → member (z ∷ ys)))
-            ≡⟨ cong (λ k → f x (head ys) >>= k) (funExt λ z → sym (ret-left-id (z ∷ ys) member)) ⟩
-            (f x (head ys) >>= (λ z → return (z ∷ ys) >>= member))
-            ≡⟨ sym (>>=-assoc (f x (head ys)) (λ z → return (z ∷ ys)) member) ⟩
-            ((f x (head ys) >>= (λ z → return (z ∷ ys))) >>= member)
-            ∎
-        
-        helper-⊆-union : (((λ ys → f x (head ys) >>= (λ z → return z ∪ member ys)) =<< scanrM f e xs))
-                         ⊆ (((λ ys → f x (head ys) ∪ member ys) =<< scanrM f e xs))
-        helper-⊆-union = =<<-monotonic-left (scanrM f e xs)
-          (λ ys → f x (head ys) >>= (λ z → return z ∪ member ys))
-          (λ ys → f x (head ys) ∪ member ys) 
-          lem
-          where
-            lem : (λ ys → f x (head ys) >>= (λ z → return z ∪ member ys)) ⊑
-                  (λ ys → f x (head ys) ∪ member ys)
-            lem ys = reasoning⊆ (
-                ⊆begin
-                (f x (head ys) >>= (λ z → return z ∪ member ys))
-                    
-                -- Distribute bind `_>>=_` over `_∪_`
-                ≡⟨ =<<-∪-dist-right (λ z → return z) (λ _ → member ys) (f x (head ys)) ⟩⊆ 
-                (return =<< f x (head ys)) ∪ ((λ _ → member ys) =<< f x (head ys))
-                    
-                -- Apply monad Identity
-                ≡⟨ cong (λ k → k ∪ ((λ _ → member ys) =<< f x (head ys))) (ret-right-id (f x (head ys))) ⟩⊆
-                f x (head ys) ∪ ((λ _ → member ys) =<< f x (head ys))
-                    
-                -- Trivial, the right term is member ys
-                ⊆⟨ incl subset-lem ⟩
-                f x (head ys) ∪ member ys
-                ⊆∎)
-              where
-                -- Proof of the final trivial subset step
-                subset-lem : (f x (head ys) ∪ ((λ _ → member ys) =<< f x (head ys))) ⊆ (f x (head ys) ∪ member ys)
-                subset-lem = ∪-⊆-both 
-                               (f x (head ys)) 
-                               ((λ _ → member ys) =<< f x (head ys)) 
-                               (f x (head ys) ∪ member ys)
-                             (⊆-∪-left (f x (head ys)) (member ys))
-                             (λ v p → rec squash₁ (λ {(z , z∈f , v∈mem) → ⊆-∪-right (f x (head ys)) (member ys) v v∈mem}) p)        
-        scanrM-head-is-foldrM : ∀ xs → head <$> scanrM f e xs ≡ foldrM f e xs 
-        scanrM-head-is-foldrM [] = 
-            (head <$> (wrap <$> e))
-            -- Expand the definition of _<$>_
-            ≡⟨ refl ⟩
-            ((e >>= (λ x → return (wrap x))) >>= (λ ys → return (head ys)))
-            
-            -- Apply monad associativity
-            ≡⟨ >>=-assoc e (λ x → return (wrap x)) (λ ys → return (head ys)) ⟩
-            (e >>= (λ x → return (wrap x) >>= (λ ys → return (head ys))))
-            
-            -- Evaluate the inner bind using the left identity law
-            ≡⟨ cong (λ k → e >>= k) (funExt (λ x → ret-left-id (wrap x) (λ ys → return (head ys)))) ⟩
-            (e >>= (λ x → return (head (wrap x))))
-            
-            -- head (wrap x) = x
-            ≡⟨ refl ⟩
-            (e >>= return)
-            
-            -- Apply the monad right identity law
-            ≡⟨ ret-right-id e ⟩
-            e
-            ∎
-        scanrM-head-is-foldrM (x ∷ xs) = 
-            (head <$> scanrM f e (x ∷ xs))
-            ≡⟨ refl ⟩ 
-            (head <$>
-               (scanrM f e xs >>=
-                (λ ys → f x (head ys) >>= (λ z → return (z ∷ ys)))))
-            ≡⟨ manipulate_monad_laws xs ⟩ 
-            (f x ∘ head) =<< scanrM f e xs
-            ≡⟨ sym (=<<-<$>-fusion (f x) head (scanrM f e xs)) ⟩ 
-            f x =<< (head <$> scanrM f e xs) 
-            ≡⟨ cong (λ k → f x =<< k) (scanrM-head-is-foldrM xs) ⟩ 
-            (f x =<< foldrM f e xs)
-            ≡⟨ refl ⟩ 
-            foldrM f e (x ∷ xs)
-            ∎
-          where
-            manipulate_monad_laws : ∀ xs → (head <$> (scanrM f e xs >>= (λ ys → f x (head ys) >>= (λ z → return (z ∷ ys)))))
-                       ≡ ((f x ∘ head) =<< scanrM f e xs)
-            manipulate_monad_laws xs = 
-                ((scanrM f e xs >>= (λ ys → f x (head ys) >>= (λ z → return (z ∷ ys)))) >>= (λ ws → return (head ws)))
-                ≡⟨ >>=-assoc (scanrM f e xs) (λ ys → f x (head ys) >>= (λ z → return (z ∷ ys))) (λ ws → return (head ws)) ⟩
-                (scanrM f e xs >>= (λ ys → (f x (head ys) >>= (λ z → return (z ∷ ys))) >>= (λ ws → return (head ws))))
-                ≡⟨ cong (λ k → scanrM f e xs >>= k) (funExt (λ ys → 
-                    ((f x (head ys) >>= (λ z → return (z ∷ ys))) >>= (λ ws → return (head ws)))
-                    ≡⟨ >>=-assoc (f x (head ys)) (λ z → return (z ∷ ys)) (λ ws → return (head ws)) ⟩
-                    (f x (head ys) >>= (λ z → return (z ∷ ys) >>= (λ ws → return (head ws))))
-                    ≡⟨ cong (λ k → f x (head ys) >>= k) (funExt (λ z → ret-left-id (z ∷ ys) (λ ws → return (head ws)))) ⟩
-                    (f x (head ys) >>= (λ z → return z))
-                    ≡⟨ ret-right-id (f x (head ys)) ⟩
-                    f x (head ys)
-                    ∎
-                   )) 
-                ⟩
-              ((f x ∘ head) =<< scanrM f e xs)
-              ∎
 
 -- fold properties
 foldrM-fixed-point-properties-⇐ :
@@ -402,3 +209,224 @@ foldrM-pure f e = funExt (λ x → help x)
                 ≡⟨ refl ⟩
             foldrM (λ x → return ∘ f x) (return e) (x ∷ xs)
                 ∎
+
+
+
+
+
+-- scan properties
+
+--  scanrM can be defined in terms of a foldrM:
+
+scanrM-head-is-foldrM : ∀ {ℓ} {A B : Type ℓ} (f : A → B → ℙ B) (e : ℙ B) (xs : List A) → head <$> scanrM f e xs ≡ foldrM f e xs 
+scanrM-head-is-foldrM f e [] = 
+    (head <$> (wrap <$> e))
+    -- Expand the definition of _<$>_
+    ≡⟨ refl ⟩
+    ((e >>= (λ x → return (wrap x))) >>= (λ ys → return (head ys)))
+
+    -- Apply monad associativity
+    ≡⟨ >>=-assoc e (λ x → return (wrap x)) (λ ys → return (head ys)) ⟩
+    (e >>= (λ x → return (wrap x) >>= (λ ys → return (head ys))))
+
+    -- Evaluate the inner bind using the left identity law
+    ≡⟨ cong (λ k → e >>= k) (funExt (λ x → ret-left-id (wrap x) (λ ys → return (head ys)))) ⟩
+    (e >>= (λ x → return (head (wrap x))))
+
+    -- head (wrap x) = x
+    ≡⟨ refl ⟩
+    (e >>= return)
+
+    -- Apply the monad right identity law
+    ≡⟨ ret-right-id e ⟩
+    e
+    ∎
+scanrM-head-is-foldrM f e (x ∷ xs) = 
+    (head <$> scanrM f e (x ∷ xs))
+    ≡⟨ refl ⟩ 
+    (head <$>
+        (scanrM f e xs >>=
+        (λ ys → f x (head ys) >>= (λ z → return (z ∷ ys)))))
+    ≡⟨ manipulate_monad_laws f e x xs ⟩ 
+    (f x ∘ head) =<< scanrM f e xs
+    ≡⟨ sym (=<<-<$>-fusion (f x) head (scanrM f e xs)) ⟩ 
+    f x =<< (head <$> scanrM f e xs) 
+    ≡⟨ cong (λ k → f x =<< k) (scanrM-head-is-foldrM f e xs) ⟩ 
+    (f x =<< foldrM f e xs)
+    ≡⟨ refl ⟩ 
+    foldrM f e (x ∷ xs)
+    ∎
+    where
+    manipulate_monad_laws : ∀ {ℓ} {A B : Type ℓ} (f : A → B → ℙ B) (e : ℙ B) (x : A) (xs : List A) → (head <$> (scanrM f e xs >>= (λ ys → f x (head ys) >>= (λ z → return (z ∷ ys)))))
+                ≡ ((f x ∘ head) =<< scanrM f e xs)
+    manipulate_monad_laws f e x xs = 
+        ((scanrM f e xs >>= (λ ys → f x (head ys) >>= (λ z → return (z ∷ ys)))) >>= (λ ws → return (head ws)))
+        ≡⟨ >>=-assoc (scanrM f e xs) (λ ys → f x (head ys) >>= (λ z → return (z ∷ ys))) (λ ws → return (head ws)) ⟩
+        (scanrM f e xs >>= (λ ys → (f x (head ys) >>= (λ z → return (z ∷ ys))) >>= (λ ws → return (head ws))))
+        ≡⟨ cong (λ k → scanrM f e xs >>= k) (funExt (λ ys → 
+            ((f x (head ys) >>= (λ z → return (z ∷ ys))) >>= (λ ws → return (head ws)))
+            ≡⟨ >>=-assoc (f x (head ys)) (λ z → return (z ∷ ys)) (λ ws → return (head ws)) ⟩
+            (f x (head ys) >>= (λ z → return (z ∷ ys) >>= (λ ws → return (head ws))))
+            ≡⟨ cong (λ k → f x (head ys) >>= k) (funExt (λ z → ret-left-id (z ∷ ys) (λ ws → return (head ws)))) ⟩
+            (f x (head ys) >>= (λ z → return z))
+            ≡⟨ ret-right-id (f x (head ys)) ⟩
+            f x (head ys)
+            ∎
+            )) 
+        ⟩
+        ((f x ∘ head) =<< scanrM f e xs)
+        ∎
+
+scan-lemma : (f : A → B → ℙ B) (e : ℙ B) → 
+              member <=< scanrM f e ⊑ foldrM f e <=< suffix
+scan-lemma f e [] = 
+    let eq = (
+            member =<< scanrM f e []
+            ≡⟨ refl ⟩ 
+            member =<< (wrap <$> e)
+            ≡⟨ refl ⟩ 
+            ((e >>= λ x → return [ x ]) >>= member)
+            ≡⟨ >>=-assoc e (λ x → return [ x ]) member ⟩ 
+            (e >>= λ x → return [ x ] >>= member)
+            ≡⟨ cong (λ k → e >>= k) (funExt (λ x → ret-left-id [ x ] member)) ⟩
+            (e >>= λ x → member [ x ])
+            ≡⟨ refl ⟩ 
+            (e >>= λ x → return x ∪ ∅)
+            ≡⟨ cong (λ x → e >>= x) (funExt λ x → return-∪-∅ x) ⟩ 
+            (e >>= return)
+            ≡⟨ ret-right-id e ⟩
+            e
+            ≡⟨ refl ⟩ 
+            foldrM f e []
+            ≡⟨ sym (ret-left-id [] (foldrM f e)) ⟩ 
+            (foldrM f e =<< return []) 
+            ≡⟨ refl ⟩
+            foldrM f e =<< suffix []
+            ∎)
+    in fst (P.⊆-refl-consequence (member =<< scanrM f e []) (foldrM f e =<< suffix []) eq)
+scan-lemma f e (x ∷ xs) = reasoning⊆ (
+    ⊆begin 
+        (member =<< scanrM f e (x ∷ xs))
+
+        -- Expand the defintion of scanrM
+        ≡⟨ refl ⟩⊆ 
+        (member =<< ((λ ys → (λ z → return (z ∷ ys)) =<< f x (head ys)) =<< scanrM f e xs))
+
+        -- Apply monad associativity
+        ≡⟨ (>>=-assoc (scanrM f e xs) (λ ys → (λ z → return (z ∷ ys)) =<< f x (head ys)) member) ⟩⊆
+        (λ ys → member =<< ((λ z → return (z ∷ ys)) =<< f x (head ys))) =<< scanrM f e xs
+
+        -- Use helper-1 to distribute member into the inner return
+        ≡⟨ cong (λ k → k =<< scanrM f e xs) (funExt λ ys → sym (helper-1 ys)) ⟩⊆  
+        ((λ ys → f x (head ys) >>= (λ z → return z ∪ member ys)) =<< scanrM f e xs)
+
+        ⊆⟨ incl helper-⊆-union ⟩
+        ((λ ys → f x (head ys) ∪ member ys) =<< scanrM f e xs)
+
+        -- Distribute the bind over the union
+        ≡⟨ =<<-∪-dist-right (f x ∘ head) member (scanrM f e xs) ⟩⊆
+        ((f x ∘ head) =<< scanrM f e xs) ∪ (member =<< scanrM f e xs)
+
+        -- Un-fuse the map over the head
+        ≡⟨ sym (cong (λ w → w ∪ (member =<< scanrM f e xs)) (=<<-<$>-fusion (f x) head (scanrM f e xs))) ⟩⊆
+        (f x =<< (head <$> scanrM f e xs)) ∪ (member =<< scanrM f e xs)
+
+        -- head <$> scanR f e xs = foldR f e xs 
+        ⊆⟨ incl (⊆-∪-monotonic-left 
+                (f x =<< (head <$> scanrM f e xs)) 
+                (f x =<< foldrM f e xs) 
+                (member =<< scanrM f e xs) 
+                (=<<-monotonic-right (f x) (head <$> scanrM f e xs) (foldrM f e xs)
+                    (fst 
+                            (P.⊆-refl-consequence 
+                                (head <$> scanrM f e xs) 
+                                (foldrM f e xs) 
+                                (scanrM-head-is-foldrM f e xs)
+                            )
+                        )
+                )
+            ) 
+        ⟩
+        (f x =<< foldrM f e xs) ∪ (member =<< scanrM f e xs)
+
+        -- Induction
+        ⊆⟨ incl (⊆-∪-monotonic-right 
+            (member =<< scanrM f e xs) 
+            (foldrM f e =<< suffix xs) 
+            (f x =<< foldrM f e xs)
+            (scan-lemma f e xs)) 
+        ⟩ 
+        (f x =<< foldrM f e xs) ∪ (foldrM f e =<< suffix xs)
+
+        -- Monad law, definition of foldrM
+        ≡⟨ cong (λ k → k ∪ (foldrM f e =<< suffix xs)) (sym (ret-left-id (x ∷ xs) (foldrM f e))) ⟩⊆
+        (foldrM f e =<< return (x ∷ xs)) ∪ (foldrM f e =<< suffix xs)
+
+        -- Distributivity between (=<<) and (∪)
+        ≡⟨ sym (=<<-∪-dist-left (foldrM f e) (return (x ∷ xs)) (suffix xs)) ⟩⊆
+        (foldrM f e =<< (return (x ∷ xs) ∪ suffix xs))
+    ⊆∎)
+    where
+        helper-1 : ∀ ys → (f x (head ys) >>= (λ z → return z ∪ member ys)) ≡ ((f x (head ys) >>= (λ z → return (z ∷ ys))) >>= member)
+        helper-1 ys =  
+            (f x (head ys) >>= (λ z → member (z ∷ ys)))
+            ≡⟨ cong (λ k → f x (head ys) >>= k) (funExt λ z → sym (ret-left-id (z ∷ ys) member)) ⟩
+            (f x (head ys) >>= (λ z → return (z ∷ ys) >>= member))
+            ≡⟨ sym (>>=-assoc (f x (head ys)) (λ z → return (z ∷ ys)) member) ⟩
+            ((f x (head ys) >>= (λ z → return (z ∷ ys))) >>= member)
+            ∎
+
+        helper-⊆-union : (((λ ys → f x (head ys) >>= (λ z → return z ∪ member ys)) =<< scanrM f e xs))
+                         ⊆ (((λ ys → f x (head ys) ∪ member ys) =<< scanrM f e xs))
+        helper-⊆-union = =<<-monotonic-left (scanrM f e xs)
+          (λ ys → f x (head ys) >>= (λ z → return z ∪ member ys))
+          (λ ys → f x (head ys) ∪ member ys) 
+          lem
+          where
+            lem : (λ ys → f x (head ys) >>= (λ z → return z ∪ member ys)) ⊑
+                  (λ ys → f x (head ys) ∪ member ys)
+            lem ys = reasoning⊆ (
+                ⊆begin
+                (f x (head ys) >>= (λ z → return z ∪ member ys))
+
+                -- Distribute bind `_>>=_` over `_∪_`
+                ≡⟨ =<<-∪-dist-right (λ z → return z) (λ _ → member ys) (f x (head ys)) ⟩⊆ 
+                (return =<< f x (head ys)) ∪ ((λ _ → member ys) =<< f x (head ys))
+
+                -- Apply monad Identity
+                ≡⟨ cong (λ k → k ∪ ((λ _ → member ys) =<< f x (head ys))) (ret-right-id (f x (head ys))) ⟩⊆
+                f x (head ys) ∪ ((λ _ → member ys) =<< f x (head ys))
+
+                -- Trivial, the right term is member ys
+                ⊆⟨ incl subset-lem ⟩
+                f x (head ys) ∪ member ys
+                ⊆∎)
+              where
+                -- Proof of the final trivial subset step
+                subset-lem : (f x (head ys) ∪ ((λ _ → member ys) =<< f x (head ys))) ⊆ (f x (head ys) ∪ member ys)
+                subset-lem = ∪-⊆-both 
+                               (f x (head ys)) 
+                               ((λ _ → member ys) =<< f x (head ys)) 
+                               (f x (head ys) ∪ member ys)
+                             (⊆-∪-left (f x (head ys)) (member ys))
+                             (λ v p → rec squash₁ (λ {(z , z∈f , v∈mem) → ⊆-∪-right (f x (head ys)) (member ys) v v∈mem}) p)        
+ 
+prefix-is-foldrM : {X : Type ℓ} → prefix {X = X} ≡ foldrM {A = X} (pre) (return [])
+prefix-is-foldrM = foldrM-fixed-point-properties-eq⇐ pre (return []) prefix (refl , p)
+  where
+    nil∈prefix : ∀ {X : Type ℓ} (xs : List X) → [] ∈ prefix xs
+    nil∈prefix [] = ∣ refl ∣₁
+    nil∈prefix (x ∷ xs) = ∣ _⊎_.inl ∣ refl ∣₁ ∣₁
+    
+    p : ∀ x xs → prefix (x ∷ xs) ≡ (pre x =<< prefix xs)
+    p x xs = P.⊆-antisym _ _
+      (λ zs → rec squash₁ λ {
+        (_⊎_.inl zs≡[]) → ∣ [] , nil∈prefix xs , ∣ _⊎_.inl zs≡[] ∣₁ ∣₁ ;
+        (_⊎_.inr m) → rec squash₁ (λ { (ys , ys∈pfx , eq) → ∣ ys , ys∈pfx , ∣ _⊎_.inr eq ∣₁ ∣₁ }) m 
+      })
+      (λ zs → rec squash₁ λ {
+        (ys , ys∈pfx , zs∈prexys) → rec squash₁ (λ {
+          (_⊎_.inl zs≡[]) → ∣ _⊎_.inl zs≡[] ∣₁ ;
+          (_⊎_.inr zs≡x∷ys) → ∣ _⊎_.inr ∣ ys , ys∈pfx , zs≡x∷ys ∣₁ ∣₁
+        }) zs∈prexys
+      })

@@ -116,8 +116,8 @@ r ⊑ s = ∀ x → r x ⊆ s x
 _⊒_ : (X → ℙ Y) → (X → ℙ Y) → Type _
 r ⊒ s = s ⊑ r
 
-⊒-trans : {r s t : X → ℙ Y} → r ⊒ s → s ⊒ t → r ⊒ t
-⊒-trans r⊒s s⊒t x y y∈tx = r⊒s x y (s⊒t x y y∈tx)
+⊒-trans : (r s t : X → ℙ Y) → r ⊒ s → s ⊒ t → r ⊒ t
+⊒-trans r s t r⊒s s⊒t x y y∈tx = r⊒s x y (s⊒t x y y∈tx)
 
 ⊑-antisym : (f g : X → ℙ Y) → f ⊑ g → g ⊑ f → f ≡ g
 ⊑-antisym f g f⊑g g⊑f = funExt (λ x → P.⊆-antisym (f x) (g x) (f⊑g x) (g⊑f x))
