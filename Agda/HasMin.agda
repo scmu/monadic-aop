@@ -10,6 +10,7 @@ open import Cubical.Foundations.Powerset as P using (ℙ; _∈_; _⊆_)
 open import Sets
 open import Monad_v2
 open import Min
+open import MonadicList
 
 module HasMinProps {ℓ : Level} {Y : Type ℓ} (R : Y → ℙ Y) 
     (minR-inst : MinR R)
@@ -100,3 +101,70 @@ module HasMinProps {ℓ : Level} {Y : Type ℓ} (R : Y → ℙ Y)
             in ∣ f mA , minR-property-⇐ (f <$> A) (f mA) fmA∈fA is-lower-bound ∣₁
             
         }) minA
+
+    -- Bind preserves hasmin if f is Hoare-monotonic
+    hasmin-bind : (A : ℙ Y) (f : Y → ℙ Y)
+        → Hoare-Monotonic R f
+        → ∥ Σ Y (λ y → y ∈ minR A) ∥₁
+        → (∀ y → y ∈ A → ∥ Σ Y (λ z → z ∈ minR (f y)) ∥₁)
+        → ∥ Σ Y (λ z → z ∈ minR (f =<< A)) ∥₁
+    hasmin-bind A f f-hoare minA minF = 
+        rec squash₁ (λ { (mA , mA∈minA) → 
+        rec squash₁ (λ { (m' , m'∈minFmA) → 
+            let 
+                mA∈A = minR-contained A mA mA∈minA
+                m'∈FmA = minR-contained (f mA) m' m'∈minFmA
+                m'∈FhA : m' ∈ (f =<< A)
+                m'∈FhA = ∣ mA , mA∈A , m'∈FmA ∣₁
+                
+                lower-bound : ∀ z → z ∈ (f =<< A) → m' ∈ R z
+                lower-bound z z∈FhA = 
+                    rec (P.∈-isProp (R z) m') (λ { (a , a∈A , z∈Fa) → 
+                        let mA∈Ra = minR-minimum A mA mA∈minA a a∈A
+                        in rec (P.∈-isProp (R z) m') (λ { (z1 , z1∈FmA , z1∈Rz) → 
+                            let m'∈Rz1 = minR-minimum (f mA) m' m'∈minFmA z1 z1∈FmA
+                            in R-trans m' z1 z m'∈Rz1 z1∈Rz
+                        }) (f-hoare mA a z mA∈Ra z∈Fa)
+                    }) z∈FhA
+            in ∣ m' , minR-property-⇐ (f =<< A) m' m'∈FhA lower-bound ∣₁
+        }) (minF mA (minR-contained A mA mA∈minA))
+        }) minA
+
+
+    -- 5. foldrM preserves hasmin
+    -- hasmin-foldrM : {X : Type _} (f : X → Y → ℙ Y) (e : ℙ Y)
+    --     → (∀ x → Hoare-Monotonic R (f x))
+    --     → (∀ x y → ∥ Σ Y (λ z → z ∈ minR (f x y)) ∥₁)
+    --     → ∥ Σ Y (λ y → y ∈ minR e) ∥₁
+    --     → ∀ xs → ∥ Σ Y (λ y → y ∈ minR (foldrM f e xs)) ∥₁
+    -- hasmin-foldrM f e f-hoare f-hasmin e-hasmin [] = ?
+    -- hasmin-foldrM f e f-hoare f-hasmin e-hasmin (x ∷ xs) = ?
+        -- let 
+        --     ih = hasmin-foldrM f e f-hoare f-hasmin e-hasmin xs
+        -- in hasmin-bind (foldrM f e xs) (f x) (f-hoare x) ih (f-hasmin x)
+
+    hasmin-minR : (A : ℙ Y) 
+        → ∥ Σ Y (λ y → y ∈ minR A) ∥₁ 
+        → ∥ Σ Y (λ y → y ∈ minR (minR A)) ∥₁
+    hasmin-minR A h = PT.map (λ { (y , y∈minA) → 
+        y , (mf⊑mmf (const A) h y y∈minA) 
+        }) h
+
+
+
+    -- minR preserves Hoare-monotonicity
+    Hoare-Monotonic-minR : (f : Y → ℙ Y)
+        → Hoare-Monotonic R f
+        → (∀ y → ∥ Σ Y (λ z → z ∈ minR (f y)) ∥₁)
+        → Hoare-Monotonic R (minR ∘ f)
+    Hoare-Monotonic-minR f f-hoare f-hasmin y1 y0 z0 y1Ry0 z0∈minFy0 = 
+        rec squash₁ (λ { (z1' , z1'∈minFy1) → 
+            let 
+                z0∈Fy0 = minR-contained (f y0) z0 z0∈minFy0
+            in rec squash₁ (λ { (z1 , z1∈Fy1 , z1Rz0) → 
+                let 
+                    z1'Rz1 = minR-minimum (f y1) z1' z1'∈minFy1 z1 z1∈Fy1
+                    z1'Rz0 = R-trans z1' z1 z0 z1'Rz1 z1Rz0
+                in ∣ z1' , z1'∈minFy1 , z1'Rz0 ∣₁
+            }) (f-hoare y1 y0 z0 y1Ry0 z0∈Fy0)
+        }) (f-hasmin y1)
