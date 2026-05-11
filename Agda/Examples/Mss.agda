@@ -86,7 +86,6 @@ minR-return-[] = P.⊆-extensionality (minR (return [])) (return []) (minR-id (r
             (rec squash₁ (λ []≡y → ∣ 0 , (λ i → sumℤ ([]≡y i)) ∣₁) y∈[]) 
             ((rec squash₁ (λ []≡y → ∣ 0 , (λ i → sumℤ (sym []≡y i)) ∣₁) y'∈[])) 
 
-
 mss-thm : minR ∘ member ∘ scanr zplus [] ⊑ mss
 mss-thm  = reasoning⊑ (
     ⊑begin
@@ -101,22 +100,28 @@ mss-thm  = reasoning⊑ (
     
     
     -- Scan Lemma -- member <=< scanrM maxPre e ⊑ foldrM maxPre e <=< suffix
-    ≡⟨ {!   !} ⟩⊑
+    ⊑⟨ incl⊑ (minR-conditional-monotonicity-func (m <=< h) (f <=< s) (scan-lemma maxPre (return [])) lem-2 R-trans-≥ₛ) ⟩
     minR ∘ (foldrM maxPre (return []) <=< suffix)
     
-    -- Greedy Theorem
-    ⊑⟨ incl⊑ (minR-refinement-monotonicity (foldrM maxPre (return [])) prefix suffix greedy-proof hasmin-f R-trans-≥ₛ) ⟩
-    minR ∘ (prefix <=< suffix)
+    -- Greedy Theorem & Monotonicity
+    ⊑⟨ incl⊑ (minR-conditional-monotonicity-func (f <=< s) (g <=< s) f<=<s⊑g<=<s lem-1 R-trans-≥ₛ) ⟩
     
     -- minR-<=<-Promotion
-    -- ≡⟨ sym (minR-<=<-Promotion prefix suffix hasmin-prefix R-trans-≥ₛ) ⟩⊑
-    -- mss -- minR ∘ (prefix <=< suffix) 
+    minR ∘ ((minR ∘ prefix) <=< suffix)
+    ≡⟨ sym (minR-<=<-Promotion prefix suffix hasmin-prefix R-trans-≥ₛ) ⟩⊑
+    mss -- minR ∘ (prefix <=< suffix) 
     ⊑∎ 
     )
     where
+        f = foldrM maxPre (return [])
+        g = (minR ∘ prefix)
+        s = suffix
+        m = member
+        h = scanrM maxPre (return [])
+
         -- minR-<=<-Promotion
         R-trans-≥ₛ : R-trans _≥ₛ_
-        R-trans-≥ₛ x y z p q = PT.map2 (λ x≤y y≤z → isTrans≤ x≤y y≤z) p q
+        R-trans-≥ₛ x y z yRx zRy = ≥ₛ-trans z y x zRy yRx
 
         is-mono_∷_ : ∀ x → is-mono (_∷_ x) 
         is-mono_∷_ x y z y≥z = ∣ Order.≤-o+ {m = sumℤ z} {n = sumℤ y} {o = x} (rec Order.isProp≤ id y≥z) ∣₁ 
@@ -135,20 +140,13 @@ mss-thm  = reasoning⊑ (
             let 
                 prev-hasmin = hasmin-foldrMx xs
             in rec squash₁ (λ { (ys , ys∈fold) → 
-                let 
-                    set-hasmin : ∥ Σ (List ℤ) (λ y → y ∈ (return [] ∪ return (x ∷ ys))) ∥₁
-                    set-hasmin = ∣ [] , ∣ _⊎_.inl (y∈[y] []) ∣₁ ∣₁
-                in 
-                    rec squash₁ (λ { (y , y∈max) → ∣ y , ∣ ys , ys∈fold , y∈max ∣₁ ∣₁ }) (hasmin-pre x ys)
+                rec squash₁ (λ { (y , y∈max) → ∣ y , ∣ ys , ys∈fold , y∈max ∣₁ ∣₁ }) (hasmin-pre x ys)
             }) prev-hasmin
         
         hasmin-f : ∀ z → ∥ Σ (List ℤ) (λ y → y ∈ prefix z) ∥₁ → ∥ Σ (List ℤ) (λ y → y ∈ foldrM maxPre (return []) z) ∥₁
         hasmin-f z _ = hasmin-foldrMx z
 
         -- Greedy Theorem
-        f = foldrM maxPre (return []) <=< suffix
-        g = (minR ∘ prefix) <=< suffix
-
         
         hoare-mono : (x : ℤ) → Hoare-Monotonic _≥ₛ_ (pre x)
         hoare-mono x y1 y0 z0 y1≥y0 z0∈pre = rec squash₁ helper z0∈pre
@@ -176,3 +174,71 @@ mss-thm  = reasoning⊑ (
 
             )
 
+        f<=<s⊑g<=<s : f <=< s ⊑ g <=< s
+        f<=<s⊑g<=<s k x x∈fs_k = rec squash₁ (λ { (b , b∈sk , x∈fb) → ∣ b , b∈sk , greedy-proof b x x∈fb ∣₁ }) x∈fs_k
+
+        lem-1 : ∀ k y → y ∈ (g <=< s) k → y ∈ ((_≥ₛ_ °) =<< (f <=< s) k)
+        lem-1 k y y∈gs_k = rec squash₁ (λ { (b , b∈sk , y∈gb) → 
+                rec squash₁ (λ { (x , x∈fb) → 
+                    let 
+                        x∈gb = greedy-proof b x x∈fb
+                        xRy = minR-minimum (prefix b) x x∈gb y (minR-id (prefix b) y y∈gb)
+                    in ∣ x , ∣ b , b∈sk , x∈fb ∣₁ , xRy ∣₁
+                }) (hasmin-foldrMx b)
+            }) y∈gs_k
+
+        lem-2 : (k y : List ℤ) → y ∈ (f <=< s) k → y ∈ ((_≥ₛ_ °) =<< (m <=< h) k)
+        lem-2 [] y y∈fs_[] = 
+            let 
+                y∈return[] : y ∈ return []
+                y∈return[] = subst (λ S → y ∈ S) (ret-left-id [] f) y∈fs_[]
+            in rec squash₁ (λ { []≡y → 
+                let 
+                    z = []
+                    z∈mh[] : z ∈ (m <=< h) []
+                    z∈mh[] = ∣ [ [] ] , ∣ [] , ∣ refl ∣₁ , y∈[y] [ z ] ∣₁ , ∣ _⊎_.inl ∣ refl ∣₁ ∣₁ ∣₁
+                    z≥y : z ∈ _≥ₛ_ y
+                    z≥y = subst (λ w → z ∈ _≥ₛ_ w) []≡y (≥ₛ-refl [])
+                in ∣ z , z∈mh[] , z≥y ∣₁ 
+            }) y∈return[]
+        lem-2 (x ∷ xs) y y∈fs_xxs = 
+            let 
+                path = (=<<-∪-dist-left f (return (x ∷ xs)) (s xs)) ∙ (cong (λ u → u ∪ (f <=< s) xs) (ret-left-id (x ∷ xs) f))
+                y∈f_xxs_∪_fs_xs = subst (λ S → y ∈ S) path y∈fs_xxs
+            in rec squash₁ helper y∈f_xxs_∪_fs_xs
+          where
+            helper : (y ∈ f (x ∷ xs)) ⊎ (y ∈ (f <=< s) xs) → y ∈ ((_≥ₛ_ °) =<< (m <=< h) (x ∷ xs))
+            helper (_⊎_.inl y∈f_xxs) = 
+                rec squash₁ (λ { (ys , ys∈f_xs , y∈maxPre_x_ys) → 
+                    let 
+                        path-h = scanrM-head-is-foldrM maxPre (return []) xs
+                        ys∈map-h = subst (λ S → ys ∈ S) (sym path-h) ys∈f_xs
+                    in rec squash₁ (λ { (ls , ls∈hxs , head_ls≡ys) → rec squash₁ (λ head-ls≡ys →
+                        let 
+                            y∈maxPre_x_head_ls = subst (λ w → y ∈ maxPre x w) (sym head-ls≡ys) y∈maxPre_x_ys
+                            ls_xxs = y ∷ ls
+                            ls_xxs_∈_h_xxs : ls_xxs ∈ h (x ∷ xs)
+                            ls_xxs_∈_h_xxs = ∣ ls , ls∈hxs , ∣ y , y∈maxPre_x_head_ls , y∈[y] ls_xxs ∣₁ ∣₁
+                            y∈m_ls_xxs : y ∈ member ls_xxs
+                            y∈m_ls_xxs = ∣ _⊎_.inl ∣ refl ∣₁ ∣₁
+                            z∈mh_xxs : y ∈ (m <=< h) (x ∷ xs)
+                            z∈mh_xxs = ∣ ls_xxs , ls_xxs_∈_h_xxs , y∈m_ls_xxs ∣₁
+                        in ∣ y , z∈mh_xxs , ≥ₛ-refl y ∣₁) head_ls≡ys
+                    }) ys∈map-h
+                }) y∈f_xxs
+            helper (_⊎_.inr y∈fs_xs) = 
+                rec squash₁ (λ { (z , z∈mh_xs , y≥z) → 
+                    rec squash₁ (λ { (ls , ls∈hxs , z∈member_ls) → 
+                        rec squash₁ (λ { (z' , z'∈maxPre) → 
+                            let 
+                                ls_xxs = z' ∷ ls
+                                ls_xxs_∈_h_xxs : ls_xxs ∈ h (x ∷ xs)
+                                ls_xxs_∈_h_xxs = ∣ ls , ls∈hxs , ∣ z' , z'∈maxPre , y∈[y] ls_xxs ∣₁ ∣₁
+                                z∈m_ls_xxs : z ∈ member ls_xxs
+                                z∈m_ls_xxs = ∣ _⊎_.inr z∈member_ls ∣₁
+                                z∈mh_xxs : z ∈ (m <=< h) (x ∷ xs)
+                                z∈mh_xxs = ∣ ls_xxs , ls_xxs_∈_h_xxs , z∈m_ls_xxs ∣₁
+                            in ∣ z , z∈mh_xxs , y≥z ∣₁
+                        }) (hasmin-pre x (head ls))
+                    }) z∈mh_xs
+                }) (lem-2 xs y y∈fs_xs)
