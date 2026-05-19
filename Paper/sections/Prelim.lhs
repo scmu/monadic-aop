@@ -45,15 +45,6 @@ In this paper we will also make extensive use of the Kliseli composition:
 Kliseli composition |(<=<)| is associative, |(=<<)| is right-associative, and both bind looser than function composition |(.)|.
 We will add parentheses where there might be confusion.
 
-Alternatively, a monad can be defined by three operators: |return :: a -> M a|, |join :: M (M a) -> M a|, and its functorial map |(<$>) :: (a -> b) -> M a -> M b|. The two styles of definitions are equivalent, as |(=<<)| can be defined in terms of |join| and |(<$>)|, and vice versa:
-\begin{spec}
-join :: M (M a) -> M a
-join m = id =<< m {-"~~,"-}
-
-(=<<) :: (a -> M b) -> M a -> M b
-f =<< m = join (f <$> m) {-"~~."-}
-\end{spec}
-
 Non-determinism is the only effect we are concerned with in this article: |M a| denotes a non-deterministic computation that may yield zero, one, or more values of type |a|.
 We let |mplus :: M a -> M a -> M a| denote non-deterministic choice and |mzero :: M a| failure. Together they form a monoid (that is, |mplus| is associative with |mzero| as its identity element).
 We demand that |(=<<)| distributes into |mplus| from both sides:
@@ -68,8 +59,8 @@ and that |mzero| is a zero of |(=<<)|:
 \end{align*}
 Furthermore, |mplus| is commutative (|m `mplus` n = n `mplus` m|) and idempotent (|m `mplus` m = m|).
 
-
-{\bf Note:} using monads avoids the confusion mentioned in Section \ref{sec:intro}.
+\paraskip
+\noindent{\bf Note:} using monads avoids the confusion mentioned in Section \ref{sec:intro}.
 The expression |(\x -> x - x) (0 `mplus` 1)| of \citet{deMoorGibbons:00:Pointwise} and \citet{BirdRabe:19:How} is written and evaluated in monadic notation as:
 \begin{spec}
       (\x -> return (x - x)) =<< (return 0 `mplus` return 1)
@@ -86,7 +77,7 @@ while pure and non-deterministic values are clearly distinguished by type and sy
 {\bf End of note.}
 
 \paraskip
-\paragraph{Containment.}~
+\paragraph{Containment}~
 The containment relation of non-determinism monad is defined by:
 \begin{spec}
 m `sse` n = (m `mplus` n = n) {-"~~."-}
@@ -116,10 +107,12 @@ Even though |n| does not use |m|, we cannot just drop |m| without changing the v
 the lefthand side reduces to |mzero| when |m = mzero|.
 When |m /= mzero|, we have |n << m = n|.
 
-\vspace{0.3cm}
-\paragraph{Sets.}~ A structure that supports all the operations above is the set monad: for all type |a|,
+%format Union = "\bigcup"
+\paraskip
+\paragraph{Sets}~ A structure that supports all the operations above is the set monad: for all type |a|,
 |m :: P a| is a set whose elements are of type |a|,
-|mzero| is the empty set, |mplus| is set union for two sets, |join| is union for a set of sets, |(`sse`)| is set inclusion, |return| forms a singleton set, and |f =<< m| is given by |join {f x || x <- m }|.
+|mzero| is the empty set, |mplus| is set union for two sets, |(`sse`)| is set inclusion, |return| forms a singleton set, and |f =<< m| is given by |Union {f x || x <- m }|,
+where |Union| is union for a set of sets.
 For the rest of the paper we take |M = P|.
 
 The set |any :: P a| contains all elements having type |a|.
@@ -136,7 +129,7 @@ We think the latter name is misleading, and instead use |filt| in this paper.%
 }
 
 \paraskip
-\paragraph{Example: prefixes and suffixes.}~
+\paragraph{Example: prefixes and suffixes}~
 The function |prefix| non-deterministically computes a prefix of the given list:
 \begin{code}
 prefix :: List a -> P (List a)
@@ -193,6 +186,8 @@ The righthand side |m| is a function which yields, for each member |y|, a proof 
 while the lefthand side is a function which produces, for each member |y|, a dependent pair consisting of a value |x : a| , a proof that |x| is in |m|, and a proof that |x <=> y|.
 While logically we recognize that they are equivalent, in the type theory of Agda the two sides are different, albeit isomorphic, types.
 
+\paraskip
+\paragraph{Cubical Agda}~
 To make the proofs easier we prefer a type theory where such types denote ``the same'' properties are indeed considered equivalent.
 We move to Cubical Agda \cite{Vezzosi:19:Cubical}, and make use of its definition of |P|, in terms of |hprop| (Homotopic Type Theory (HoTT) propositions), which expands to:
 \begin{spec}
@@ -223,9 +218,23 @@ leftId : (m : P a) -> (return =<< m) <=> m
 leftId = ...
 \end{spec}
 Proof of these primitive properties typically involves use of functional extensionality,
-the |rec| operator, of type |isProp P -> (b -> P) -> sem1 b -> P|, which says that if every |b| satisfies proposition |P|, every |sem1 b| satissfies |P| as well.
+and the |rec| operator, of type |isProp P -> (b -> P) -> sem1 b -> P|, which says that if every |b| satisfies proposition |P|, every |sem1 b| satissfies |P| as well.
 Interested readers are referred to the accompanying Agda code.
 Other properties may then be established on these primitive properties, without touching these details.
+
+\paragraph{Problem with |join|}~
+Traditionally, a monad may also be defined by three operators: |return :: a -> P a|, |join :: P (P a) -> P a|, and its functorial map |(<$>) :: (a -> b) -> P a -> P b|.
+This defintion is equivalent to the definition using |return| and |(=<<)|,
+The two styles of definitions are equivalent, as |(=<<)| can be defined in terms of |join| and |(<$>)|, and vice versa:
+\begin{spec}
+join :: P (P a) -> P a
+join m = id =<< m {-"~~,"-}
+
+(=<<) :: (a -> P b) -> P a -> P b
+f =<< m = join (f <$> m) {-"~~."-}
+\end{spec}
+However, this definition does not work in |Agda| since, given |a :: Type l|, |P (P a)| is in |Type (2+l)|, where as we want |(=<<)| to stay in the realm of |Type (1+l)|.
+For our purpose, we found it possible to avoid |join| and present all our specifications and theorems in terms of |return| and |(=<<)|.
 
 \subsection{Monadic fold}
 
@@ -281,15 +290,15 @@ Meanwhile, the following definition does \emph{not} equal |prefixP|:
 notPrefixP    = foldR preP mzero  {-"~~,"-}
   where preP x ys  = return [x] <|> return (x : ys) {-"~~,"-}
 \end{code}
-because |pre x =<< mzero| immediately reduces to |mzero|.
+because |preP x =<< mzero| immediately reduces to |mzero|.
 
 \paraskip
-\paragraph{Fixed-point properties and fusion laws.}~
-Given |h :: List a -> P b|, the \emph{fixed-point properties}, that is, sufficient conditions for |h| to contain, be contained by, or equal to |foldR f e|, are given by:
+\paragraph{Fixed-point properties and fusion laws}~
+The \emph{fixed-point properties} of |foldR|, which provide sufficient conditions for some |h :: List a -> P b| to contain, be contained by, or equal to |foldR f e|, are given by:
 \begin{align}
-|foldR f e `sse` h| & |{-"~"-}<=={-"~"-} e `sse` h [] {-"\,"-}&&{-"\,"-} f x =<< h xs `sse` h (x:xs)  {-"~~,"-}| \label{eq:foldRPrefixPt} \\
-|h `sse` foldR f e| & |{-"~"-}<=={-"~"-} h [] `sse` e {-"\,"-}&&{-"\,"-} h (x:xs) `sse` f x =<< h xs  {-"~~."-}| \label{eq:foldRSuffixPt} \\
-|h = foldR f e| & |{-"~"-}<=>{-"~"-} h [] = e {-"\,"-}&&{-"\,"-} h (x:xs) = f x =<< h xs  {-"~~."-}| \label{eq:foldRFixPt}
+|foldR f e `sse` h| & |{-"~"-}<=={-"~"-} e `sse` h [] {-"\,"-}&&{-"\,"-} (forall x, xs : f x =<< h xs `sse` h (x:xs))  {-"~~,"-}| \label{eq:foldRPrefixPt} \\
+|h `sse` foldR f e| & |{-"~"-}<=={-"~"-} h [] `sse` e {-"\,"-}&&{-"\,"-} (forall x, xs : h (x:xs) `sse` f x =<< h xs)  {-"~~."-}| \label{eq:foldRSuffixPt} \\
+|h = foldR f e| & |{-"~"-}<=>{-"~"-} h [] = e {-"\,"-}&&{-"\,"-} (forall x, xs : h (x:xs) = f x =<< h xs ) {-"~~."-}| \label{eq:foldRFixPt}
 \end{align}
 The properties above can be proved by routine induction on the input list.
 
@@ -322,38 +331,9 @@ prefixPPrefixInd x xs =
      return [] <|> prefixP (x:xs) {-"~~."-}
 \end{code}
 
-
-% One would eventually get stuck and realise that we need to prove a stronger property:
-% \begin{spec}
-%   return [] <|> prefixP xs `sse` prefix xs {-"~~."-}
-% \end{spec}
-% This is a case where a stronger variation of a property is easier to prove!
-% To prove the property above by \eqref{eq:foldRPrefixPt}, we need to show that
-% |return [] <||> fail `sse` return []|, which is immediate, and that
-% \begin{spec}
-%  return [] <|> prefixP (x:xs) `sse` pre x =<< (return [] <|> prefixP xs) {-"~~."-}
-% \end{spec}
-% We try to simply the more complex righthand side to the lefthand side.
-% The proof proceeds by utilising monad laws and distributivity:
-% \begin{spec}
-%       pre x =<< (return [] <|> prefixP xs)
-%  ===    {- |(=<<)| distributes into |mplus| -}
-%       (pre x =<< return []) <|> (pre x =<< prefixP xs)
-%  ===    {- definition of |pre|, monad laws -}
-%       return [] <|> return [x] <|> (pre x =<< prefixP xs)
-%  ===    {- definition of |pre| -}
-%       return [] <|> return [x] <|> ((\ ys -> return [] <|> return (x : y)) =<< prefixP xs)
-%  ===    {- |(=<<)| distributes into |mplus|, monad laws, definition of |(<$>)| -}
-%       return [] <|> return [x] <|> return [] <|> (x:) <$> prefixP xs
-%  ===    {- idempotency of |mplus|, definition of |prefixP|  -}
-%       return [] <|> prefixP (x:xs) {-"~~."-}
-% \end{spec}
-% We wanted an inclusion but end up proving an equality.
-% We have actually proved that |return [] <||> prefixP xs = prefix xs|.
-
 With the fixed-point properties, we can prove the following |foldR| fusion rule:
 \begin{equation}
-  |foldR g (h e) `sse` h . foldR f e {-"~"-}<=={-"~"-} g x =<< h m `sse` h (f x =<< m) {-"~~."-}|
+  |foldR g (h e) `sse` h . foldR f e {-"~"-}<=={-"~"-} (forall x, m : g x =<< h m `sse` h (f x =<< m)) {-"~~."-}|
   \label{eq:foldRFusion}
 \end{equation}
 
@@ -403,7 +383,19 @@ wrap x = [x]
 %endif
 where |wrap x = [x]|.
 With |f| and |e| being non-deterministic, |scanR f e| returns a set of all possible lists.
-\todo{example.}
+For example,
+|scanR (\x y -> return (x+y)) (return 0) [1,2,3]| yields |return [6,5,3,0]| as its only result,
+while
+\begin{spec}
+scanR rplus (return 0) [1,2,3] {-"~~,"-}
+\end{spec}
+where |rplus x y = return y <||> return (x+y)|,
+computes |8| possibilities:
+\begin{spec}
+ return [0,0,0,0] <|> return [1,0,0,0] <|> return [2,2,0,0] <|> return [3,2,0,0] <|>
+ return [3,3,3,0] <|> return [4,3,3,0] <|> return [5,5,3,0] <|> return [6,5,3,0] {-"~~,"-}
+\end{spec}
+where each element in |[1,2,3]| may be added or not.
 
 The function |scanR| can be defined in terms of a |foldR|:
 \begin{spec}
@@ -437,9 +429,14 @@ propScanLemmaStmt f e =
   \label{eq:ScanLemma}
 \end{equation}
 That is, every element in any list computed by |scanR| is a result of |foldR| applied to some suffix of the input.
-The lefthand side is strictly smaller than the righthande side when |f| returns |mzero| while |e /= mzero|.
+For example, letting |f := rplus| and |e := return 0|, both sides of
+\eqref{eq:ScanLemma} have type |List Int -> P Int|.
+When applied to |[1,2,3]|, both sides yield |return 0 <||> return 1 <||> ... <||> return 6|, that is, all the numbers that may appear in any list returned by |scanR rplus (return 0) [1,2,3]|.
+In this example the two sides are equal. The lefthand side of \eqref{eq:ScanLemma} is strictly smaller than the righthand side when |f| returns |mzero| while |e /= mzero|.
+
+The lemma \eqref{eq:ScanLemma} can be proved by our familiar method --- an induction on the input:
 \begin{proof}
-Induction on the input. For the inductive case we reason:
+The base case is immediate. For the inductive case we reason:
 %if False
 \begin{code}
 proofScanLemmaInd :: (a -> b -> P b) -> P b -> a -> List a -> P b
@@ -609,7 +606,8 @@ Letting |h = max . f| in \eqref{eq:max-univ-monadic}, we get on the righthand si
  \label{eq:max-cancelation}
 \end{equation}
 
-{\bf Note}: by defining the ``split'' operator |split f g x = do { y <- f x; z <- g x; return (y,z) }|,
+\paraskip
+\noindent{\bf Note}: by defining the ``split'' operator |split f g x = do { y <- f x; z <- g x; return (y,z) }|,
 \eqref{eq:max-univ-monadic} can be written more concisely as below:
 \begin{equation*}
 |h `sse` max_unlhd . f|\mbox{~~}|<==>|\mbox{~~} |h `sse` f &&|~
@@ -641,12 +639,13 @@ We will discuss about that soon.
 
 The function |max| is not monotonic with respect to |(`sse`)| ---
 indeed, |{1,2} `sse` {1,2,3}|, while |max {1,2} = {2} {-"\not\subseteq"-} {3} = max {1,2,3}|.
-Consequently, having |f `sse` g| does not give us |max . f `sse` max g|.%
+Consequently, having |f `sse` g| does not give us |max . f `sse` max . g|.%
 \footnote{Again, the situation is the same in \citet{BirddeMoor:97:Algebra}: even though $\Varid{S} \subseteq \Varid{T}$, we do not have
 $\Lambda \Varid{S} \subseteq \Lambda \Varid{T}$, therefore neither do we have $\Varid{max} \circo \Lambda \Varid{S} \subseteq \Varid{max} \circo \Lambda \Varid{T}$.
 It has not been a major problem, probably due to that using Greedy Theorem to eliminate the outermost |max| is usually the first refinement step in their treatment of optimisation problems.}
 
-Luckily, we only need monotonicity to hold in more specific cases.
+\citet{Pinho:22:Greedy} proposed a general condition (property (2.195)) for |max . f `sse` max . g| to hold that is based on the universal property of |max|.
+For this article, we only need monotonicity to hold in more specific cases.
 Observing the counter example above, one might conjecture that |max s `sse` max t| if |s `sse` t| and |s| somehow keeps the maximum elements of |t|. Indeed, there are two such laws.
 Provided that |unrhd| is transitive, we have:
 \begin{spec}
@@ -660,11 +659,10 @@ Their function-compositional counterparts are written as:
 max_unlhd . f `sse` max_unlhd . g  {-"~"-}<=={-"~"-} f `sse` g && (forall z, x `inn` f z, y `inn` g z : x `unrhd` y) {-"~~,"-}
 max_unlhd . f `sse` max_unlhd . g  {-"~"-}<=={-"~"-} f `sse` g && (forall z, y `inn` g z : (exists x `inn` g z : x `unrhd` y)) {-"~~."-}
 \end{spec}
-These two laws cover all the cases in this article where we need |max| to be monotonic.
-In particular, the first law automatically is satisfied if |g| has the form |max_unlhd . g'|, that is, |f| is already a refinement of some function that computes maximums.
+In this article we find the second law particularly useful.
 
-\todo{Find out whether these are the properties we use, and whether the following proofs should be mentioned at all.}
-
+%These two laws cover all the cases in this article where we need |max| to be monotonic.
+% In particular, the first law automatically is satisfied if |g| has the form |max_unlhd . g'|, that is, |f| is already a refinement of some function that computes maximums.
 The two laws translate to the monadic language as:
 \begin{equation*}
 |max_unlhd . f `sse` max_unlhd . g|\mbox{~~}|<==|\mbox{~~} |f `sse` g &&|~
@@ -699,9 +697,10 @@ The two laws translate to the monadic language as:
        & |filt unrhd (x, y)|\\
        & |return (y,z)|
  \end{aligned}
- \right)\mbox{~~.}
+ \right)\mbox{~~,}
  \label{eq:max-monotonic-monadic}
 \end{equation}
+provided that |unrhd| is transitive.
 It might be instructive observing how the two laws are translated: universally quantified variables are introduced on the LHS of |(`sse`)|; existential quantification of |x| is represented by introducing it on the RHS of |(`sse`)|;
 in \eqref{eq:max-monotonic-monadic} both sides return |(y,z)| to ensure that they are the same.
 
@@ -758,26 +757,48 @@ It will be a technique we use a lot in such proofs: identifying the lines that m
 
 \subsubsection{Promotion into Kliseli composition}
 
-The function |max| promotes into |join|:
-%if False
-\begin{code}
--- propMinJoin :: forall {k} (a :: Type). P (P a) -> P a
-propMaxJoin xss = max (join xss) === max (join (fmap max xss))
-\end{code}
-%endif
+Given the expression |max . (f <=< g)|, one might want to reason about |f| and |g| separately and wish to promote |max| into |(<=<)|:
 \begin{equation}
-  |max . join === max . join  . fmap max| \mbox{~~.}
-   \label{eq:MaxJoin}
-\end{equation}
-Consider an input |xss :: P (P a)|, a set of sets, as the input for both sides. On the lefthand side, |xss| is joined into a single set, from which we keep the minimums. It is equivalent to the righthand side, where we choose the minimums of each of the sets in |xss|, before keeping their minimums.
-With \eqref{eq:MaxJoin} and the definition of |(=<<)| by |join| we can show how |max| promotes into |(=<<)| or |(<=<)|:
-\begin{equation}
-  |max . (f <=< g) === max . ((max . f) <=< g)| \mbox{~~,}
+  |max_unlhd . (f <=< g) === max_unlhd . ((max_unlhd . f) <=< g)| \mbox{~~,}
    \label{eq:MaxKComp}
 \end{equation}
-or |max (f =<< g x) === max ((max . f) =<< g x)| for all |x|.
+for transitive |unrhd|.
+Equivalently, |max_unlhd (f =<< g x) === max_unlhd ((max_unlhd . f) =<< g x)| for all |x| and transitive |unrhd|.
 
-\todo{Verify this. And probably drop |join| if we do not need it.}
+Indeed, the |(`sse`)| direction of \eqref{eq:MaxKComp},
+that is, |max . (f <=< g) `sse` max . ((max . f) <=< g)|, always hold.
+It is not the case for the other direction:
+\begin{equation*}
+  |max . ((max . f) <=< g) `sse` max . (f <=< g)| \mbox{~~.}
+    \tag{\ref{eq:MaxKComp}'}
+\end{equation*}
+%format `union` = "\cup"
+For an counterexample, let |g () = {False, True}|
+and |f False = {0}|, while |f True| returns an infinite set |{0, 1, 2, ..}| ---
+thus |max (f True) = mzero|.
+The lefthand side of (\ref{eq:MaxKComp}') is
+|max ({0} `union` {}) = {0}|, while the righthand side evaluates to
+|max ({0} `union` {0, 1, 2, ..}) = mzero|.%
+\footnote{Note that infinite sets are not necessary to generate such counter examples.
+One may also let the domain be |Nat `union` {awkward}| where |awkward| is a value not comparable with any |Nat|, therefore |max {0, awkward} = mzero|, and let |f True = {0, awkward}|.}
+
+One of the ways to have both directions of \eqref{eq:MaxKComp} is to add a side condition that |f| always returns sets that has maximums, that is, |(forall x : (exists y : y `elem` max (f x))|. This turns out to be sufficient for examples in this article.
+
+% The function |max| promotes into |join|:
+% %if False
+% \begin{code}
+% -- propMinJoin :: forall {k} (a :: Type). P (P a) -> P a
+% propMaxJoin xss = max (join xss) === max (join (fmap max xss))
+% \end{code}
+% %endif
+% \begin{equation}
+%   |max . join === max . join  . fmap max| \mbox{~~.}
+%    \label{eq:MaxJoin}
+% \end{equation}
+% Consider an input |xss :: P (P a)|, a set of sets, as the input for both sides. On the lefthand side, |xss| is joined into a single set, from which we keep the minimums. It is equivalent to the righthand side, where we choose the minimums of each of the sets in |xss|, before keeping their minimums.
+% With \eqref{eq:MaxJoin} and the definition of |(=<<)| by |join| we can show how
+%
+% \todo{Verify this. And probably drop |join| if we do not need it.}
 %The proof goes:
 %%if False
 %\begin{code}
@@ -818,6 +839,6 @@ maxlist = undefined
 That |unlhd| being total guarantees that maximum exists for non-empty |xs|.
 The function |maxlist| may decide how to resolve a tie --- in the implementation above, for example, |maxlist| prefers elements that appears earlier in the list.
 
-\paraskip
+%\paraskip
 \paragraph{In the Agda model}
 We assume that |max| is a value satisfying a universal property that more closely resembles that of \citet{BirddeMoor:97:Algebra}, which essentially expands to \eqref{eq:max-univ-monadic}, from which we prove the rest of the properties.

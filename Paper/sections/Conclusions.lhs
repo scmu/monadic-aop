@@ -16,7 +16,7 @@ Meanwhile, monads are a general way to model effects, including non-determinism,
 Talking about these problems also demonstrates the importance of monad laws.
 
 \paraskip
-\paragraph{Related work.}
+\paragraph{Related work}
 \citet{GibbonsHinze:11:Just} is a pioneering work showing that one does not have to give up equational reasoning with the presence of side effects.
 On the contrary, monadic programs are very suitable for reasoning using monad laws and properties of effect operators.
 Inspired, \citet{Mu:19:Equational} modelled Spark aggregation using non-determinism monad, in order to prove it properties.
@@ -32,7 +32,6 @@ Still, we use Agda to verify the correctness of our theory.
 Having built the formalisation, they verified a number of previous work on reasoning about monads and corrected many bugs.
 
 In \citet{BirddeMoor:97:Algebra} and in this article, |max| is a relation/function that takes a set as its input. Alternatively, \citet{MuOliveira:12:Programming} proposed a ``shrink'' operator $(\upharpoonright)$ that is applied directly to relations --- given $S :: A \rightarrow B$, the relation ${S\!\upharpoonright} :: A \rightarrow B$ is included in $S$ but keeps only those outputs that are optimal.
-Using $(\upharpoonright)$ led to a more streamlined formalisation of optimisation problems by avoiding an intermediate set.
+\citet{Oliveira:18:Programming} hinted at the possibility of extending the notion to another operator $(\downharpoonleft)$ that corresponds to thinning, which was further developed by \citet{Pinho:22:Greedy}, who carefully reviewed and proved many important properties of $(\upharpoonright)$ and $(\downharpoonleft)$, and applied them to a number of examples.
+Using these notations led to a more streamlined formalisation of optimisation problems by avoiding an intermediate set.
 As a future work, it remains to investigate whether the advantage also applies to our setting.
-
-\cite{Pinho:22:Greedy}
