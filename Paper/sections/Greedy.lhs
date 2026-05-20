@@ -418,7 +418,7 @@ genElem = do Small x <- arbitrary
 
 propMSSCorrect n = forAll (listNoLongerThan n genElem) $ \ (xs :: List Int) ->
   let sols = unP $ mss xs
-      opt  = mssFinal xs
+      opt  = mssImpl xs
   in  all ((sum opt ==) . sum) sols
 \end{code}
 %endif

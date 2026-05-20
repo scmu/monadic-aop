@@ -201,7 +201,7 @@ Here the equality |(<=>)| is defined in the HoTT sense, that there is a path fro
 In the terminology of Cubical Agda and HoTT, a \emph{proposition} is a type whose terms are always equal.
 The operator |sem1(_)| converts a type to a proposition, and |squash1| is a proof that any two terms of the said type are equal (that is, there exists a path between them).
 They are defined as constructors of a \emph{higher-order inductive type}, but we omit the details.
-Given them, |return| and |(=<<)| are defined by:
+Operators |return| and |(=<<)| are defined by:
 \begin{spec}
 return : a -> P a
 return x  = \y -> sem1(x <=> y) , squash1 {-"~~,"-}
@@ -210,20 +210,20 @@ return x  = \y -> sem1(x <=> y) , squash1 {-"~~,"-}
 f =<< m   = \y -> sem1(\Sum _ (\ x -> fst (m x) * fst (f x y))) , squash1 {-"~~."-}
 \end{spec}
 
-Properties such as the left identity can then be proved in Agda:
+Properties such as the left identity may then be proved in Agda:
 %format leftId = "\Varid{left}{\textendash}\Varid{id}"
 \begin{spec}
 leftId : (m : P a) -> (return =<< m) <=> m
 leftId = ...
 \end{spec}
 Proof of these primitive properties typically involves use of functional extensionality,
-and the |rec| operator, of type |isProp P -> (b -> P) -> sem1 b -> P|, which says that if every |b| satisfies proposition |P|, every |sem1 b| satissfies |P| as well.
+and the |rec| operator, of type |isProp P -> (b -> P) -> sem1 b -> P|, which says that if every |b| satisfies proposition |P|, every |sem1 b| satisfies |P| as well.
 Interested readers are referred to the accompanying Agda code.
 Other properties may then be established on these primitive properties, without touching these details.
 
 \paragraph{Problem with |join|}~
 Traditionally, a monad may also be defined by three operators: |return :: a -> P a|, |join :: P (P a) -> P a|, and its functorial map |(<$>) :: (a -> b) -> P a -> P b|.
-This defintion is equivalent to the definition using |return| and |(=<<)|,
+This definition is equivalent to the definition using |return| and |(=<<)|,
 The two styles of definitions are equivalent, as |(=<<)| can be defined in terms of |join| and |(<$>)|, and vice versa:
 \begin{spec}
 join :: P (P a) -> P a
@@ -394,19 +394,28 @@ computes |8| possibilities:
  return [0,0,0,0] <|> return [1,0,0,0] <|> return [2,2,0,0] <|> return [3,2,0,0] <|>
  return [3,3,3,0] <|> return [4,3,3,0] <|> return [5,5,3,0] <|> return [6,5,3,0] {-"~~,"-}
 \end{spec}
-where each element in |[1,2,3]| may be added or not.
+since each element in |[1,2,3]| may be used or not.
 
 The function |scanR| can be defined in terms of a |foldR|:
-\begin{spec}
-scanR f e = foldR f' (wrap <$> e)
+%{
+%format scanR1 = "\Varid{scanR}"
+\begin{code}
+scanR1 f e = foldR f' (wrap <$> e) {-"~~,"-}
   where f' x ys = do {z <- f x (head ys); return (z:ys)} {-"~~."-}
-\end{spec}
+\end{code}
+%}
 Therefore, from \eqref{eq:foldr-foldR} one can induce that |scanR| with a
 deterministic step function is itself deterministic:
 \begin{align}
   |return . scanr f e|~&=~ |scanR (\x -> return . f x) (return e)|  \mbox{~~.}
     \label{eq:scanr-scanR}
 \end{align}
+%if False
+\begin{code}
+propScanrScanR f e =
+  return . scanr f e === scanR (\x -> return . f x) (return e)
+\end{code}
+%endif
 
 The main property of |scanR| that we need for this article is a monadic variation of \emph{scan lemma}.
 Let the function |member| non-deterministically returns an element of the given list:
@@ -731,8 +740,28 @@ For the second conjunct, we assume the righthand side of \eqref{eq:max-monotonic
 minMonoPf :: Ord b => (a -> P b) -> (a -> P b) -> ((b,b) -> Bool) -> P (b, b)
 minMonoPf f g unrhd =
 \end{code}
-%endif
 \begin{code}
+        do  z <- any
+            x <- max (f z)
+            y <- g z
+            return (x, y)
+ `sse`   {- matching |z <- any| and |y <- g z| in \eqref{eq:max-monotonic-monadic} and rewrite -}
+        do  (y,z) <- any
+            w <- f z
+            filt unrhd (w,y)
+            x <- max (f z)
+            return (x,y)
+ `sse`   {- |max|-cancelation -}
+        do  (x,y,w) <- any
+            filt unrhd (w,y)
+            filt unrhd (x,w)
+            return (x,y)
+ `sse`   {- |unrhd| transitive -}
+        do  (x,y) <- any
+            filt unrhd (x,y) {-"~~."-}
+\end{code}
+%endif
+\begin{spec}
         do  z <- any
             x <- max (f z)
             y <- g z
@@ -750,7 +779,7 @@ minMonoPf f g unrhd =
             return (x,y)
  `sse`   {- |unrhd| transitive -}
         do  x `unrhd` y <- any {-"~~."-}
-\end{code}
+\end{spec}
 \end{proof}
 Notice the first step of the calculation: |z <- any| and |y <- g z| match the LHS of |(`sse`)| in the big parentheses in \eqref{eq:max-monotonic-monadic}, allowing us to rewrite them to the RHS of |(`sse`)|.
 It will be a technique we use a lot in such proofs: identifying the lines that matches the LHS of some |(`sse`)|, and rewrite them to the RHS.
@@ -783,38 +812,6 @@ The lefthand side of (\ref{eq:MaxKComp}') is
 One may also let the domain be |Nat `union` {awkward}| where |awkward| is a value not comparable with any |Nat|, therefore |max {0, awkward} = mzero|, and let |f True = {0, awkward}|.}
 
 One of the ways to have both directions of \eqref{eq:MaxKComp} is to add a side condition that |f| always returns sets that has maximums, that is, |(forall x : (exists y : y `elem` max (f x))|. This turns out to be sufficient for examples in this article.
-
-% The function |max| promotes into |join|:
-% %if False
-% \begin{code}
-% -- propMinJoin :: forall {k} (a :: Type). P (P a) -> P a
-% propMaxJoin xss = max (join xss) === max (join (fmap max xss))
-% \end{code}
-% %endif
-% \begin{equation}
-%   |max . join === max . join  . fmap max| \mbox{~~.}
-%    \label{eq:MaxJoin}
-% \end{equation}
-% Consider an input |xss :: P (P a)|, a set of sets, as the input for both sides. On the lefthand side, |xss| is joined into a single set, from which we keep the minimums. It is equivalent to the righthand side, where we choose the minimums of each of the sets in |xss|, before keeping their minimums.
-% With \eqref{eq:MaxJoin} and the definition of |(=<<)| by |join| we can show how
-%
-% \todo{Verify this. And probably drop |join| if we do not need it.}
-%The proof goes:
-%%if False
-%\begin{code}
-%-- propMaxJoin :: forall {k} (a :: Type). P (P a) -> P a
-%propMaxBind f g xs =
-%\end{code}
-%%endif
-%\begin{code}
-%      max (f =<< g xs)
-% ===    {- definition of |(=<<)| -}
-%      max (join (fmap f (g xs)))
-% ===    {- \eqref{eq:MaxJoin} -}
-%      max (join (fmap (max . f) (g xs)))
-% ===    {- definition of |(=<<)| -}
-%      max ((max . f) =<< g xs) {-"~~."-}
-%\end{code}
 
 \subsubsection{Conversion from lists}
 
