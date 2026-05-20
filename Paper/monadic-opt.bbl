@@ -1,47 +1,262 @@
-\begin{thebibliography}{9}
+%%% -*-BibTeX-*-
+%%% Do NOT edit. File created by BibTeX with style
+%%% ACM-Reference-Format-Journals [18-Jan-2012].
 
-\bibitem[{Aarts et~al.}(1992){Aarts, Backhouse, Hoogendijk, Voermans, \&
-  van~der Woude}]{Aarts:92:Relational}
-{Aarts, C., Backhouse, R.~C., Hoogendijk, P.~F., Voermans, E. \& van~der Woude,
-  J.} (1992) A relational theory of datatypes. Technical report. Technische
-  Universiteit Eindhoven.
+\begin{thebibliography}{19}
 
-\bibitem[{Backhouse et~al.}(1991){Backhouse, de~Bruin, Malcolm, Voermans, \&
-  van~der Woude}]{BackhousedeBruin:91:Relational}
-{Backhouse, R.~C., de~Bruin, P.~J., Malcolm, G., Voermans, E. \& van~der Woude,
-  J.} (1991) Relational catamorphisms. Proceedings of the {IFIP} {TC}2/{WG}2.1
-  Working Conference on Constructing Programs. Elsevier Science Publishers. pp.
-  287--318.
+%%% ====================================================================
+%%% NOTE TO THE USER: you can override these defaults by providing
+%%% customized versions of any of these macros before the \bibliography
+%%% command.  Each of them MUST provide its own final punctuation,
+%%% except for \shownote{}, \showDOI{}, and \showURL{}.  The latter two
+%%% do not use final punctuation, in order to avoid confusing it with
+%%% the Web address.
+%%%
+%%% To suppress output of a particular field, define its macro to expand
+%%% to an empty string, or better, \unskip, like this:
+%%%
+%%% \newcommand{\showDOI}[1]{\unskip}   % LaTeX syntax
+%%%
+%%% \def \showDOI #1{\unskip}           % plain TeX syntax
+%%%
+%%% ====================================================================
 
-\bibitem[{Backhouse and Hoogendijk}(1992){Backhouse \&
-  Hoogendijk}]{BackhouseHoogendijk:92:Elements}
-{Backhouse, R.~C. \& Hoogendijk, P.~F.} (1992) Elements of a relational theory
-  of datatypes. Formal Program Development. Proc. {IFIP} {TC}2/{WG} 2.1 State
-  of the Art Seminar. Springer-Verlag. pp. 7--42.
+\ifx \showCODEN    \undefined \def \showCODEN     #1{\unskip}     \fi
+\ifx \showDOI      \undefined \def \showDOI       #1{#1}\fi
+\ifx \showISBNx    \undefined \def \showISBNx     #1{\unskip}     \fi
+\ifx \showISBNxiii \undefined \def \showISBNxiii  #1{\unskip}     \fi
+\ifx \showISSN     \undefined \def \showISSN      #1{\unskip}     \fi
+\ifx \showLCCN     \undefined \def \showLCCN      #1{\unskip}     \fi
+\ifx \shownote     \undefined \def \shownote      #1{#1}          \fi
+\ifx \showarticletitle \undefined \def \showarticletitle #1{#1}   \fi
+\ifx \showURL      \undefined \def \showURL       {\relax}        \fi
+% The following commands are used for tagged output and should be
+% invisible to TeX
+\providecommand\bibfield[2]{#2}
+\providecommand\bibinfo[2]{#2}
+\providecommand\natexlab[1]{#1}
+\providecommand\showeprint[2][]{arXiv:#2}
 
-\bibitem[{Bird and de~Moor}(1997){Bird \& de~Moor}]{BirddeMoor:97:Algebra}
-{Bird, R.~S. \& de~Moor, O.} (1997) {\em Algebra of Programming\/}.
-  International Series in Computer Science. Prentice Hall.
+\bibitem[Aarts et~al\mbox{.}(1992)]%
+        {Aarts:92:Relational}
+\bibfield{author}{\bibinfo{person}{Chritiene Aarts}, \bibinfo{person}{Roland~C.
+  Backhouse}, \bibinfo{person}{Paul~F. Hoogendijk}, \bibinfo{person}{Ed
+  Voermans}, {and} \bibinfo{person}{Jaap van~der Woude}.}
+  \bibinfo{year}{1992}\natexlab{}.
+\newblock \bibinfo{booktitle}{\emph{A Relational Theory of Datatypes}}.
+\newblock \bibinfo{type}{{T}echnical {R}eport}.
+  \bibinfo{institution}{Technische Universiteit Eindhoven}.
+\newblock
 
-\bibitem[{Bird and Gibbons}(2020){Bird \& Gibbons}]{BirdGibbons:20:Algorithm}
-{Bird, R.~S. \& Gibbons, J.} (2020) {\em Algorithm Design with Haskell\/}.
-  Cambridge University Press.
 
-\bibitem[{Bird and Rabe}(2019){Bird \& Rabe}]{BirdRabe:19:How}
-{Bird, R.~S. \& Rabe, F.} (2019) How to calculate with nondeterministic
-  functions. Mathematics of Program Construction. Springer. pp. 138--154.
+\bibitem[Affeldt et~al\mbox{.}(2019)]%
+        {Affeldt:19:Hierarchy}
+\bibfield{author}{\bibinfo{person}{Reynald Affeldt}, \bibinfo{person}{David
+  Nowak}, {and} \bibinfo{person}{Takafumi Saikawa}.}
+  \bibinfo{year}{2019}\natexlab{}.
+\newblock \showarticletitle{A hierarchy of monadic effects for program
+  verification using equational reasoning}, See \citeN{MPC:19},
+  \bibinfo{pages}{226--254}.
+\newblock
 
-\bibitem[{de~Moor and Gibbons}(2000){de~Moor \&
-  Gibbons}]{deMoorGibbons:00:Pointwise}
-{de~Moor, O. \& Gibbons, J.} (2000) Pointwise relational programming. Algebraic
-  Methodology and Software Technology. Springer-Verlag. pp. 371--390.
 
-\bibitem[{Smyth}(1978)]{Smyth:78:Power}
-{Smyth, M.~B.} (1978) Power domains. \textit{Journal of Computer and System
-  Sciences}. {\bf 16}(1), 23--36.
+\bibitem[Backhouse et~al\mbox{.}(1991)]%
+        {BackhousedeBruin:91:Relational}
+\bibfield{author}{\bibinfo{person}{Roland~C. Backhouse},
+  \bibinfo{person}{Peter~J. de Bruin}, \bibinfo{person}{Grant Malcolm},
+  \bibinfo{person}{Ed Voermans}, {and} \bibinfo{person}{Jaap van~der Woude}.}
+  \bibinfo{year}{1991}\natexlab{}.
+\newblock \showarticletitle{Relational catamorphisms}. In
+  \bibinfo{booktitle}{\emph{Proceedings of the {IFIP} {TC}2/{WG}2.1 Working
+  Conference on Constructing Programs}},
+  \bibfield{editor}{\bibinfo{person}{Bernhard M\"oller}} (Ed.).
+  \bibinfo{publisher}{Elsevier Science Publishers}, \bibinfo{pages}{287--318}.
+\newblock
 
-\bibitem[{Winskel}(1985)]{Winskel:85:Powerdomains}
-{Winskel, G.} (1985) On powerdomains and modality. \textit{Theoretical Computer
-  Science}. {\bf 36}, 127--137.
+
+\bibitem[Backhouse and Hoogendijk(1992)]%
+        {BackhouseHoogendijk:92:Elements}
+\bibfield{author}{\bibinfo{person}{Roland~C. Backhouse} {and}
+  \bibinfo{person}{Paul~F. Hoogendijk}.} \bibinfo{year}{1992}\natexlab{}.
+\newblock \showarticletitle{Elements of a relational theory of datatypes}. In
+  \bibinfo{booktitle}{\emph{Formal Program Development. Proc. {IFIP} {TC}2/{WG}
+  2.1 State of the Art Seminar}} \emph{(\bibinfo{series}{Lecture Notes in
+  Computer Science}, \bibinfo{number}{755})},
+  \bibfield{editor}{\bibinfo{person}{Bernhard M\"oller},
+  \bibinfo{person}{Helmuth~A. Partsch}, {and} \bibinfo{person}{Stephen~A.
+  Schuman}} (Eds.). \bibinfo{publisher}{Springer-Verlag},
+  \bibinfo{pages}{7--42}.
+\newblock
+
+
+\bibitem[Bird and de~Moor(1997)]%
+        {BirddeMoor:97:Algebra}
+\bibfield{author}{\bibinfo{person}{Richard~S. Bird} {and} \bibinfo{person}{Oege
+  de Moor}.} \bibinfo{year}{1997}\natexlab{}.
+\newblock \bibinfo{booktitle}{\emph{Algebra of Programming}}.
+\newblock \bibinfo{publisher}{Prentice Hall}.
+\newblock
+\showISBNx{0-13-507245-X}
+
+
+\bibitem[Bird and Gibbons(2020)]%
+        {BirdGibbons:20:Algorithm}
+\bibfield{author}{\bibinfo{person}{Richard~S. Bird} {and}
+  \bibinfo{person}{Jeremy Gibbons}.} \bibinfo{year}{2020}\natexlab{}.
+\newblock \bibinfo{booktitle}{\emph{Algorithm Design with Haskell}}.
+\newblock \bibinfo{publisher}{Cambridge University Press}.
+\newblock
+
+
+\bibitem[Bird and Rabe(2019)]%
+        {BirdRabe:19:How}
+\bibfield{author}{\bibinfo{person}{Richard~S. Bird} {and}
+  \bibinfo{person}{Florian Rabe}.} \bibinfo{year}{2019}\natexlab{}.
+\newblock \showarticletitle{How to calculate with nondeterministic functions},
+  See \citeN{MPC:19}, \bibinfo{pages}{138--154}.
+\newblock
+
+
+\bibitem[de~Moor and Gibbons(2000)]%
+        {deMoorGibbons:00:Pointwise}
+\bibfield{author}{\bibinfo{person}{Oege de Moor} {and} \bibinfo{person}{Jeremy
+  Gibbons}.} \bibinfo{year}{2000}\natexlab{}.
+\newblock \showarticletitle{Pointwise relational programming}. In
+  \bibinfo{booktitle}{\emph{Algebraic Methodology and Software Technology}}
+  \emph{(\bibinfo{series}{Lecture Notes in Computer Science},
+  \bibinfo{number}{1816})}, \bibfield{editor}{\bibinfo{person}{Teodor Rus}}
+  (Ed.). \bibinfo{publisher}{Springer-Verlag}, \bibinfo{pages}{371--390}.
+\newblock
+
+
+\bibitem[Gibbons and Hinze(2011)]%
+        {GibbonsHinze:11:Just}
+\bibfield{author}{\bibinfo{person}{Jeremy Gibbons} {and} \bibinfo{person}{Ralf
+  Hinze}.} \bibinfo{year}{2011}\natexlab{}.
+\newblock \showarticletitle{Just do it: simple monadic equational reasoning}.
+  In \bibinfo{booktitle}{\emph{International Conference on Functional
+  Programming}}, \bibfield{editor}{\bibinfo{person}{Olivier Danvy}} (Ed.).
+  \bibinfo{publisher}{ACM Press}, \bibinfo{pages}{2--14}.
+\newblock
+
+
+\bibitem[Hutton(2019)]%
+        {MPC:19}
+\bibfield{editor}{\bibinfo{person}{Graham Hutton}} (Ed.).
+  \bibinfo{year}{2019}\natexlab{}.
+\newblock \bibinfo{booktitle}{\emph{Mathematics of Program Construction}}.
+  Number 11825 in \bibinfo{series}{Lecture Notes in Computer Science}.
+  \bibinfo{publisher}{Springer}.
+\newblock
+
+
+\bibitem[Mu(2019)]%
+        {Mu:19:Equational}
+\bibfield{author}{\bibinfo{person}{Shin-Cheng Mu}.}
+  \bibinfo{year}{2019}\natexlab{}.
+\newblock \bibinfo{booktitle}{\emph{Equational reasoning for non-determinism
+  monad: the case of {S}park aggregation}}.
+\newblock \bibinfo{type}{{T}echnical {R}eport} TR-IIS-19-002.
+  \bibinfo{institution}{Institute of Information Science, Academia Sinica}.
+\newblock
+
+
+\bibitem[Mu and Chiang(2020)]%
+        {MuChiang:20:Deriving}
+\bibfield{author}{\bibinfo{person}{Shin-Cheng Mu} {and}
+  \bibinfo{person}{Tsung-Ju Chiang}.} \bibinfo{year}{2020}\natexlab{}.
+\newblock \showarticletitle{Deriving monadic quicksort}. In
+  \bibinfo{booktitle}{\emph{Functional and Logic Programming}}
+  \emph{(\bibinfo{series}{Lecture Notes in Computer Science},
+  \bibinfo{number}{12073})}, \bibfield{editor}{\bibinfo{person}{Keisuke Nakano}
+  {and} \bibinfo{person}{Konstantinos Sagonas}} (Eds.).
+  \bibinfo{publisher}{Springer}, \bibinfo{pages}{124--138}.
+\newblock
+
+
+\bibitem[Mu et~al\mbox{.}(2009)]%
+        {MuKoJansson:09:Algebra}
+\bibfield{author}{\bibinfo{person}{Shin-Cheng Mu},
+  \bibinfo{person}{Hsiang-Shang Ko}, {and} \bibinfo{person}{Patrik Jansson}.}
+  \bibinfo{year}{2009}\natexlab{}.
+\newblock \showarticletitle{Algebra of programming in {Agda}: dependent types
+  for relational program derivation}.
+\newblock \bibinfo{journal}{\emph{Journal of Functional Programming}}
+  \bibinfo{volume}{19}, \bibinfo{number}{5} (\bibinfo{year}{2009}),
+  \bibinfo{pages}{545--579}.
+\newblock
+
+
+\bibitem[Mu and Oliveira(2012)]%
+        {MuOliveira:12:Programming}
+\bibfield{author}{\bibinfo{person}{Shin-Cheng Mu} {and}
+  \bibinfo{person}{Jos{\'{e}} N. F.~de Oliveira}.}
+  \bibinfo{year}{2012}\natexlab{}.
+\newblock \showarticletitle{Programming from {G}alois connections}.
+\newblock \bibinfo{journal}{\emph{Journal of Logic and Algebraic Programming}}
+  \bibinfo{volume}{81}, \bibinfo{number}{6} (\bibinfo{date}{August}
+  \bibinfo{year}{2012}), \bibinfo{pages}{680--704}.
+\newblock
+
+
+\bibitem[Oliveira(2018)]%
+        {Oliveira:18:Programming}
+\bibfield{author}{\bibinfo{person}{Jos{\'{e}} N. F.~de Oliveira}.}
+  \bibinfo{year}{2018}\natexlab{}.
+\newblock \showarticletitle{Programming from metaphorisms}.
+\newblock \bibinfo{journal}{\emph{Journal of Logical and Algebraic Methods in
+  Programming}}  \bibinfo{volume}{94} (\bibinfo{year}{2018}),
+  \bibinfo{pages}{15--44}.
+\newblock
+
+
+\bibitem[Pinho(2022)]%
+        {Pinho:22:Greedy}
+\bibfield{author}{\bibinfo{person}{Alexandre~M. Pinho}.}
+  \bibinfo{year}{2022}\natexlab{}.
+\newblock \emph{\bibinfo{title}{Greedy and dynamic programming by
+  calculation}}.
+\newblock \bibinfo{thesistype}{Master's\ thesis}. \bibinfo{school}{Universidade
+  do Minho}.
+\newblock
+
+
+\bibitem[Smyth(1978)]%
+        {Smyth:78:Power}
+\bibfield{author}{\bibinfo{person}{Michael~B. Smyth}.}
+  \bibinfo{year}{1978}\natexlab{}.
+\newblock \showarticletitle{Power domains}.
+\newblock \bibinfo{journal}{\emph{J. Comput. System Sci.}}
+  \bibinfo{volume}{16}, \bibinfo{number}{1} (\bibinfo{year}{1978}),
+  \bibinfo{pages}{23--36}.
+\newblock
+\urldef\tempurl%
+\url{https://doi.org/10.1016/0022-0000(78)90048-X}
+\showDOI{\tempurl}
+
+
+\bibitem[Vezzosi et~al\mbox{.}(2019)]%
+        {Vezzosi:19:Cubical}
+\bibfield{author}{\bibinfo{person}{Andrea Vezzosi}, \bibinfo{person}{Anders
+  M{\"{o}}rtberg}, {and} \bibinfo{person}{Andreas Abel}.}
+  \bibinfo{year}{2019}\natexlab{}.
+\newblock \showarticletitle{Cubical {A}gda: a dependently typed programming
+  language with univalence and higher inductive types}. In
+  \bibinfo{booktitle}{\emph{Proceedings of the ACM on Programming Languages}},
+  \bibfield{editor}{\bibinfo{person}{Fran{\c{c}}ois Pottier}} (Ed.),
+  Vol.~\bibinfo{volume}{3}. \bibinfo{publisher}{Academic Press},
+  \bibinfo{pages}{1--29}.
+\newblock
+
+
+\bibitem[Winskel(1985)]%
+        {Winskel:85:Powerdomains}
+\bibfield{author}{\bibinfo{person}{Glynn Winskel}.}
+  \bibinfo{year}{1985}\natexlab{}.
+\newblock \showarticletitle{On powerdomains and modality}.
+\newblock \bibinfo{journal}{\emph{Theoretical Computer Science}}
+  \bibinfo{volume}{36} (\bibinfo{year}{1985}), \bibinfo{pages}{127--137}.
+\newblock
+
 
 \end{thebibliography}

@@ -124,8 +124,7 @@ filt p x  | p x        = return x
 \end{code}
 It returns its input |x| if it satisfies |p|, and fails otherwise.%
 \footnote{The function |filt| is called |assert| in the standard Haskell library.
-We think the latter name is misleading, and instead use |filt| in this paper.%
- % is a function |guard :: Bool -> M ()| that returns |()| when the input is true and |mzero| otherwise, and |assert p x| is defined by |do { guard (p x); return x }|. In this paper we try to introduce less construct and use only |filt|.
+We think the latter name is misleading, and instead use |filt| in this paper.
 }
 
 \paraskip
@@ -561,8 +560,7 @@ It turns out that \eqref{eq:max-univ-set} can be rewritten monadically as below:
  \end{aligned}
  |`sse`|~~
  \begin{aligned}
- |do|~ & |(y1, y0) <- any| \\
-       & |filt unrhd (y1, y0)|
+ |do|~ & |y1 `unrhd` y0 <- any|
  \end{aligned}
  \right)\mbox{~~.}
  \label{eq:max-univ-monadic}
@@ -585,7 +583,14 @@ maxUnivMonadic h f unrhd = (lhs, rhs)
 \end{code}
 %endif
 In \eqref{eq:max-univ-monadic} and from now on we abuse the notation a bit,
-using |filt unrhd| to denote |filt (\(y,z) -> y `unrhd` z)|.
+using |y `unrhd` z | to denote |filt (\(y,z) -> y `unrhd` z) (y,z)|,
+which is consistent with the notation of list comprehensions in Haskell.
+Furthermore, since the pattern
+\begin{spec}
+do  (y,z) <- any
+    y `unrhd` z
+\end{spec}
+appears very often, we abbreviate that to |do y `unrhd` z <- any|.
 The large pair of parentheses in \eqref{eq:max-univ-monadic} relates two monadic values. On the lefthand side we generate a pair of values |y1| and |y0|, which are respectively results of |h| and |f| for the same, arbitrarily generated input |x|. The inclusion says that |(y1, y0)| must be contained by the monad on the righthand side, which consists of all pairs |(y1, y0)| as long as |y1 `unrhd` y0|.
 
 Letting |h = max| and |f = id| in \eqref{eq:max-univ-monadic}, we get |max `sse` id| on the righthand side.
@@ -600,8 +605,7 @@ Letting |h = max . f| in \eqref{eq:max-univ-monadic}, we get on the righthand si
  \end{aligned}
  |`sse`|~~
  \begin{aligned}
- |do|~ & |(y1, y0) <- any| \\
-       & |filt unrhd (y1, y0)| \mbox{~~.}
+ |do|~ & |y1 `unrhd` y0 <- any| \mbox{~~.}
  \end{aligned}
  \label{eq:max-cancelation}
 \end{equation}
@@ -615,7 +619,6 @@ Letting |h = max . f| in \eqref{eq:max-univ-monadic}, we get on the righthand si
 \end{equation*}
 We may then manipulate expressions using properties of the |split| operator.
 The |max|-cancelation law \eqref{eq:max-cancelation} is written neatly as
-%|split (max_unlhd . f) f =<< any {-"\,"-}`sse`{-"\,"-} filt unrhd =<< any|.
 \begin{equation*}
   |split (max_unlhd . f) f =<< any {-"\,"-}`sse`{-"\,"-} filt unrhd =<< any| \mbox{~~.}
 \end{equation*}
@@ -676,8 +679,7 @@ The two laws translate to the monadic language as:
  \end{aligned}
  |`sse`|~~
  \begin{aligned}
- |do|~ & |(x, y) <- any| \\
-       & |filt unrhd (x, y)|\\
+ |do|~ & |x `unrhd` y <- any|
  \end{aligned}
  \right)\mbox{~~,}
 \end{equation*}
@@ -694,7 +696,7 @@ The two laws translate to the monadic language as:
  \begin{aligned}
  |do|~ & |(y, z) <- any| \\
        & |x <- f z| \\
-       & |filt unrhd (x, y)|\\
+       & |x `unrhd` y|\\
        & |return (y,z)|
  \end{aligned}
  \right)\mbox{~~,}
@@ -718,8 +720,7 @@ By the universal property \eqref{eq:max-univ-monadic}, to have |max . f `sse` ma
  \end{aligned}
  ~~|`sse`|~~
  \begin{aligned}
- |do|~ & |(x, y) <- any| \\
-       & |filt unrhd (x, y)|\mbox{~~.}
+ |do|~ & |x `unrhd` y <- any| \mbox{~~.}
  \end{aligned}
 \end{equation*}
 The first conjunct is immediate:
@@ -739,17 +740,16 @@ minMonoPf f g unrhd =
  `sse`   {- matching |z <- any| and |y <- g z| in \eqref{eq:max-monotonic-monadic} and rewrite -}
         do  (y,z) <- any
             w <- f z
-            filt unrhd (w,y)
+            w `unrhd` y
             x <- max (f z)
             return (x,y)
  `sse`   {- |max|-cancelation -}
         do  (x,y,w) <- any
-            filt unrhd (w, y)
-            filt unrhd (x, w)
+            w `unrhd` y
+            x `unrhd` w
             return (x,y)
  `sse`   {- |unrhd| transitive -}
-        do  (x,y) <- any
-            return (x,y) {-"~~."-}
+        do  x `unrhd` y <- any {-"~~."-}
 \end{code}
 \end{proof}
 Notice the first step of the calculation: |z <- any| and |y <- g z| match the LHS of |(`sse`)| in the big parentheses in \eqref{eq:max-monotonic-monadic}, allowing us to rewrite them to the RHS of |(`sse`)|.

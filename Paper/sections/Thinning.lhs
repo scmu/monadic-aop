@@ -141,8 +141,7 @@ For the convenience of our readers, we recite and instantiate \eqref{eq:monotoni
 \begin{equation*}
 \setlength{\jot}{-1pt}
 \begin{aligned}
-|do|~ & |(ys1, ys0) <- any|\\
-      & |filt geqv (ys1, ys0)|\\
+|do|~ & |ys1 `geqv` ys0 <- any|\\
       & |zs0 <- subsw x ys0| \\
       & |return (ys1, zs0)|
 \end{aligned}
@@ -150,7 +149,7 @@ For the convenience of our readers, we recite and instantiate \eqref{eq:monotoni
 \begin{aligned}
 |do|~& |(ys1, zs0) <- any|\\
      & |zs1 <- subsw x ys1|\\
-     & |filt geqv (zs1, zs0)|\\
+     & |zs1 `geqv` zs0|\\
      & |return (ys1, zs0)| \mbox{~~.}
 \end{aligned}
 \tag{\ref{eq:monotonicity}'}
@@ -263,7 +262,7 @@ for all |f :: a -> P b| and |h :: a -> P (T b)|,
  \begin{aligned}
  |do|~ & |(t1, y0) <- any| \\
        & |y1 <- mem t1| \\
-       & |filt succeq (y1, y0)|\\
+       & |y1 `succeq` y0|\\
        & |return (t1, y0)|
  \end{aligned}
  \right)\mbox{~~.}
@@ -322,7 +321,7 @@ Letting |h := thin_preceq . f| in \eqref{eq:thin-univ-monadic}, we get the |thin
   \begin{aligned}
   |do|~ & |(t1, y0) <- any| \\
         & |y1 <- mem t1| \\
-        & |filt succeq (y1, y0)|\\
+        & |y1 `succeq` y0|\\
         & |return (t1, y0)|
   \end{aligned}
 \end{equation}
