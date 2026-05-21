@@ -107,7 +107,6 @@ Even though |n| does not use |m|, we cannot just drop |m| without changing the v
 the lefthand side reduces to |mzero| when |m = mzero|.
 When |m /= mzero|, we have |n << m = n|.
 
-%format Union = "\bigcup"
 \paraskip
 \paragraph{Sets}~ A structure that supports all the operations above is the set monad: for all type |a|,
 |m :: P a| is a set whose elements are of type |a|,
@@ -801,7 +800,6 @@ It is not the case for the other direction:
   |max . ((max . f) <=< g) `sse` max . (f <=< g)| \mbox{~~.}
     \tag{\ref{eq:MaxKComp}'}
 \end{equation*}
-%format `union` = "\cup"
 For an counterexample, let |g () = {False, True}|
 and |f False = {0}|, while |f True| returns an infinite set |{0, 1, 2, ..}| ---
 thus |max (f True) = mzero|.

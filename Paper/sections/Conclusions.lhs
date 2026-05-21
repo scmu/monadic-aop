@@ -13,7 +13,11 @@ It also fits better into a functional programming curriculum.
 In a course about reasoning and construction of functional programs, we may want to talk about solving optimisation problems, where it is likely that there are multiple possible solutions for one input.
 Introducing relations or multi-functions seems to be an overkill for these ``corner cases''.
 Meanwhile, monads are a general way to model effects, including non-determinism, which ought to be taught in any intermediate level functional programming course anyway.
-Talking about these problems also demonstrates the importance of monad laws.
+Talking about these problems also demonstrates why monad laws are essential in reasoning about monadic programs.
+
+A natural question is how expressive this monadic calculus is.
+It turns out that most of the relational operators used by \citet{BackhousedeBruin:91:Relational} and \citet{BirddeMoor:97:Algebra} can be defined in the monadic language (see Appendix \ref{sec:rel-op}).
+Therefore, in principle their proofs can be ported into our framework as well.
 
 \paraskip
 \paragraph{Related work}

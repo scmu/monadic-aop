@@ -52,5 +52,6 @@ Key properties of our calculus are verified in Agda.
 \appendix
 
 %include sections/ThinningProof.lhs
+%include sections/RelOps.lhs
 
 \end{document}

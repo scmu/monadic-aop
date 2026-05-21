@@ -54,6 +54,23 @@ According to the universal property of |thin_preceq|, for the above to hold we n
   mem <=< (thin_preceq . (f x <=< mem)) <=< (thin_preceq . foldR f e) `sse` f x <=< foldR f e {-"~~,"-}
 \end{spec}
 and that
+\begin{equation*}
+\setlength{\jot}{-1pt}
+ \begin{aligned}
+ |do|~ & |xs <- any| \\
+       & |t1 <- (thin_preceq . (f x <=< mem)) =<< (thin_preceq . foldR f e) xs| \\
+       & |y0 <- f x =<< foldR f e xs| \\
+       & |return (t1, y0)|
+ \end{aligned}
+ |`sse`|~~
+ \begin{aligned}
+ |do|~ & |(t1, y0) <- any| \\
+       & |y2 <- mem t1| \\
+       & |y2 `succeq` y0|\\
+       & |return (t1, y0)|  \mbox{~~.}
+ \end{aligned}
+\end{equation*}
+We present a proof of the latter property:
 %{
 %if False
 \begin{code}
