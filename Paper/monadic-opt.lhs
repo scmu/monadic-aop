@@ -3,7 +3,7 @@
 %let anonymous = False
 %let draft = False
 
-\documentclass[pearl,fleqn,review]{jfp-epi}
+\documentclass[fleqn,review]{jfp-epi}
 
 %include preamble.tex
 

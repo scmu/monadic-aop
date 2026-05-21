@@ -401,8 +401,8 @@ We now want to show that these values can be returned by |pre x ys1|:
             return (ys1, zs0) {-"~~."-}
 \end{spec}
 In the first step above we added more cases into the expression, in order to
-extract |zs0| and |zs1|. We can do so becuase we are reasoning about inclusions.
-The last few steps are about folding back the defintion of |pre|.
+extract |zs0| and |zs1|. We can do so because we are reasoning about inclusions.
+The last few steps are about folding back the definition of |pre|.
 The proof is a more precise formalisation of what one might say when reasoning about monotonicity verbally.
 
 %if False
