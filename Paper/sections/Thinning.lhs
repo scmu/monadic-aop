@@ -152,7 +152,7 @@ For the convenience of our readers, we recite and instantiate \eqref{eq:monotoni
      & |zs1 `geqv` zs0|\\
      & |return (ys1, zs0)| \mbox{~~.}
 \end{aligned}
-\tag{\ref{eq:monotonicity}'}
+\tag{$\ref{eq:monotonicity}'$}
 \end{equation*}
 Let the weight limit |w| be |10|.
 Consider the lefthand side.
@@ -298,17 +298,17 @@ thin_preceq :: P b -> P (T b)
 thin_preceq = thinT_preceq . collect {-"~~."-}
 \end{code}
 
-Letting |h := thin_preceq| and |f := id| in \eqref{eq:thin-univ-monadic}, we get
+Letting |h := thin_preceq . f| in \eqref{eq:thin-univ-monadic}, we get
 %if False
 \begin{code}
--- memThinId :: P c -> P c
-memThinId =
+memThinId :: (a -> P b) -> a -> P b
+memThinId f =
 \end{code}
 %endif
 \begin{code}
-    mem <=< thin_preceq `sse` id {-"~~."-}
+    mem <=< thin_preceq . f `sse` f {-"~~,"-}
 \end{code}
-Letting |h := thin_preceq . f| in \eqref{eq:thin-univ-monadic}, we get the |thin|-cancelation law:
+and the |thin|-cancelation law:
 \begin{equation}
 \setlength{\jot}{-1pt}
   \begin{aligned}

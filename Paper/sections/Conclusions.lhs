@@ -6,9 +6,9 @@ We showed that this notation is capable of solving classical problems including 
 The monadic calculus is verified by Agda.
 
 The monadic notation, being pointwise, is not as concise as the point-free calculus.
-However, the notation enables one to use familiar proof techniques such as case analysis and structural induction, while still allows point-free techniques such as fold fusion and universal properties.
+However, the notation enables one to use familiar proof techniques such as case analysis and structural induction, while still allowing point-free techniques such as fold fusion and universal properties.
 In fact, it allows us to formally prove properties that were usually dealt with informally.
-With a clear distinction between a monad and the value it yields, the monadic notation avoid the ambiguity seen in previous proposed pointwise notations.
+With a clear distinction between a monad and the value it yields, the monadic notation avoids the ambiguity seen in previous proposed pointwise notations.
 It also fits better into a functional programming curriculum.
 In a course about reasoning and construction of functional programs, we may want to talk about solving optimisation problems, where it is likely that there are multiple possible solutions for one input.
 Introducing relations or multi-functions seems to be an overkill for these ``corner cases''.
@@ -32,10 +32,10 @@ The article went further to explore mixing of effects --- the quicksort algorith
 The intention was to use the interactive interface of Agda to carry out program derivations while having them formally checked.
 As the scenario got more complicated, the details one has to provide in an Agda proof got more massive, thus in this article we no longer promote Agda as an ideal interface to derive program with.
 Still, we use Agda to verify the correctness of our theory.
-\cite{Affeldt:19:Hierarchy} presented an Coq/Rocq formalisation of monads and effects, the purpose being to formally model effects hierarchy and the properties of each effects.
+\citet{Affeldt:19:Hierarchy} presented an Coq/Rocq formalisation of monads and effects, the purpose being to formally model a hierarchy of effects and the properties of each of the effects.
 Having built the formalisation, they verified a number of previous work on reasoning about monads and corrected many bugs.
 
 In \citet{BirddeMoor:97:Algebra} and in this article, |max| is a relation/function that takes a set as its input. Alternatively, \citet{MuOliveira:12:Programming} proposed a ``shrink'' operator $(\upharpoonright)$ that is applied directly to relations --- given $S :: A \rightarrow B$, the relation ${S\!\upharpoonright} :: A \rightarrow B$ is included in $S$ but keeps only those outputs that are optimal.
 \citet{Oliveira:18:Programming} hinted at the possibility of extending the notion to another operator $(\downharpoonleft)$ that corresponds to thinning, which was further developed by \citet{Pinho:22:Greedy}, who carefully reviewed and proved many important properties of $(\upharpoonright)$ and $(\downharpoonleft)$, and applied them to a number of examples.
 Using these notations led to a more streamlined formalisation of optimisation problems by avoiding an intermediate set.
-As a future work, it remains to investigate whether the advantage also applies to our setting.
+As future work, it remains to investigate whether the advantage also applies to our setting.

@@ -37,21 +37,25 @@ We also write |fmap f m| infix as |f <$> m|, where the operator |(<$>)| is left-
 It follows from the monad laws that
 |id <$> m = m| and |(f . g) <$> m = f <$> (g <$> m)|, that is, |M| is a functor with |(<$>)| as its functorial map.
 
-In this paper we will also make extensive use of the Kliseli composition:
+In this paper we will also make extensive use of the Kleisli composition:
 \begin{spec}
 (<=<) :: (b -> M c) -> (a -> M b) -> (a -> M c)
 (f <=< g) x = f =<< g x {-"~~."-}
 \end{spec}
-Kliseli composition |(<=<)| is associative, |(=<<)| is right-associative, and both bind looser than function composition |(.)|.
+Kleisli composition |(<=<)| is associative, |(=<<)| is right-associative, and both bind looser than function composition |(.)|.
 We will add parentheses where there might be confusion.
 
-Non-determinism is the only effect we are concerned with in this article: |M a| denotes a non-deterministic computation that may yield zero, one, or more values of type |a|.
-We let |mplus :: M a -> M a -> M a| denote non-deterministic choice and |mzero :: M a| failure. Together they form a monoid (that is, |mplus| is associative with |mzero| as its identity element).
+Non-determinism is the only effect we are concerned with in this article: |P a| denotes a non-deterministic computation that may yield zero, one, or more values of type |a|.
+It should satisfy the monad laws above.
+In addition, we let |mplus :: P a -> P a -> P a| denote non-deterministic choice and |mzero :: P a| failure.
+Together they form a monoid (that is, |mplus| is associative with |mzero| as its identity element).
 We demand that |(=<<)| distributes into |mplus| from both sides:
-\begin{align*}
-  |(\x -> f x `mplus` g x) =<< m| &= |(f =<< m) `mplus` (g =<< m)| \mbox{~~,}\\
+\begin{align}
+  |(\x -> f x `mplus` g x) =<< m| &= |(f =<< m) `mplus` (g =<< m)| \mbox{~~,}
+    \label{eq:mplus-bind-distr}\\
   |f =<< (m `mplus` n)| &= |(f =<< m) `mplus` (f =<< n)| \mbox{~~.}
-\end{align*}
+    \label{eq:bind-mplus-distr}
+\end{align}
 and that |mzero| is a zero of |(=<<)|:
 \begin{align*}
   |f =<< mzero| &= |mzero| \mbox{~~,}\\
@@ -64,11 +68,11 @@ Furthermore, |mplus| is commutative (|m `mplus` n = n `mplus` m|) and idempotent
 The expression |(\x -> x - x) (0 `mplus` 1)| of \citet{deMoorGibbons:00:Pointwise} and \citet{BirdRabe:19:How} is written and evaluated in monadic notation as:
 \begin{spec}
       (\x -> return (x - x)) =<< (return 0 `mplus` return 1)
- ===    {- |(=<<)| distributes into |mplus| -}
-      ((\x -> return (x - x)) =<< return 0) `mplus` ((\x -> return (x - x)) =<< return 0)
+ ===    {- |(=<<)| distributes into |mplus| \eqref{eq:bind-mplus-distr} -}
+      ((\x -> return (x - x)) =<< return 0) `mplus` ((\x -> return (x - x)) =<< return 1)
  ===    {- monad law, $\beta$-reduction -}
       return (0-0) `mplus` return (1-1)
- ===    {- arithmetics, idempotency of |mplus| -}
+ ===    {- arithmetic, idempotency of |mplus| -}
       return 0 {-"~~."-}
 \end{spec}
 The presence of |(=<<)| makes it clear that one cannot perform $\beta$-reduction too early and must use distributivity to resolve the non-determinism.
@@ -112,7 +116,6 @@ When |m /= mzero|, we have |n << m = n|.
 |m :: P a| is a set whose elements are of type |a|,
 |mzero| is the empty set, |mplus| is set union for two sets, |(`sse`)| is set inclusion, |return| forms a singleton set, and |f =<< m| is given by |Union {f x || x <- m }|,
 where |Union| is union for a set of sets.
-For the rest of the paper we take |M = P|.
 
 The set |any :: P a| contains all elements having type |a|.
 Computationally, it creates an arbitrary element of its type.
@@ -155,9 +158,9 @@ suffix (x:xs)  = return (x:xs) <|> suffix xs {-"~~."-}
 Evaluating |suffix [1,2,3]| yields |[1,2,3]|, |[2,3]|, |[3]|, and |[]|.
 We get all segments of a list by |prefix <=< suffix|.
 
-\subsection{An Agda model of set monad}
+\subsection{Formalisation in Agda}
 
-To ensure that there is indeed a model of our set monad, we built one in Agda.
+To ensure that all the properties we demand of |P| may indeed be satisfied, we formalised them in Agda.
 A first attempt was to represent a set |P| by its characteristic predicate:
 \begin{spec}
 P : Type -> Type 1
@@ -220,6 +223,7 @@ and the |rec| operator, of type |isProp P -> (b -> P) -> sem1 b -> P|, which say
 Interested readers are referred to the accompanying Agda code.
 Other properties may then be established on these primitive properties, without touching these details.
 
+\paraskip
 \paragraph{Problem with |join|}~
 Traditionally, a monad may also be defined by three operators: |return :: a -> P a|, |join :: P (P a) -> P a|, and its functorial map |(<$>) :: (a -> b) -> P a -> P b|.
 This definition is equivalent to the definition using |return| and |(=<<)|,
@@ -242,11 +246,10 @@ foldR :: (a -> b -> P b) -> P b -> List a -> P b
 foldR f e []      = e
 foldR f e (x:xs)  = f x =<< foldR f e xs {-"~~."-}
 \end{code}
-Recall |prefix| defined in Section~\ref{sec:non-det-monad}.
-The following function |prefix'|, defined in terms of |foldR|,
-also computes an arbitrary prefix of the input list:
+For an example, the function |prefix| defined in Section~\ref{sec:non-det-monad} may be defined in terms of |foldR|:
+%format prefix' = "\Varid{prefix}"
 \begin{code}
-prefix' = foldR pre (return [])
+prefix' = foldR pre (return []) {-"~~,"-}
   where pre x ys  = return [] <|> return (x : ys) {-"~~."-}
 \end{code}
 %if False
@@ -254,32 +257,45 @@ prefix' = foldR pre (return [])
 pre x ys = return [] <|> return (x : ys)
 \end{code}
 %endif
-Note that |prefix'| behaves subtly differently from |prefix|, in that the former returns  |[]| more frequently.
-For example, while |prefix [1,2]| evaluates to:
-\begin{spec}
-    prefix [1,2]
- =    {- definition of |prefix| -}
-    return [] <|> (1:) <$> (return [] <|> (2:) <$> return [])
- =    {- definition of |(<$>)| -}
-    return [] <|> (return . (1:)) =<< (return [] <|> (return . (2:)) =<< return [])
- =    {- |(=<<)| distributes into |mplus| -}
-    return [] <|> return [1] <|> return [1,2] {-"~~,"-}
-\end{spec}
-Evaluating |prefix' [1,2]|, we get:
+It is instructive trying to evaluate |prefix [1,2]|.
+The first few steps are:
 \begin{spec}
     prefix' [1,2]
  =     {- definition of |prefix'| -}
     pre 1 =<< pre 2 =<< return []
  =     {- definition of |pre 2| -}
     pre 1 =<< (return [] <|> return [2])
- =     {- |(=<<)| distributes into |mplus| -}
-    (pre 1 =<< return []) <|> (pre 1 =<< return [2])
  =     {- definition of |pre 1| -}
-    return [] <|> return [1] <|> return [] <|> return [1,2] {-"~~,"-}
+    (\ys -> return [] <|> return (1 : ys)) =<< (return [] <|> return [2]) {-"~~."-}
 \end{spec}
-The difference is due to that, in the case of |prefix'|, nondeterminism of |pre| happens inside |(=<<)|.
-In the semantics of our set monad, due to commutativity and idempotency of |mplus|, the two results are seen as the same.
-From now on we equate |prefix| and |prefix'|.
+Now we see a non-determinstic function monadically applied to a non-deterministic value.
+One may then apply the two distributivity laws \eqref{eq:mplus-bind-distr} and \eqref{eq:bind-mplus-distr} in either order.
+The results are considered the same due to commutativity and idempotency of |mplus|.
+% For example, while |prefix [1,2]| evaluates to:
+% \begin{spec}
+%     prefix [1,2]
+%  =    {- definition of |prefix| -}
+%     return [] <|> (1:) <$> (return [] <|> (2:) <$> return [])
+%  =    {- definition of |(<$>)| -}
+%     return [] <|> (return . (1:)) =<< (return [] <|> (return . (2:)) =<< return [])
+%  =    {- |(=<<)| distributes into |mplus| -}
+%     return [] <|> return [1] <|> return [1,2] {-"~~,"-}
+% \end{spec}
+% Evaluating |prefix' [1,2]|, we get:
+% \begin{spec}
+%     prefix' [1,2]
+%  =     {- definition of |prefix'| -}
+%     pre 1 =<< pre 2 =<< return []
+%  =     {- definition of |pre 2| -}
+%     pre 1 =<< (return [] <|> return [2])
+%  =     {- |(=<<)| distributes into |mplus| -}
+%     (pre 1 =<< return []) <|> (pre 1 =<< return [2])
+%  =     {- definition of |pre 1| -}
+%     return [] <|> return [1] <|> return [] <|> return [1,2] {-"~~,"-}
+% \end{spec}
+% The difference is due to that, in the case of |prefix'|, nondeterminism of |pre| happens inside |(=<<)|.
+% In the semantics of our set monad, due to commutativity and idempotency of |mplus|, the two results are seen as the same.
+%From now on we equate |prefix| and |prefix'|.
 
 %format notPrefixP = "\Varid{notPrefix}^{+}"
 %format preP = "\Varid{pre}^{+}"
@@ -319,7 +335,7 @@ prefixPPrefixInd x xs =
 %endif
 \begin{code}
      pre x =<< (return [] <|> prefixP xs)
- ===   {- |(=<<)| distributes into |mplus| -}
+ ===   {- |(=<<)| distributes into |mplus| \eqref{eq:bind-mplus-distr} -}
      (pre x =<< return []) <|> (pre x =<< prefixP xs)
  ===   {- definition of |pre| -}
      return [] <|> return [x] <|> return [] <|> (x:) <$> prefixP xs
@@ -657,18 +673,18 @@ It has not been a major problem, probably due to that using Greedy Theorem to el
 
 \citet{Pinho:22:Greedy} proposed a general condition (property (2.195)) for |max . f `sse` max . g| to hold that is based on the universal property of |max|.
 For this article, we only need monotonicity to hold in more specific cases.
-Observing the counter example above, one might conjecture that |max s `sse` max t| if |s `sse` t| and |s| somehow keeps the maximum elements of |t|. Indeed, there are two such laws.
+Observing the counterexample above, one might conjecture that |max s `sse` max t| if |s `sse` t| and |s| somehow keeps the maximum elements of |t|. Indeed, there are two such laws.
 Provided that |unrhd| is transitive, we have:
 \begin{spec}
 max_unlhd xs `sse` max_unlhd ys  {-"~"-}<=={-"~"-} xs `sse` ys && (forall x `inn` xs, y `inn` ys : x `unrhd` y) {-"~~,"-}
 max_unlhd xs `sse` max_unlhd ys  {-"~"-}<=={-"~"-} xs `sse` ys && (forall y `inn` ys : (exists x `inn` xs : x `unrhd` y)) {-"~~."-}
 \end{spec}
 The first one says that |max xs `sse` max ys| if all elements in |xs| are maximums.
-The second laws is a bit relaxed, allowing |xs| to keep some non-maximum element, requiring only that every |y `inn` ys| is dominated by some element in |xs|.
+The second law is a bit relaxed, allowing |xs| to keep some non-maximum element, requiring only that every |y `inn` ys| is dominated by some element in |xs|.
 Their function-compositional counterparts are written as:
 \begin{spec}
 max_unlhd . f `sse` max_unlhd . g  {-"~"-}<=={-"~"-} f `sse` g && (forall z, x `inn` f z, y `inn` g z : x `unrhd` y) {-"~~,"-}
-max_unlhd . f `sse` max_unlhd . g  {-"~"-}<=={-"~"-} f `sse` g && (forall z, y `inn` g z : (exists x `inn` g z : x `unrhd` y)) {-"~~."-}
+max_unlhd . f `sse` max_unlhd . g  {-"~"-}<=={-"~"-} f `sse` g && (forall z, y `inn` g z : (exists x `inn` f z : x `unrhd` y)) {-"~~."-}
 \end{spec}
 In this article we find the second law particularly useful.
 
@@ -722,8 +738,8 @@ By the universal property \eqref{eq:max-univ-monadic}, to have |max . f `sse` ma
 \setlength{\jot}{-1pt}
  \begin{aligned}
  |do|~ & |z <- any| \\
-       & |x <- max (f x)| \\
-       & |y <- g x| \\
+       & |x <- max (f z)| \\
+       & |y <- g z| \\
        & |return (x, y)|
  \end{aligned}
  ~~|`sse`|~~
@@ -783,7 +799,7 @@ minMonoPf f g unrhd =
 Notice the first step of the calculation: |z <- any| and |y <- g z| match the LHS of |(`sse`)| in the big parentheses in \eqref{eq:max-monotonic-monadic}, allowing us to rewrite them to the RHS of |(`sse`)|.
 It will be a technique we use a lot in such proofs: identifying the lines that matches the LHS of some |(`sse`)|, and rewrite them to the RHS.
 
-\subsubsection{Promotion into Kliseli composition}
+\subsubsection{Promotion into Kleisli composition}
 
 Given the expression |max . (f <=< g)|, one might want to reason about |f| and |g| separately and wish to promote |max| into |(<=<)|:
 \begin{equation}
@@ -798,15 +814,15 @@ that is, |max . (f <=< g) `sse` max . ((max . f) <=< g)|, always hold.
 It is not the case for the other direction:
 \begin{equation*}
   |max . ((max . f) <=< g) `sse` max . (f <=< g)| \mbox{~~.}
-    \tag{\ref{eq:MaxKComp}'}
+    \tag{$\ref{eq:MaxKComp}'$}
 \end{equation*}
-For an counterexample, let |g () = {False, True}|
+For a counterexample, let |g () = {False, True}|
 and |f False = {0}|, while |f True| returns an infinite set |{0, 1, 2, ..}| ---
 thus |max (f True) = mzero|.
 The lefthand side of (\ref{eq:MaxKComp}') is
 |max ({0} `union` {}) = {0}|, while the righthand side evaluates to
 |max ({0} `union` {0, 1, 2, ..}) = mzero|.%
-\footnote{Note that infinite sets are not necessary to generate such counter examples.
+\footnote{Note that infinite sets are not necessary to generate such counterexamples.
 One may also let the domain be |Nat `union` {awkward}| where |awkward| is a value not comparable with any |Nat|, therefore |max {0, awkward} = mzero|, and let |f True = {0, awkward}|.}
 
 One of the ways to have both directions of \eqref{eq:MaxKComp} is to add a side condition that |f| always returns sets that has maximums, that is, |(forall x : (exists y : y `elem` max (f x))|. This turns out to be sufficient for examples in this article.
