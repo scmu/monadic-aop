@@ -8,7 +8,7 @@ Like relations, union and intersection of monadic arrows can be defined as:
 (`intersect`) :: (a -> P b) -> (a -> P b) -> a -> P b
 (f `intersect` g) x = f x `intersect` g x {-"~~."-}
 \end{spec}
-The |(`intersect`)| in the righthand side of the last line refers to intersection of sets.
+The |(`intersect`)| in the right-hand side of the last line refers to intersection of sets.
 They respectively satisfy the universal properties:
 \begin{align*}
 |f `union` g {-"\,"-}`sse`{-"\,"-} h|    &  |{-"~"-}<=>{-"~"-} f `sse` h {-"\,"-}&&{-"\,"-} g `sse` h {-"~~,"-}|\\

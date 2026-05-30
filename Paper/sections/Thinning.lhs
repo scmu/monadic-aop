@@ -122,7 +122,7 @@ we will have
   foldR subsw (return []) {-"~"-}`sse`{-"~"-} filt ((w >) . wgt) <=< subseq {-"~~."-}
 \end{spec}
 (For the second argument to |foldR|, |filt ((w >) . wgt) [] = return []| holds because |w| is non-negative.)
-To construct |subsw|, one may start from the righthand side of \eqref{eq:filtSubseqFusionCond} and try to distribute |filt ((w>).wgt)| inside until it is applied to |m|.
+To construct |subsw|, one may start from the right-hand side of \eqref{eq:filtSubseqFusionCond} and try to distribute |filt ((w>).wgt)| inside until it is applied to |m|.
 One will eventually construct:
 \begin{code}
 subsw x ys = return ys <|> filt ((w>).wgt) (x:ys) {-"~~."-}
@@ -155,22 +155,22 @@ For the convenience of our readers, we recite and instantiate \eqref{eq:monotoni
 \tag{$\ref{eq:monotonicity}'$}
 \end{equation*}
 Let the weight limit |w| be |10|.
-Consider the lefthand side.
+Consider the left-hand side.
 Among all the possible values of |ys1| and |ys0|, we pick |ys1 = [(5,8)]| and |ys0 = [(4,6)]|,
 for which we do have |ys1 `geqv` ys0|.
 With |ys0| being a lesser solution, if ($\ref{eq:monotonicity}'$) holds, we could use a greedy algorithm, dropping |ys0| and keeping only |ys1|.
 Let |x = (3,3)|.
 The two possible values of |zs0| are |[(4,6)]| and |[(3,3),(4,6)]|.
-The inclusion demands that the same |(ys1, zs0)| be a result of the righthand side as well.
-In particular, the righthand side must be able to yield |([(5,8)], [(3,3),(4,6)])| as a result.
-Let us examine the righthand side, assuming that from |any| we draw |ys1 = [(5,8)]| and |zs0 = [(3,3),(4,6)]|.
+The inclusion demands that the same |(ys1, zs0)| be a result of the right-hand side as well.
+In particular, the right-hand side must be able to yield |([(5,8)], [(3,3),(4,6)])| as a result.
+Let us examine the right-hand side, assuming that from |any| we draw |ys1 = [(5,8)]| and |zs0 = [(3,3),(4,6)]|.
 With this value of |ys1|,
 the only possible value of |zs1| is also |[(5,8)]| --- since |[(3,3),(5,8)]| exceeds the weight limit!
 And we do not have |[(5,8)] `geqv` [(3,3),(4,6)]|.
-Therefore the righthand side cannot return |([(5,8)], [(3,3),(4,6)])|, and thus ($\ref{eq:monotonicity}'$) fails.
+Therefore the right-hand side cannot return |([(5,8)], [(3,3),(4,6)])|, and thus ($\ref{eq:monotonicity}'$) fails.
 
 Notice that, comparing to traditional arguments using first-order logic, in the reasoning above we have expressions to execute with.
-Notice also how the |return (ys1, zs0)| on the lefthand side forces the value of |(ys1, zs0) <- any| on the righthand side.
+Notice also how the |return (ys1, zs0)| on the left-hand side forces the value of |(ys1, zs0) <- any| on the right-hand side.
 
 The lesson we have just learned is that we cannot throw away a solution, such as |[(4,6)]|, simply because it is not the most valuable.
 Therefore a greedy algorithm would not work for this problem.
@@ -380,8 +380,8 @@ thmThinning f e =
 \end{code}
 %endif
 \end{theorem}
-On the righthand side of |(`sse`)|, |foldR f e| computes all potential solutions before they are collected into a table and thinned by |thin|.
-The theorem says that we may also, as seen in the lefthand side, distribute the thinning into each stage of the |foldR|, maintaining a smaller set of solutions, which may lead to an algorithm having a smaller time complexity.
+On the right-hand side of |(`sse`)|, |foldR f e| computes all potential solutions before they are collected into a table and thinned by |thin|.
+The theorem says that we may also, as seen in the left-hand side, distribute the thinning into each stage of the |foldR|, maintaining a smaller set of solutions, which may lead to an algorithm having a smaller time complexity.
 With |x :: a|, the subexpression |thin . (f x <=< mem)| has type |T b -> P (T b)|.
 
 \subsection{Solving knapsack}

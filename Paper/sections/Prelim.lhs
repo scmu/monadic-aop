@@ -123,7 +123,7 @@ The following law relates |(<<)| and |(`sse`)|:
  \label{eq:seq-non-cancel}
 \end{equation}
 Even though |n| does not use |m|, we cannot just drop |m| without changing the value of the expression ---
-the lefthand side reduces to |mzero| when |m = mzero|.
+the left-hand side reduces to |mzero| when |m = mzero|.
 When |m /= mzero|, we have |n << m = n|.
 
 \paraskip
@@ -198,8 +198,8 @@ To prove the left identity law |return =<< m = m|, for example, amounts to provi
 \begin{spec}
   (\y -> Sum{-"\!"-}[x `inn` a] (m x * x <=> y)) {-"~"-}<=>{-"~"-} m {-"~~."-}
 \end{spec}
-The righthand side |m| is a function which yields, for each member |y|, a proof that |y| is in |m|,
-while the lefthand side is a function which produces, for each member |y|, a dependent pair consisting of a value |x : a| , a proof that |x| is in |m|, and a proof that |x <=> y|.
+The right-hand side |m| is a function which yields, for each member |y|, a proof that |y| is in |m|,
+while the left-hand side is a function which produces, for each member |y|, a dependent pair consisting of a value |x : a| , a proof that |x| is in |m|, and a proof that |x <=> y|.
 While logically we recognize that they are equivalent, in the type theory of Agda the two sides are different, albeit isomorphic, types.
 
 \paraskip
@@ -470,7 +470,7 @@ That is, every element in any list computed by |scanR| is a result of |foldR| ap
 For example, letting |f := rplus| and |e := return 0|, both sides of
 \eqref{eq:ScanLemma} have type |List Int -> P Int|.
 When applied to |[1,2,3]|, both sides yield |return 0 <||> return 1 <||> ... <||> return 6|, that is, all the numbers that may appear in any list returned by |scanR rplus (return 0) [1,2,3]|.
-In this example the two sides are equal. The lefthand side of \eqref{eq:ScanLemma} is strictly smaller than the righthand side when |f| returns |mzero| while |e /= mzero|.
+In this example the two sides are equal. The left-hand side of \eqref{eq:ScanLemma} is strictly smaller than the right-hand side when |f| returns |mzero| while |e /= mzero|.
 
 The lemma \eqref{eq:ScanLemma} can be proved by our familiar method --- an induction on the input:
 \begin{proof}
@@ -566,7 +566,7 @@ for all |xs| and |ys|,
 \label{eq:max-def-set}
 \end{equation}
 We omit the subscript |unlhd| when it is clear from the context or not relevant.
-The |(==>)| direction of \eqref{eq:max-def-set}, letting |ys = max xs|, says that |max xs| is a subset of |xs|, and every member in |max xs| is no lesser than any member in |xs|. The |(<==)| direction of \eqref{eq:max-def-set} says that |max xs| is the largest such set --- any |ys| satisfying the righthand side is a subset of |max xs|.
+The |(==>)| direction of \eqref{eq:max-def-set}, letting |ys = max xs|, says that |max xs| is a subset of |xs|, and every member in |max xs| is no lesser than any member in |xs|. The |(<==)| direction of \eqref{eq:max-def-set} says that |max xs| is the largest such set --- any |ys| satisfying the right-hand side is a subset of |max xs|.
 
 In calculation, we often want to refine expressions of the form |max . f| where |f| generates a set. Therefore the following \emph{universal property} of |max| is more useful: for all |h| and |f| of type |a -> P b|,
 \begin{equation}
@@ -630,9 +630,9 @@ do  (y,z) <- any
     y `unrhd` z
 \end{spec}
 appears very often, we abbreviate that to |do y `unrhd` z <- any|.
-The large pair of parentheses in \eqref{eq:max-univ-monadic} relates two monadic values. On the lefthand side we generate a pair of values |y1| and |y0|, which are respectively results of |h| and |f| for the same, arbitrarily generated input |x|. The inclusion says that |(y1, y0)| must be contained by the monad on the righthand side, which consists of all pairs |(y1, y0)| as long as |y1 `unrhd` y0|.
+The large pair of parentheses in \eqref{eq:max-univ-monadic} relates two monadic values. On the left-hand side we generate a pair of values |y1| and |y0|, which are respectively results of |h| and |f| for the same, arbitrarily generated input |x|. The inclusion says that |(y1, y0)| must be contained by the monad on the right-hand side, which consists of all pairs |(y1, y0)| as long as |y1 `unrhd` y0|.
 
-Letting |h := max . f| in \eqref{eq:max-univ-monadic}, the lefthand side trivally holds, and on the righthand side we get
+Letting |h := max . f| in \eqref{eq:max-univ-monadic}, the left-hand side trivally holds, and on the right-hand side we get
 |max . f `sse` f|, meaning that any result returned by |max . f| is a result of |f|, and the |max|-cancelation law:
 \begin{equation}
 \setlength{\jot}{-1pt}
@@ -760,7 +760,7 @@ By the universal property \eqref{eq:max-univ-monadic}, to have |max . f `sse` ma
  |do|~ & |x `unrhd` y <- any| \mbox{~~.}
  \end{aligned}
 \end{equation*}
-To prove the property, we assume the righthand side of \eqref{eq:max-monotonic-monadic} and reason:
+To prove the property, we assume the right-hand side of \eqref{eq:max-monotonic-monadic} and reason:
 %if False
 \begin{code}
 minMonoPf :: Ord b => (a -> P b) -> (a -> P b) -> ((b,b) -> Bool) -> P (b, b)
@@ -891,8 +891,8 @@ It is not the case for the other direction:
 For a counterexample, let |g () = {False, True}|
 and |f False = {0}|, while |f True| returns an infinite set |{0, 1, 2, ..}| ---
 thus |max (f True) = mzero|.
-The lefthand side of ($\ref{eq:MaxKComp}'$) is
-|max ({0} `union` {}) = {0}|, while the righthand side evaluates to
+The left-hand side of ($\ref{eq:MaxKComp}'$) is
+|max ({0} `union` {}) = {0}|, while the right-hand side evaluates to
 |max ({0} `union` {0, 1, 2, ..}) = mzero|.%
 \footnote{Note that infinite sets are not necessary to generate such counterexamples.
 One may also let the domain be |Nat `union` {awkward}| where |awkward| is a value not comparable with any |Nat|, therefore |max {0, awkward} = mzero|, and let |f True = {0, awkward}|.}
