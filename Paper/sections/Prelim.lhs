@@ -740,7 +740,7 @@ The two laws translate to the monadic language as:
  \label{eq:max-monotonic-monadic}
 \end{equation}
 provided that |unrhd| is transitive.
-It might be instructive observing how the two laws are translated: universally quantified variables are introduced on the LHS of |(`sse`)|; existential quantification of |x| is represented by introducing it on the RHS of |(`sse`)|;
+It might be instructive observing how the two laws are translated: universally quantified variables are introduced on the left-hand side of |(`sse`)|; existential quantification of |x| is represented by introducing it on the right-hand side of |(`sse`)|;
 in \eqref{eq:max-monotonic-monadic} both sides return |(y,z)| to ensure that they are the same.
 
 We present a proof of \eqref{eq:max-monotonic-monadic}, as our first example of proving properties about maximum in the monadic notation.
@@ -810,9 +810,9 @@ minMonoPf f g unrhd =
 
 \paraskip
 \paragraph{The match-and-rewrite technique}
-In the first step of the proof above, we match |z <- any| and |y <- g z| against the LHS of |(`sse`)| in the big parentheses in \eqref{eq:max-monotonic-monadic}, and rewrite them to the RHS of |(`sse`)|.
+In the first step of the proof above, we match |z <- any| and |y <- g z| against the left-hand side of |(`sse`)| in the big parentheses in \eqref{eq:max-monotonic-monadic}, and rewrite them to the right-hand side of |(`sse`)|.
 
-Identifying the lines that matches the LHS of some |(`sse`)| and rewrite them to the RHS will be a proof step we use a lot in this article.
+Identifying the lines that matches the left-hand side of some |(`sse`)| and rewrite them to the right-hand side will be a proof step we use a lot in this article.
 It is actually a composition of many mini-steps.
 We first utilise the commutativity of non-determinism monad and the monad laws to group the relevant lines together:
 \begin{spec}
