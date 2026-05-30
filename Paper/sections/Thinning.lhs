@@ -17,7 +17,7 @@ import Greedy
 \end{code}
 %endif
 
-Consider again our generic problem speficication: |max_unlhd . foldR f e|.
+Consider again our generic problem specification: |max_unlhd . foldR f e|.
 For many problems, wishing that |f| satisfies the monotonicity condition \eqref{eq:monotonicity}
 with respect to |unlhd| is asking for a lot.
 It is more common that |f| satisfies \eqref{eq:monotonicity} with respect to some other ordering, say, |preceq|, that is a stronger variation of |unlhd|.
@@ -100,7 +100,7 @@ w = 20
 %format subsw = "\Varid{subs}_{w}"
 \paraskip
 \paragraph{Fusion}~
-To transform to the specification to our generic form, we try to fuse |filt ((w >) . wgt) <=< subseq| into one |foldR|.
+To transform the specification to our generic form, we try to fuse |filt ((w >) . wgt) <=< subseq| into one |foldR|.
 According to the |foldR| fusion rule \eqref{eq:foldRFusion}:
 \begin{equation*}
   |foldR g (h e) `sse` h . foldR f e {-"~"-}<=={-"~"-} g x =<< h m `sse` h (f x =<< m) {-"~~,"-}|
@@ -192,8 +192,7 @@ For example, if at one point the algorithm computes a collection of solutions
 Meanwhile, |[(4,8)]|, which is less valuable than |[(5,8)]| and heavier |[(4,6)]|, needs not be kept.
 This process of ``keeping useful solutions, while possibly dropping those useless ones'' is called \emph{thinning} in the terminology of \citet{BirddeMoor:97:Algebra}.
 
-Note our wording: |[(4,8)]| needs not be kept, but it does not mean that we \emph{have to} drop it.
-An algorithm should have the flexibility of deciding how much thinning it needs to do.
+Note our wording: that |[(4,8)]| needs not be kept does not mean that we \emph{have to} drop it.
 Doing a full thinning keeps the set of solutions small, but the thinning itself could be time consuming,
 and it may be beneficial to remove some but not all of the useless solutions.
 A general specification of thinning algorithms should allow such flexibility.
@@ -218,12 +217,11 @@ collect = undefined
 %endif
 where |mem| non-deterministically yields an element in |T|, while |collect m| collects the results of |m| and stores them in the data structure |T|.
 Both |T| and |P| represent sets. If we let |T = P|, we would have |mem = collect = id|, and some notations could be much simplified.
-However, we prefer to treat |T| and |P| as different types, since they serve different purposes: |P| denotes non-determinism, while |T| denotes a \emph{finite} collection of potential solutions.
-The function |collect| applies only to finite inputs.
+However, we prefer to treat |T| and |P| as distinct types, since they serve different purposes: |P| denotes non-determinism, while |T| denotes a \emph{finite} collection of potential solutions.
 
 Given a preorder |preceq| on some type |b| that is not necessarily connected, and a table |xs :: T b|,
 |thinT_preceq xs| computes a table that is possibly smaller, but still contains necessary elements that lead to an optimal solution.
-There could be many such tables, therefore we let |thinT_preceq| have type |T b -> P (T b)|. It non-deterministically computes a table that meets the following criteria :
+There could be many such tables, therefore we let |thinT_preceq| have type |T b -> P (T b)|. The tables it computes meets the following criteria:
 %if False
 \begin{code}
 thinT :: T b -> P (T b)

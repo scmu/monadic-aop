@@ -825,7 +825,7 @@ We first utilise the commutativity of non-determinism monad and the monad laws t
 Monotonicity of |(=<<)| with respect to |(`sse`)| then allows us to do the ``rewrite'', before moving the lines back using commutativity.
 The step is therefore only applicable when the scopes of variable allow us to perform such regrouping, and we need to apply renaming when necessary.
 
-Using the technique can be compared to proving property in an interactive theorem prover: the lines in the |do|-expression are known facts in the context, from which one can induce more facts.
+Using the technique can be compared to proving properties in an interactive theorem prover: the lines in the |do|-expression are known facts in the context, from which one can induce more facts.
 With this monadic calculus, we are able to reason in the same language we program in.
 
 \paraskip
