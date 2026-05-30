@@ -45,10 +45,18 @@ In this paper we will also make extensive use of the Kleisli composition:
 Kleisli composition |(<=<)| is associative, |(=<<)| is right-associative, and both bind looser than function composition |(.)|.
 We will add parentheses where there might be confusion.
 
-Non-determinism is the only effect we are concerned with in this article: |P a| denotes a non-deterministic computation that may yield zero, one, or more values of type |a|.
+When monadic expressions get lengthy, it is handy to use the |do|-notation.
+The expression |do {x <- m;{-"\,"-}  y <- n;{-"\,"-}  f x y}|, for example, is equivalent to
+|(\x -> (\y -> f x y) =<< n) =<< m|.
+
+The non-determinism monad, |P|, is the only monad we are concerned with in this article. |P a| denotes a non-deterministic computation that may yield zero, one, or more values of type |a|.
 It should satisfy the monad laws above.
 In addition, we let |mplus :: P a -> P a -> P a| denote non-deterministic choice and |mzero :: P a| failure.
-Together they form a monoid (that is, |mplus| is associative with |mzero| as its identity element).
+Together they form a monoid (that is, |mplus| is associative with |mzero| as its identity element):
+\begin{align*}
+  |(m <||> n) <||> k| &~=~ |m <||> (n <||> k)| \mbox{~~,}\\
+  |0 <||> m| ~=~&~ |m| ~=~ |m <||> 0| \mbox{~~.}
+\end{align*}
 We demand that |(=<<)| distributes into |mplus| from both sides:
 \begin{align}
   |(\x -> f x `mplus` g x) =<< m| &= |(f =<< m) `mplus` (g =<< m)| \mbox{~~,}
@@ -62,6 +70,13 @@ and that |mzero| is a zero of |(=<<)|:
   |mzero << m|  &= |mzero| \mbox{~~.}
 \end{align*}
 Furthermore, |mplus| is commutative (|m `mplus` n = n `mplus` m|) and idempotent (|m `mplus` m = m|).
+
+Finally, we want that our non-determinism monad be commutative. That is,
+\begin{spec}
+ do { x <- m;{-"\,"-} y <- n;{-"\,"-}  f x y } = do { y <- n;{-"\,"-}  x <- m;{-"\,"-}  f x y } {-"~~,"-}
+\end{spec}
+when |x| does not occur free in |n| and |y| does not occur free in |m|.
+Commutativity plays a crucial role in our calculation.
 
 \paraskip
 \noindent{\bf Note:} using monads avoids the confusion mentioned in Section \ref{sec:intro}.
@@ -730,8 +745,8 @@ in \eqref{eq:max-monotonic-monadic} both sides return |(y,z)| to ensure that the
 
 We present a proof of \eqref{eq:max-monotonic-monadic}, as our first example of proving properties about maximum in the monadic notation.
 \begin{proof}
-By the universal property \eqref{eq:max-univ-monadic}, to have |max . f `sse` max . g| we need
-|max . f `sse` g| and
+By the universal property \eqref{eq:max-univ-monadic}, to have |max . f `sse` max . g| we need that |max . f `sse` g|, which follows from
+|max . f `sse` f `sse` g|, and that
 \begin{equation*}
 \setlength{\jot}{-1pt}
  \begin{aligned}
@@ -792,8 +807,69 @@ minMonoPf f g unrhd =
         do  x `unrhd` y <- any {-"~~."-}
 \end{spec}
 \end{proof}
-Notice the first step of the calculation: |z <- any| and |y <- g z| match the LHS of |(`sse`)| in the big parentheses in \eqref{eq:max-monotonic-monadic}, allowing us to rewrite them to the RHS of |(`sse`)|.
-It will be a technique we use a lot in such proofs: identifying the lines that matches the LHS of some |(`sse`)|, and rewrite them to the RHS.
+
+\paraskip
+\paragraph{The match-and-rewrite technique}
+In the first step of the proof above, we match |z <- any| and |y <- g z| against the LHS of |(`sse`)| in the big parentheses in \eqref{eq:max-monotonic-monadic}, and rewrite them to the RHS of |(`sse`)|.
+
+Identifying the lines that matches the LHS of some |(`sse`)| and rewrite them to the RHS will be a proof step we use a lot in this article.
+It is actually a composition of many mini-steps.
+We first utilise the commutativity of non-determinism monad and the monad laws to group the relevant lines together:
+\begin{spec}
+(do  z <- any
+     y <- g z
+     return (y,z)) >>= \(y,z) ->
+ do  x <- max (f z)
+     return (x,y) {-"~~."-}
+\end{spec}
+Monotonicity of |(=<<)| with respect to |(`sse`)| then allows us to do the ``rewrite'', before moving the lines back using commutativity.
+The step is therefore only applicable when the scopes of variable allow us to perform such regrouping, and we need to apply renaming when necessary.
+
+Using the technique can be compared to proving property in an interactive theorem prover: the lines in the |do|-expression are known facts in the context, from which one can induce more facts.
+With this monadic calculus, we are able to reason in the same language we program in.
+
+\paraskip
+\noindent{\bf Note.} In a theorem prover we usually do not lose a fact after using it.
+In this sense, our framework is linear in the usage of facts.
+We may retain a fact by explicitly copying it.
+We omit the details since it is not relevant now, but noting that we can do so only because our sole effect, non-determinism, is idempotent and commutative.
+It will be an interesting further investigation to see how we can adapt to situations, such as that proposed by \citet{MuChiang:20:Deriving}, where more effects are involved.
+% For example, if we want to keep |y <- g z|:
+% \begin{equation*}
+% \setlength{\jot}{-1pt}
+% \begin{aligned}
+% |do|~ & |z <- any|\\
+%      & |y <- g z| \\
+%      & |y' <- g z| \\
+%      & |y == y'| \\
+%      & ... \\
+%      & ...
+% \end{aligned}
+% ~~|`sse`|~~
+% \begin{aligned}
+% |do|~ & |(y,z) <- any|\\
+%      & |y' <- g z| \\
+%      & |y == y'| \\
+%      & |w <- f z|\\
+%      & |w `unrhd` y|\\
+%      & ...\\
+% \end{aligned}
+% ~~|`sse`|~~
+% \begin{aligned}
+% |do|~ & |z <- any|\\
+%       & |y <- g z| \\
+%       & |w <- f z|\\
+%       & |w `unrhd` y|\\
+%       & ...\\
+%       & ...
+% \end{aligned}
+% \end{equation*}
+% On the left we create a |y' <- g z| and demand that |y == y'|.
+% We then perform the rewrite, letting |y| be generated by |any|.
+% Finally, |y <- any|, |y' <- g z|, and |y == y'| simplify to |y <- g z|.
+% We can do so only because our only effect, non-determinism, is idempotent and commutative.
+% It await further investigation to see how we can adapt to situations, such as that proposed by \citet{MuChiang:20:Deriving}, where more effects are involved.
+{\bf End of note.}
 
 \subsubsection{Promotion into Kleisli composition}
 
