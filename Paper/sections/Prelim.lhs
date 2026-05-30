@@ -617,8 +617,8 @@ do  (y,z) <- any
 appears very often, we abbreviate that to |do y `unrhd` z <- any|.
 The large pair of parentheses in \eqref{eq:max-univ-monadic} relates two monadic values. On the lefthand side we generate a pair of values |y1| and |y0|, which are respectively results of |h| and |f| for the same, arbitrarily generated input |x|. The inclusion says that |(y1, y0)| must be contained by the monad on the righthand side, which consists of all pairs |(y1, y0)| as long as |y1 `unrhd` y0|.
 
-Letting |h = max| and |f = id| in \eqref{eq:max-univ-monadic}, we get |max `sse` id| on the righthand side.
-Letting |h = max . f| in \eqref{eq:max-univ-monadic}, we get on the righthand side the |max|-cancelation law:
+Letting |h := max . f| in \eqref{eq:max-univ-monadic}, the lefthand side trivally holds, and on the righthand side we get
+|max . f `sse` f|, meaning that any result returned by |max . f| is a result of |f|, and the |max|-cancelation law:
 \begin{equation}
 \setlength{\jot}{-1pt}
  \begin{aligned}
@@ -627,7 +627,7 @@ Letting |h = max . f| in \eqref{eq:max-univ-monadic}, we get on the righthand si
        & |y0 <- f x| \\
        & |return (y1, y0)|
  \end{aligned}
- |`sse`|~~
+ ~~|`sse`|~~
  \begin{aligned}
  |do|~ & |y1 `unrhd` y0 <- any| \mbox{~~.}
  \end{aligned}
@@ -688,8 +688,6 @@ max_unlhd . f `sse` max_unlhd . g  {-"~"-}<=={-"~"-} f `sse` g && (forall z, y `
 \end{spec}
 In this article we find the second law particularly useful.
 
-%These two laws cover all the cases in this article where we need |max| to be monotonic.
-% In particular, the first law automatically is satisfied if |g| has the form |max_unlhd . g'|, that is, |f| is already a refinement of some function that computes maximums.
 The two laws translate to the monadic language as:
 \begin{equation*}
 |max_unlhd . f `sse` max_unlhd . g|\mbox{~~}|<==|\mbox{~~} |f `sse` g &&|~
@@ -747,9 +745,7 @@ By the universal property \eqref{eq:max-univ-monadic}, to have |max . f `sse` ma
  |do|~ & |x `unrhd` y <- any| \mbox{~~.}
  \end{aligned}
 \end{equation*}
-The first conjunct is immediate:
-|max . f `sse` f `sse` g|.
-For the second conjunct, we assume the righthand side of \eqref{eq:max-monotonic-monadic} and reason:
+To prove the property, we assume the righthand side of \eqref{eq:max-monotonic-monadic} and reason:
 %if False
 \begin{code}
 minMonoPf :: Ord b => (a -> P b) -> (a -> P b) -> ((b,b) -> Bool) -> P (b, b)
@@ -819,7 +815,7 @@ It is not the case for the other direction:
 For a counterexample, let |g () = {False, True}|
 and |f False = {0}|, while |f True| returns an infinite set |{0, 1, 2, ..}| ---
 thus |max (f True) = mzero|.
-The lefthand side of (\ref{eq:MaxKComp}') is
+The lefthand side of ($\ref{eq:MaxKComp}'$) is
 |max ({0} `union` {}) = {0}|, while the righthand side evaluates to
 |max ({0} `union` {0, 1, 2, ..}) = mzero|.%
 \footnote{Note that infinite sets are not necessary to generate such counterexamples.

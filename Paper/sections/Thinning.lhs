@@ -101,11 +101,11 @@ w = 20
 \paraskip
 \paragraph{Fusion}~
 To transform to the specification to our generic form, we try to fuse |filt ((w >) . wgt) <=< subseq| into one |foldR|.
-Accroding to the |foldR| fusion rule \eqref{eq:foldRFusion}:
+According to the |foldR| fusion rule \eqref{eq:foldRFusion}:
 \begin{equation*}
   |foldR g (h e) `sse` h . foldR f e {-"~"-}<=={-"~"-} g x =<< h m `sse` h (f x =<< m) {-"~~,"-}|
 \end{equation*}
-if we manange to construct some function |subsw| that satisfies the fusion condition:
+if we manage to construct some function |subsw| that satisfies the fusion condition:
 \begin{equation}
  |subsw x =<< (filt ((w>).wgt) =<< m) {-"~"-}`sse`{-"~"-} filt ((w>).wgt) =<< (subs x =<< m) {-"~~,"-}|
  \label{eq:filtSubseqFusionCond}
@@ -158,7 +158,7 @@ Let the weight limit |w| be |10|.
 Consider the lefthand side.
 Among all the possible values of |ys1| and |ys0|, we pick |ys1 = [(5,8)]| and |ys0 = [(4,6)]|,
 for which we do have |ys1 `geqv` ys0|.
-With |ys0| being a lesser solution, if (\ref{eq:monotonicity}') holds, we could use a greedy algorithm, dropping |ys0| and keeping only |ys1|.
+With |ys0| being a lesser solution, if ($\ref{eq:monotonicity}'$) holds, we could use a greedy algorithm, dropping |ys0| and keeping only |ys1|.
 Let |x = (3,3)|.
 The two possible values of |zs0| are |[(4,6)]| and |[(3,3),(4,6)]|.
 The inclusion demands that the same |(ys1, zs0)| be a result of the righthand side as well.
@@ -167,7 +167,7 @@ Let us examine the righthand side, assuming that from |any| we draw |ys1 = [(5,8
 With this value of |ys1|,
 the only possible value of |zs1| is also |[(5,8)]| --- since |[(3,3),(5,8)]| exceeds the weight limit!
 And we do not have |[(5,8)] `geqv` [(3,3),(4,6)]|.
-Therefore the righthand side cannot return |([(5,8)], [(3,3),(4,6)])|, and thus (\ref{eq:monotonicity}') fails.
+Therefore the righthand side cannot return |([(5,8)], [(3,3),(4,6)])|, and thus ($\ref{eq:monotonicity}'$) fails.
 
 Notice that, comparing to traditional arguments using first-order logic, in the reasoning above we have expressions to execute with.
 Notice also how the |return (ys1, zs0)| on the lefthand side forces the value of |(ys1, zs0) <- any| on the righthand side.
@@ -189,10 +189,10 @@ Therefore, while one may apply the Greedy Theorem to |max_leqvw . | |foldR subsw
 Instead, one may use a different strategy: let the |foldR| maintain, in some data structure, a collection of solutions that might be useful, while those that are definitely not going to contribute to the final solution can be disposed of.
 For example, if at one point the algorithm computes a collection of solutions
 |{[(5,8)],[(4,6)], [(4,8)]}|, the solutions |[(5,8)]| and |[(4,6)]| must be kept because we do not yet know which will contribute to the final solution.
-Meanwhile, |[(4,8)]|, which is less valuable than |[(5,8)]| and heavier |[(4,6)]|, need not be kept.
+Meanwhile, |[(4,8)]|, which is less valuable than |[(5,8)]| and heavier |[(4,6)]|, needs not be kept.
 This process of ``keeping useful solutions, while possibly dropping those useless ones'' is called \emph{thinning} in the terminology of \citet{BirddeMoor:97:Algebra}.
 
-Note our wording: |[(4,8)]| need not be kept, but it does not mean that we \emph{have to} drop it.
+Note our wording: |[(4,8)]| needs not be kept, but it does not mean that we \emph{have to} drop it.
 An algorithm should have the flexibility of deciding how much thinning it needs to do.
 Doing a full thinning keeps the set of solutions small, but the thinning itself could be time consuming,
 and it may be beneficial to remove some but not all of the useless solutions.
@@ -219,6 +219,7 @@ collect = undefined
 where |mem| non-deterministically yields an element in |T|, while |collect m| collects the results of |m| and stores them in the data structure |T|.
 Both |T| and |P| represent sets. If we let |T = P|, we would have |mem = collect = id|, and some notations could be much simplified.
 However, we prefer to treat |T| and |P| as different types, since they serve different purposes: |P| denotes non-determinism, while |T| denotes a \emph{finite} collection of potential solutions.
+The function |collect| applies only to finite inputs.
 
 Given a preorder |preceq| on some type |b| that is not necessarily connected, and a table |xs :: T b|,
 |thinT_preceq xs| computes a table that is possibly smaller, but still contains necessary elements that lead to an optimal solution.
@@ -289,7 +290,7 @@ Think of |f| as a function that non-deterministically generates some solution ca
 In |thinT_preceq. collect . f|, the results of |f| is collected into a table of type |T b| and passed to |thinT_preceq|.
 The monadic inclusion in the big brackets encodes the combination of universal and existential quantification in \eqref{eq:thin-def-set}:
 for all table |t1| returned by |h|, and for all |y0| returned by |f|,
-there must exists an elememt |y1| in |t1| such that |y1 `succeq` y0|.
+there must exists an element |y1| in |t1| such that |y1 `succeq` y0|.
 
 Since |thinT_preceq| and |collect| often appear together, we will use the following abbreviation:
 given a preorder |(`preceq`)| on some type |b|, define
@@ -298,16 +299,16 @@ thin_preceq :: P b -> P (T b)
 thin_preceq = thinT_preceq . collect {-"~~."-}
 \end{code}
 
-Letting |h := thin_preceq . f| in \eqref{eq:thin-univ-monadic}, we get
+Letting |h := thin_preceq . f| in \eqref{eq:thin-univ-monadic}, we get |mem <=< thin_preceq . f `sse` f |,
 %if False
 \begin{code}
 memThinId :: (a -> P b) -> a -> P b
 memThinId f =
 \end{code}
-%endif
 \begin{code}
     mem <=< thin_preceq . f `sse` f {-"~~,"-}
 \end{code}
+%endif
 and the |thin|-cancelation law:
 \begin{equation}
 \setlength{\jot}{-1pt}

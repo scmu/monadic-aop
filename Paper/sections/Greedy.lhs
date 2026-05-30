@@ -297,7 +297,7 @@ The case when there is a tie (that is, when the sum of |x:ys| is |sum [] = 0|) i
 Our |zplus| defined above prefers |[]| when there is a tie, but it could have made another choice by substituting |(<)| for |(<=)|.
 The result would still meet the specification.
 
-The first two |(`spse`)| steps need |max| to be monotonic. Since what follows them are sub-monads of |(max . prefix) <=< suffix|, they all return maximum elements only, and satisfy the first law in Section~\ref{sec:max-monotonic}.
+The first two |(`spse`)| steps need |max| to be monotonic. Since what follows them are contained by |(max . prefix) <=< suffix|, they all return maximum elements only, and satisfy the first law in Section~\ref{sec:max-monotonic}.
 
 We have thus derived |mss `spse` return . mssImpl|, where
 %format maxlistSum = "\Varid{maxlist}"
@@ -347,7 +347,8 @@ In most literature on optimisation problems, establishing such monotonicity is d
 In the case of MSS, the readers would be given a verbal explanation consisting of a case analysis on what |pre x| might return as |zs0|, and for each case the reader is shown how a corresponding |zs1| can be constructed.
 
 Such an informal explanation is often sufficient.
-The monadic approach, however, provides a framework in which one can formally prove the monotonicity condition when it is desired. For the MSS problem, the proof goes:
+The monadic approach, however, provides a framework in which one can formally prove the monotonicity condition when it is desired.
+For the MSS problem, the proof goes:
 \begin{spec}
         do  ys1 `geqs` ys0 <- any
             zs0 <- pre x ys0
@@ -372,7 +373,7 @@ The monadic approach, however, provides a framework in which one can formally pr
             (  do { [] `geqs` [];        return (ys1, []) } <|>
                do { x:ys1 `geqs` x:ys0;  return (ys1, x : ys0) } )
 \end{spec}
-The strategy so far has been to expand |pre x ys0|, and for each value it may return (|[]| and |x:ys0|), try to match it with something (|[]| and |x:ys1|) that is not worse.
+The strategy so far has been to expand |pre x ys0|, and for each value it may return (|[]| and |x:ys0|), try to match it with something (in this case respectively |[]| and |x:ys1|) that is not worse.
 We now want to show that these values can be returned by |pre x ys1|:
 \begin{spec}
         ...
@@ -401,9 +402,11 @@ We now want to show that these values can be returned by |pre x ys1|:
             return (ys1, zs0) {-"~~."-}
 \end{spec}
 In the first step above we added more cases into the expression, in order to
-extract |zs0| and |zs1|. We can do so because we are reasoning about inclusions.
+extract |zs0| and |zs1| ---
+when reasoning about inclusions, we can boldly ``enlarge'' a value as long as it folds back to an expression we want.
 The last few steps are about folding back the definition of |pre|.
-The proof is a more precise formalisation of what one might say when reasoning about monotonicity verbally.
+One may also imagine that we are working backwards, expanding |pre| to find out what missing cases we need.
+The proof is a more precise formalisation of what one might say when verbally arguing that the monotonicity holds.
 
 %if False
 \begin{code}
