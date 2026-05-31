@@ -823,9 +823,10 @@ We first utilise the commutativity of non-determinism monad and the monad laws t
      return (x,y) {-"~~."-}
 \end{spec}
 Monotonicity of |(=<<)| with respect to |(`sse`)| then allows us to do the ``rewrite'', before moving the lines back using commutativity.
-The step is therefore only applicable when the scopes of variable allow us to perform such regrouping, and we need to apply renaming when necessary.
+A match-and-rewrite step is therefore only applicable when the scopes of variables allow such regrouping. Renaming of variables is sometimes necessary.
 
-Using the technique can be compared to proving properties in an interactive theorem prover: the lines in the |do|-expression are known facts in the context, from which one can induce more facts.
+Using the technique can be compared to proving properties in an interactive theorem prover: the lines in the |do|-expression are known facts in the context.
+One apply rules to induce more facts, before finally reaching the goal to be proved.
 With this monadic calculus, we are able to reason in the same language we program in.
 
 \paraskip
