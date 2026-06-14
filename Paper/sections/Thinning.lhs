@@ -17,7 +17,7 @@ import Greedy
 \end{code}
 %endif
 
-Consider again our generic problem speficication: |max_unlhd . foldR f e|.
+Consider again our generic problem specification: |max_unlhd . foldR f e|.
 For many problems, wishing that |f| satisfies the monotonicity condition \eqref{eq:monotonicity}
 with respect to |unlhd| is asking for a lot.
 It is more common that |f| satisfies \eqref{eq:monotonicity} with respect to some other ordering, say, |preceq|, that is a stronger variation of |unlhd|.
@@ -99,13 +99,13 @@ w = 20
 
 %format subsw = "\Varid{subs}_{w}"
 \paraskip
-\paragraph{Fusion.}~
-To transform to the specification to our generic form, we try to fuse |filt ((w >) . wgt) <=< subseq| into one |foldR|.
-Accroding to the |foldR| fusion rule \eqref{eq:foldRFusion}:
+\paragraph{Fusion}~
+To transform the specification to our generic form, we try to fuse |filt ((w >) . wgt) <=< subseq| into one |foldR|.
+According to the |foldR| fusion rule \eqref{eq:foldRFusion}:
 \begin{equation*}
   |foldR g (h e) `sse` h . foldR f e {-"~"-}<=={-"~"-} g x =<< h m `sse` h (f x =<< m) {-"~~,"-}|
 \end{equation*}
-if we manange to construct some function |subsw| that satisfies the fusion condition:
+if we manage to construct some function |subsw| that satisfies the fusion condition:
 \begin{equation}
  |subsw x =<< (filt ((w>).wgt) =<< m) {-"~"-}`sse`{-"~"-} filt ((w>).wgt) =<< (subs x =<< m) {-"~~,"-}|
  \label{eq:filtSubseqFusionCond}
@@ -122,7 +122,7 @@ we will have
   foldR subsw (return []) {-"~"-}`sse`{-"~"-} filt ((w >) . wgt) <=< subseq {-"~~."-}
 \end{spec}
 (For the second argument to |foldR|, |filt ((w >) . wgt) [] = return []| holds because |w| is non-negative.)
-To construct |subsw|, one may start from the righthand side of \eqref{eq:filtSubseqFusionCond} and try to distribute |filt ((w>).wgt)| inside until it is applied to |m|.
+To construct |subsw|, one may start from the right-hand side of \eqref{eq:filtSubseqFusionCond} and try to distribute |filt ((w>).wgt)| inside until it is applied to |m|.
 One will eventually construct:
 \begin{code}
 subsw x ys = return ys <|> filt ((w>).wgt) (x:ys) {-"~~."-}
@@ -134,15 +134,14 @@ knapsack' = max_leqv . foldR subsw (return [])  {-"~~."-}
 \end{code}
 
 \paraskip
-\paragraph{Failing monotonicity.}~
+\paragraph{Failing monotonicity}~
 It turns out, however, that |subsw| does not meet \eqref{eq:monotonicity} with respect to |geqv|.
 To see that, let us construct a counterexample.
 For the convenience of our readers, we recite and instantiate \eqref{eq:monotonicity} here:
 \begin{equation*}
 \setlength{\jot}{-1pt}
 \begin{aligned}
-|do|~ & |(ys1, ys0) <- any|\\
-      & |filt geqv (ys1, ys0)|\\
+|do|~ & |ys1 `geqv` ys0 <- any|\\
       & |zs0 <- subsw x ys0| \\
       & |return (ys1, zs0)|
 \end{aligned}
@@ -150,28 +149,28 @@ For the convenience of our readers, we recite and instantiate \eqref{eq:monotoni
 \begin{aligned}
 |do|~& |(ys1, zs0) <- any|\\
      & |zs1 <- subsw x ys1|\\
-     & |filt geqv (zs1, zs0)|\\
+     & |zs1 `geqv` zs0|\\
      & |return (ys1, zs0)| \mbox{~~.}
 \end{aligned}
-\tag{\ref{eq:monotonicity}'}
+\tag{$\ref{eq:monotonicity}'$}
 \end{equation*}
 Let the weight limit |w| be |10|.
-Consider the lefthand side.
+Consider the left-hand side.
 Among all the possible values of |ys1| and |ys0|, we pick |ys1 = [(5,8)]| and |ys0 = [(4,6)]|,
 for which we do have |ys1 `geqv` ys0|.
-With |ys0| being a lesser solution, if (\ref{eq:monotonicity}') holds, we could use a greedy algorithm, dropping |ys0| and keeping only |ys1|.
+With |ys0| being a lesser solution, if ($\ref{eq:monotonicity}'$) holds, we could use a greedy algorithm, dropping |ys0| and keeping only |ys1|.
 Let |x = (3,3)|.
 The two possible values of |zs0| are |[(4,6)]| and |[(3,3),(4,6)]|.
-The inclusion demands that the same |(ys1, zs0)| be a result of the righthand side as well.
-In particular, the righthand side must be able to yield |([(5,8)], [(3,3),(4,6)])| as a result.
-Let us examine the righthand side, assuming that from |any| we draw |ys1 = [(5,8)]| and |zs0 = [(3,3),(4,6)]|.
+The inclusion demands that the same |(ys1, zs0)| be a result of the right-hand side as well.
+In particular, the right-hand side must be able to yield |([(5,8)], [(3,3),(4,6)])| as a result.
+Let us examine the right-hand side, assuming that from |any| we draw |ys1 = [(5,8)]| and |zs0 = [(3,3),(4,6)]|.
 With this value of |ys1|,
 the only possible value of |zs1| is also |[(5,8)]| --- since |[(3,3),(5,8)]| exceeds the weight limit!
 And we do not have |[(5,8)] `geqv` [(3,3),(4,6)]|.
-Therefore the righthand side cannot return |([(5,8)], [(3,3),(4,6)])|, and thus (\ref{eq:monotonicity}') fails.
+Therefore the right-hand side cannot return |([(5,8)], [(3,3),(4,6)])|, and thus ($\ref{eq:monotonicity}'$) fails.
 
 Notice that, comparing to traditional arguments using first-order logic, in the reasoning above we have expressions to execute with.
-Notice also how the |return (ys1, zs0)| on the lefthand side forces the value of |(ys1, zs0) <- any| on the righthand side.
+Notice also how the |return (ys1, zs0)| on the left-hand side forces the value of |(ys1, zs0) <- any| on the right-hand side.
 
 The lesson we have just learned is that we cannot throw away a solution, such as |[(4,6)]|, simply because it is not the most valuable.
 Therefore a greedy algorithm would not work for this problem.
@@ -190,11 +189,10 @@ Therefore, while one may apply the Greedy Theorem to |max_leqvw . | |foldR subsw
 Instead, one may use a different strategy: let the |foldR| maintain, in some data structure, a collection of solutions that might be useful, while those that are definitely not going to contribute to the final solution can be disposed of.
 For example, if at one point the algorithm computes a collection of solutions
 |{[(5,8)],[(4,6)], [(4,8)]}|, the solutions |[(5,8)]| and |[(4,6)]| must be kept because we do not yet know which will contribute to the final solution.
-Meanwhile, |[(4,8)]|, which is less valuable than |[(5,8)]| and heavier |[(4,6)]|, need not be kept.
+Meanwhile, |[(4,8)]|, which is less valuable than |[(5,8)]| and heavier |[(4,6)]|, needs not be kept.
 This process of ``keeping useful solutions, while possibly dropping those useless ones'' is called \emph{thinning} in the terminology of \citet{BirddeMoor:97:Algebra}.
 
-Note our wording: |[(4,8)]| need not be kept, but it does not mean that we \emph{have to} drop it.
-An algorithm should have the flexibility of deciding how much thinning it needs to do.
+Note our wording: that |[(4,8)]| needs not be kept does not mean that we \emph{have to} drop it.
 Doing a full thinning keeps the set of solutions small, but the thinning itself could be time consuming,
 and it may be beneficial to remove some but not all of the useless solutions.
 A general specification of thinning algorithms should allow such flexibility.
@@ -204,7 +202,7 @@ A general specification of thinning algorithms should allow such flexibility.
 We assume a data structure |T| used to store potentially useful partial solutions.
 Conceptually, |T a| is just a set of |a|'s.
 It could be implemented as a list, a tree, an array... the choice of implementation is problem-specific and often crucial to the efficiency of the algorithm.
-We assume two operators:
+Regarding |T|, we assume the existence of a number of operators. Firstly,
 \begin{spec}
 mem      :: T a -> P a {-"~~,"-}
 collect  :: P a -> T a {-"~~,"-}
@@ -219,11 +217,30 @@ collect = undefined
 %endif
 where |mem| non-deterministically yields an element in |T|, while |collect m| collects the results of |m| and stores them in the data structure |T|.
 Both |T| and |P| represent sets. If we let |T = P|, we would have |mem = collect = id|, and some notations could be much simplified.
-However, we prefer to treat |T| and |P| as different types, since they serve different purposes: |P| denotes non-determinism, while |T| denotes a \emph{finite} collection of potential solutions.
+However, we prefer to treat |T| and |P| as distinct types, since they serve different purposes: |P| denotes non-determinism, while |T| denotes a \emph{finite} collection of potential solutions.
+For finite |m :: P a|, we demand that |mem (collect m) = m|; for |t :: T a| we want |collect (mem t) = t|.
 
+Furthermore, we assume the existence of methods |emptyT :: T a|, which denotes an empty table, |singleT :: a -> T a|, which builds a table with one entry, and |mergeT :: T a -> T a -> T a|, which merges two tables, such that the following holds:
+\begin{align*}
+|collect mzero|      & ~=~ |emptyT {-"~~,"-}| \\
+|collect (return x)| & ~=~ |singleT x {-"~~,"-}| \\
+|collect (t <||> u)|  & ~=~ |mergeT (collect t) (collect u) {-"~~."-}|
+\end{align*}
+%if False
+\begin{code}
+mergeT :: T (List Item) -> T (List Item) -> T (List Item)
+mergeT []      u       = u
+mergeT t       []      = t
+mergeT (xs:t)  (ys:u)  | wgt xs >= wgt ys  = xs : mergeT t (ys:u)
+                       | otherwise         = ys : mergeT (xs:t) u {-"~~."-}
+\end{code}
+%endif
+
+\paraskip
+\paragraph{Thinning}
 Given a preorder |preceq| on some type |b| that is not necessarily connected, and a table |xs :: T b|,
 |thinT_preceq xs| computes a table that is possibly smaller, but still contains necessary elements that lead to an optimal solution.
-There could be many such tables, therefore we let |thinT_preceq| have type |T b -> P (T b)|. It non-deterministically computes a table that meets the following criteria :
+There could be many such tables, therefore we let |thinT_preceq| have type |T b -> P (T b)|. The tables it computes meets the following criteria:
 %if False
 \begin{code}
 thinT :: T b -> P (T b)
@@ -263,7 +280,7 @@ for all |f :: a -> P b| and |h :: a -> P (T b)|,
  \begin{aligned}
  |do|~ & |(t1, y0) <- any| \\
        & |y1 <- mem t1| \\
-       & |filt succeq (y1, y0)|\\
+       & |y1 `succeq` y0|\\
        & |return (t1, y0)|
  \end{aligned}
  \right)\mbox{~~.}
@@ -290,7 +307,7 @@ Think of |f| as a function that non-deterministically generates some solution ca
 In |thinT_preceq. collect . f|, the results of |f| is collected into a table of type |T b| and passed to |thinT_preceq|.
 The monadic inclusion in the big brackets encodes the combination of universal and existential quantification in \eqref{eq:thin-def-set}:
 for all table |t1| returned by |h|, and for all |y0| returned by |f|,
-there must exists an elememt |y1| in |t1| such that |y1 `succeq` y0|.
+there must exists an element |y1| in |t1| such that |y1 `succeq` y0|.
 
 Since |thinT_preceq| and |collect| often appear together, we will use the following abbreviation:
 given a preorder |(`preceq`)| on some type |b|, define
@@ -299,17 +316,17 @@ thin_preceq :: P b -> P (T b)
 thin_preceq = thinT_preceq . collect {-"~~."-}
 \end{code}
 
-Letting |h := thin_preceq| and |f := id| in \eqref{eq:thin-univ-monadic}, we get
+Letting |h := thin_preceq . f| in \eqref{eq:thin-univ-monadic}, we get |mem <=< thin_preceq . f `sse` f |,
 %if False
 \begin{code}
--- memThinId :: P c -> P c
-memThinId =
+memThinId :: (a -> P b) -> a -> P b
+memThinId f =
+\end{code}
+\begin{code}
+    mem <=< thin_preceq . f `sse` f {-"~~,"-}
 \end{code}
 %endif
-\begin{code}
-    mem <=< thin_preceq `sse` id {-"~~."-}
-\end{code}
-Letting |h := thin_preceq . f| in \eqref{eq:thin-univ-monadic}, we get the |thin|-cancelation law:
+and the |thin|-cancelation law:
 \begin{equation}
 \setlength{\jot}{-1pt}
   \begin{aligned}
@@ -322,7 +339,7 @@ Letting |h := thin_preceq . f| in \eqref{eq:thin-univ-monadic}, we get the |thin
   \begin{aligned}
   |do|~ & |(t1, y0) <- any| \\
         & |y1 <- mem t1| \\
-        & |filt succeq (y1, y0)|\\
+        & |y1 `succeq` y0|\\
         & |return (t1, y0)|
   \end{aligned}
 \end{equation}
@@ -382,8 +399,8 @@ thmThinning f e =
 \end{code}
 %endif
 \end{theorem}
-On the righthand side of |(`sse`)|, |foldR f e| computes all potential solutions before they are collected into a table and thinned by |thin|.
-The theorem says that we may also, as seen in the lefthand side, distribute the thinning into each stage of the |foldR|, maintaining a smaller set of solutions, which may lead to an algorithm having a smaller time complexity.
+On the right-hand side of |(`sse`)|, |foldR f e| computes all potential solutions before they are collected into a table and thinned by |thin|.
+The theorem says that we may also, as seen in the left-hand side, distribute the thinning into each stage of the |foldR|, maintaining a smaller set of solutions, which may lead to an algorithm having a smaller time complexity.
 With |x :: a|, the subexpression |thin . (f x <=< mem)| has type |T b -> P (T b)|.
 
 \subsection{Solving knapsack}
@@ -391,9 +408,10 @@ With |x :: a|, the subexpression |thin . (f x <=< mem)| has type |T b -> P (T b)
 Now we try to solve the 0-1 knapsack problem by thinning.
 
 \paraskip
-\paragraph{Representing |T|.}
-We need to choose a representation of |T|.
-We let |T (List Item)| be |List (List Item)|, \emph{sorted by decreasing weights}.
+\paragraph{Representing |T|}~
+We start with thinking about what data structure to choose as |T|.
+Given the analysis in Section~\ref{sec:ex:0-1-knapsack},
+we let |T (List Item)| be |List (List Item)|, \emph{sorted by decreasing weights}.
 If we can fully thin the list, the weights are strictly decreasing because for each weight we need to keep only one solution --- the one that yields maximum value for this weight.
 That means the lists in |T| also come in \emph{strictly decreasing values},
 since a strictly heavier solution must have a strictly higher value to be worth keeping.
@@ -403,23 +421,91 @@ type T a = List a
 \end{code}
 %endif
 
-Consider how |collect| interacts with |return| and |(<||)>|:
-\begin{spec}
-collect (return xs)  = [xs] {-"~~,"-}
-collect (t <|> u)    = mergeT (collect t) (collect u) {-"~~,"-}
-\end{spec}
-where |mergeT| merges two lists sorted by decreasing weights.
+Methods constructing |T| have obvious implementations: |emptyT = []|, |singleT x = [x]|, and |mergeT| merges two sorted lists, whose definition we omit.
+
+%format addw = "\Varid{add}_{w}"
+\paraskip
+\paragraph{The derivation}~
+Let us calculate |knapsack|.
+Starting from the fused specification, we introduce |thin|, and apply the Thinning Theorem:
 %if False
 \begin{code}
-mergeT :: T (List Item) -> T (List Item) -> T (List Item)
-mergeT []      u       = u
-mergeT t       []      = t
-mergeT (xs:t)  (ys:u)  | wgt xs >= wgt ys  = xs : mergeT t (ys:u)
-                       | otherwise         = ys : mergeT (xs:t) u {-"~~."-}
+knapsackDer :: Wgt -> List Item -> P (List Item)
+knapsackDer w =
 \end{code}
 %endif
-We omit its definition, but instead present below a function |thinmerge| that merges two lists sorted by decreasing weights,
-before removing solutions that are not needed:
+\begin{code}
+         knapsack
+ ===       {-  definition and fusion in Section~\ref{sec:ex:0-1-knapsack} -}
+         max_leqv . foldR subsw (return [])
+ `spse`    {- introducing |thin_leqvw| \eqref{eq:thin-intro} -}
+         ((max_leqv . mem) <=< thin_leqvw) . foldR subsw (return []) {-"~~."-}
+ ===       {- |(f <=< g) . h = f <=< (g . h)|-}
+         (max_leqv . mem) <=< (thin_leqvw . foldR subsw (return []))
+ `spse`    {- Thinning Theorem \eqref{eq:thinning} -}
+         (max_leqv . mem) <=< foldR (\x -> thin_leqvw . (subsw x <=< mem)) (thin_leqvw (return [])) {-"~~."-}
+\end{code}
+In the second step we may introduce |thin_leqvw| because |xs `leqvw` ys ==> xs `leqv` ys|.
+
+We try to refine the monadic fold:
+\begin{spec}
+ foldR (\x -> thin_leqvw . (subsw x <=< mem)) (thin_leqvw (return []))
+\end{spec}
+into a functional |foldr|.
+%if False
+\begin{code}
+thinReturnDer =
+         thin_leqvw (return [])
+ ===     thinT (collect (return []))
+ ===     thinT [[]]
+ `spse`  return [[]]
+\end{code}
+%endif
+It is immediate that |thin_leqvw (return []) `spse` return [[]]|.
+To refine |thin_leqvw . (subsw x <=< mem)|, we reason:
+%if False
+\begin{code}
+tstepDer x t =
+\end{code}
+%endif
+\begin{code}
+         (thin . (subsw x <=< mem)) t
+ ===       {- definition of |(<=<)| -}
+         thin (subsw x =<< mem t)
+ ===       {- definition of |subsw|, |(=<<)| distributes into |(<||>)|, monad laws -}
+         thin (mem t <|> ((filt ((w>) . wgt) . (x:)) =<< mem t))
+ ===       {- definition of |thin|, |collect| distributes into |(<||>)| -}
+         thinT (mergeT (collect (mem t)) (collect ((filt ((w>) . wgt) . (x:)) =<< mem t)))
+ ===       {-  |collect (mem t) = t| -}
+         thinT (mergeT t (collect ((filt ((w>) . wgt) . (x:)) =<< mem t)))
+ ===       {- construct |addw x t = collect ((filt ((w>) . wgt) . (x:)) =<< mem t)| -}
+         thinT (mergeT t (addw x t))
+ `spse`    {- by \eqref{eq:thinmerge-refine}, see below -}
+         return (thinmerge t (addw x t)) {-"~~."-}
+\end{code}
+
+In the penultimate step, one may define
+\begin{spec}
+  addw x t = collect ((filt ((w>) . wgt) . (x:)) =<< mem t) {-"~~."-}
+\end{spec}
+That is, we attach |x| to each member in |t|, and throws away those entries whose weights exceed the limit |w|.
+But given that |t :: T (List Item)| is sorted by decreasing weights and values, we can come up with a slightly more efficient implementation.
+Intuitively speaking, |(... (x:) =<< mem t)| can be implemented by |map (x:)|, and since |t| is sorted by weight, |filt ((w>) . wgt)| and |collect| can be implemented by a |dropWhile|. Define:
+\begin{code}
+addw :: Item -> T (List Item) -> T (List Item)
+addw x = dropWhile ((w <=) . wgt) . map (x:) {-"~~."-}
+\end{code}
+One may show that |collect ((filt ((w>) . wgt) . (x:)) =<< mem t = addw x t|.
+
+In the last step, we assume a function |thinmerge| that refines |thinT . mergeT|, that is, for |xss, yss :: T (List Item)| sorted by decreasing weights, a function that satisfies:
+\begin{equation}
+|return (thinmerge xss yss) `sse` thinT (mergeT xss yss)| \mbox{~~.}
+\label{eq:thinmerge-refine}
+\end{equation}
+One may define |thinmerge xss yss| by calling |mergeT xss yss| before removing unneeded entries, but it turns out to be easier if we perform merging and thinning in one recursive function.
+The function |thinmerge|, which runs in time linear to the sum of the lengths of the two lists, is shown in Figure~\ref{fig:thinmerge}.
+
+\begin{figure}[h]
 %format vxs = "\Varid{v}_{\Varid{xs}}"
 %format vys = "\Varid{v}_{\Varid{ys}}"
 %format wxs = "\Varid{w}_{\Varid{xs}}"
@@ -439,6 +525,8 @@ thinmerge (xs:t)  (ys:u)  | wxs >  wys  && vxs <= vys  = thinmerge t (ys:u)
          (vxs, vys)  = (val xs, val ys) {-"~~."-}
 \end{code}
 %endif
+\begin{mdframed}[linecolor=gray]
+{\small
 \begin{spec}
 thinmerge :: T (List Item) -> T (List Item) -> T (List Item)
 thinmerge []      u       = u
@@ -450,94 +538,21 @@ thinmerge (xs:t)  (ys:u)  | xs `gtw` ys  && xs `leqv` ys  = thinmerge t (ys:u)
                           | xs `ltw` ys  && xs `ltv` ys   = ys : thinmerge (xs:t) u
                           | xs `ltw` ys  && xs `geqv` ys  = thinmerge (xs:t) u  {-"~~."-}
 \end{spec}
+\centering
+\begin{minipage}{\textwidth}
+\paraskip
 In the inductive case, the first two clauses deal with situations where |xs| is heavier than |ys|,
 for which we keep |xs| only when it is strictly more valuable.
 The last two clauses are symmetrical.
 When |xs| and |ys| weigh the same, we keep the more valuable one, and arbitrary choose to keep |xs| in case of a tie.
-The function runs in time linear to the sum of the lengths of the two lists.
-We have, for |xss, yss :: T (List Item)| sorted by decreasing weights, that
-\begin{equation}
-|return (thinmerge xss yss) `sse` thinT (mergeT xss yss)| \mbox{~~.}
-\label{eq:thinmerge-refine}
-\end{equation}
+\end{minipage}
+}%small
+\end{mdframed}
+\caption{Merging two lists sorted by decreasing weights and values.}
+\label{fig:thinmerge}
+\end{figure}
 
-%format addw = "\Varid{add}_{w}"
-
-\paraskip
-\paragraph{The derivation.}
-Now it is time to calculate |knapsack|.
-Starting from the fused specification, we introduce |thin|, and apply the Thinning Theorem:
-%if False
-\begin{code}
-knapsackDer :: Wgt -> List Item -> P (List Item)
-knapsackDer w =
-\end{code}
-%endif
-\begin{code}
-         knapsack
- ===       {-  Section~\ref{sec:ex:0-1-knapsack} -}
-         max_leqv . (filt ((w >) . wgt) <=< subseq)
- `spse`    {- |foldR|-fusion -}
-         max_leqv . foldR subsw (return [])
- `spse`    {- introducing |thin_leqvw| \eqref{eq:thin-intro} -}
-         ((max_leqv . mem) <=< thin_leqvw) . foldR subsw (return []) {-"~~."-}
- ===       {- |(f <=< g) . h = f <=< (g . h)|-}
-         (max_leqv . mem) <=< (thin_leqvw . foldR subsw (return []))
- `spse`    {- Thinning Theorem \eqref{eq:thinning} -}
-         (max_leqv . mem) <=< foldR (\x -> thin_leqvw . (subsw x <=< mem)) (thin_leqvw (return [])) {-"~~."-}
-\end{code}
-In the second step we may introduce |thin_leqvw| because |xs `leqvw` ys ==> xs `leqv` ys|.
-
-We try to refine the monadic fold:
-\begin{spec}
- foldR (\x -> thin_leqvw . (subsw x <=< mem)) (thin_leqvw (return [])) {-"~~."-}
-\end{spec}
-%if False
-\begin{code}
-thinReturnDer =
-         thin_leqvw (return [])
- ===     thinT (collect (return []))
- ===     thinT [[]]
- `spse`  return [[]]
-\end{code}
-%endif
-It takes only a routine calculation to show that |thin_leqvw (return []) `spse` return [[]]|.
-To refine |thin_leqvw . (subsw x <=< mem)|, we reason:
-%if False
-\begin{code}
-tstepDer x t =
-\end{code}
-%endif
-\begin{code}
-         (thin . (subsw x <=< mem)) t
- ===       {- definition of |(<=<)| -}
-         thin (subsw x =<< mem t)
- ===       {- definition of |subsw|, |(=<<)| distributes into |(<||>)|, monad laws -}
-         thin (mem t <|> ((filt ((w>) . wgt) . (x:)) =<< mem t))
- ===       {- definition of |thin|, |collect| distributes into |(<||>)| -}
-         thinT (mergeT (collect (mem t)) (collect ((filt ((w>) . wgt) . (x:)) =<< mem t)))
- ===       {-  |collect . mem = id| -}
-         thinT (mergeT t (collect ((filt ((w>) . wgt) . (x:)) =<< mem t)))
- ===       {- construct |addw x t = collect ((filt ((w>) . wgt) . (x:)) =<< mem t)| -}
-         thinT (mergeT t (addw x t))
- `spse`    {- by \eqref{eq:thinmerge-refine} -}
-         return (thinmerge t (addw x t)) {-"~~."-}
-\end{code}
-In the penultimate step, one may define
-\begin{spec}
-  addw x t = collect ((filt ((w>) . wgt) . (x:)) =<< mem t) {-"~~."-}
-\end{spec}
-Letting |mem = collect = id|, this is an executable program.
-But given that |t :: T (List Item)| is sorted by decreasing weights and values, we can come up with a slightly more efficient implementation.
-The expression above picks each list from |t|, extend it with |x|, and keeps only those whose total weights do not exceed |w|.
-Omitting the |P| monad in the middle, |(... (x:) =<< mem t)| can be implemented by |map (x:)|, and since |t| is sorted by weight, |filt ((w>) . wgt)| and |collect| can be implemented by a |dropWhile|. Define:
-\begin{code}
-addw :: Item -> T (List Item) -> T (List Item)
-addw x = dropWhile ((w <=) . wgt) . map (x:) {-"~~,"-}
-\end{code}
-We have |collect ((filt ((w>) . wgt) . (x:)) =<< mem t = addw x t|.
-
-Back to the main derivation:
+Back to the main derivation, we only need to finish up the last few book-keeping steps:
 %if False
 \begin{code}
 knapsackDer2 :: Wgt -> List Item -> P (List Item)

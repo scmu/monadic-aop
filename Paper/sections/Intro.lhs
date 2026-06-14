@@ -32,36 +32,36 @@ if not making the specification impossible at all (it is hard to predict how, sa
 One therefore needs a different framework, where a specification describes a collection of solution that is allowed by the final program, which no longer equals, but is instead contained by the specification.
 
 One of the possibilities is to use relations as specifications.
-Foundations of this approach were laid by works including \citet{BackhousedeBruin:91:Relational}, \citet{Aarts:92:Relational}, \citet{BackhouseHoogendijk:92:Elements}, etc,
+Foundations of this approach were laid by \citet{BackhousedeBruin:91:Relational}, \citet{Aarts:92:Relational}, \citet{BackhouseHoogendijk:92:Elements}, etc,
 before \citet{BirddeMoor:97:Algebra}, taking a more abstract, categorical approach,
 presented general theories for constructing various forms of greedy, thinning, and dynamic programming algorithms.
 \citet{BirddeMoor:97:Algebra} presented a point-free calculus that is concise, elegant, and surprisingly expressive.%
 \footnote{Being ``point-free'' refers to a style where one tends not to mention arguments to a function/relation, but thinks in a higher level and construct programs by functional/relational composition, union, intersection, converses, etc. The opposite style where functions are often applied to named arguments is called ``pointwise''.}
-Concepts such as monotonicity and maximum/minimum are concisely expressed in short expressions, consisting of  composition, union, intersection, and factor (a concept resembling division) of relations.
-A short expression may encode rich interpretations, and algebraic properties of these operators are applied to prove properties of expressions.
+Concepts such as monotonicity and maximum/minimum are concisely expressed in short expressions, consisting of operators such as composition, union, intersection, and factor (a concept resembling division) of relations.
+A short expression may encode rich interpretations, and algebraic properties of these operators are applied to prove properties of such expressions.
 Such conciseness and expressiveness also turned out to be a curse, however.
 For those who not sharing the background, the calculus has a sharp learning curve, which limited its popularity to a small circle of enthusiasts.
 Thinking point-free might be too abstract for some people;
 as one might remember from high school algebra, reasoning about inequality (in this case, relational inclusion) is harder than reasoning about equality; and with the rich selection of relational operators, the number of properties one has to remember multiplies.
 
-Efforts has been made to re-introduce variables back to the relational calculus, for example, \citet{deMoorGibbons:00:Pointwise}.
+Efforts have been made to re-introduce variables back to the relational calculus, for example, by \citet{deMoorGibbons:00:Pointwise}.
 One cannot help feeling unease with some of its peculiarities.
 For example, let |0{-"\!"-} `mplus`{-"\!"-} 1| denote a value that is non-deterministically |0| or |1|.
 Non-determinism is resolved before functional application,
 therefore |(\x -> x - x) (0 `mplus` 1)| is always |0|,
 while |(0 `mplus` 1) - (0 `mplus` 1)| could be |-1|, |0|, and |1| ---
-$\beta$-reduction does not hold!
-In fact, $\beta$-reduction is applicable only to pure values.
+$\beta$-reduction does not preserve the semantics of an expression!
+To be precise, $\beta$-reduction is applicable only to pure values.
 Similarly, $\eta$-expansion also changes the non-deterministic behaviour of an expression.
-Around two decades later, \citet{BirdRabe:19:How} presented a theoretical background of pointwise ``multifunctions'', which is subsequently used in \citet{BirdGibbons:20:Algorithm}.
+Around two decades later, \citet{BirdRabe:19:How} presented a theoretical background of pointwise ``multifunctions'', which is subsequently used by \citet{BirdGibbons:20:Algorithm}.
 While \citet{deMoorGibbons:00:Pointwise} interpreted their pointwise calculus by translating expressions to relations, \citet{BirdRabe:19:How} presented a set-theoretic semantics.
 To the users, the two calculus are rather similar. While their foundations are solid, the aforementioned peculiarities makes it harder to reason about programs without making mistakes.
 
-Another problem shared by all approaches above, however, is that it is hard to fit them into the curriculum of a functional programming course.
+Another problem shared by all approaches above is that it is hard to fit them into the curriculum of a functional programming course.
 Imagine a functional programming course with an emphasis on correctness and reasoning,
 covering topics include definition and proof by induction.
-Everything looks fine, until we encounter cases like \todo{polish.}
-Suddenly we have to extend the language, move to a different semantics, be it relations or multifunctions, which seems to challenge one's established understanding of the language and break some rules one relied on, only to cover some ``corner cases.''
+Everything looks fine, until we wish to demonstrate that, given the ability to reason about programs, one can derive an algorithm solving a optimisation problem, such as 0-1 knapsack, which returns not the optimal value but the solution itself.
+Suddenly we have to extend the language, move to a different semantics, be it relations or multifunctions, which seems to challenge one's established understanding of the language and break some rules (e.g $\beta$-reduction or $\eta$-expansion) one relied on, only to cover some ``corner cases.''
 These extensions appear to be invented only for this section of the course, and are then forgotten when we move on to the next part.
 
 Meanwhile, we already have \emph{monads}, a general framework for modelling non-determinsm as well as other effects, which a functional programming course must talk about anyway.
@@ -71,15 +71,15 @@ Meanwhile, we already have \emph{monads}, a general framework for modelling non-
 \begin{spec}
   max . (filt p <=< foldR f e) {-"~~,"-}
 \end{spec}
-where |(<=<) :: (b -> M c) -> (a -> M b) -> (a -> M c)| is Kliseli composition and |(.)| is ordinary function composition.
+where |(<=<) :: (b -> M c) -> (a -> M b) -> (a -> M c)| is Kleisli composition and |(.)| is ordinary function composition.
 Given an input of type |List A|, the collection of all solution candidates is generated by |foldR f e :: List A -> M B|, a monadic variation of fold on lists.
 The function |filt :: (b -> Bool) -> b -> M b| keeps those solutions that satisfy predicate |p|, and |max :: M b -> M b| keeps only those having maximum value under some chosen ordering.
 In all cases we consider, the filtering phase can be fused into |foldR|, therefore the actual form of the problem is |max . foldR f' e'|.
 We then discuss conditions under which the specification can be refined to a fold-based greedy algorithm --- one where we greedily keep only the locally best solution in each step of the fold,
 or a \emph{thinning} algorithm, where in each step of the fold we keep a set of solution candidates that still might be useful.
 
-All these were covered in \citet{BirddeMoor:97:Algebra}.
+All these were covered by \citet{BirddeMoor:97:Algebra}.
 Rather than solving new problems or discovering new algorithms, the purpose of this article is to propose new notations that make previous derivations more accessible, while still being accurate without being too cumbersome.
 In traditional functional programming, one may reason about a functional program by induction on the input.
 This article aims to show that reasoning about monadic programs is just like that: one only need to make use of monad laws and properties of effect operators.
-\todo{Say more, and polish.}
+Meanwhile, one may still reason in point-free style and use universal properties and fold-fusion --- in fact, most of the operators of \citet{BirddeMoor:97:Algebra} have their counterparts in a monadic setting.

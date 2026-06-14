@@ -19,6 +19,9 @@
 %format `sse`  = "\subseteq"
 %format `spse` = "\supseteq"
 %format mzero  = "\emptyset"
+%format `union` = "\cup"
+%format `intersect` = "\cap"
+%format Union = "\bigcup"
 
 %format (conv f) = "{" f "}^{\circ}"
 %format alpha = "\alpha"
