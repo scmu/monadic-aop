@@ -1,73 +1,70 @@
 {-# OPTIONS --cubical #-}
 module Thin where
 
-open import Cubical.Foundations.Prelude 
-open import Cubical.Foundations.HLevels
-open import Cubical.Data.Sigma.Base using (_×_) 
-open import Cubical.Functions.Logic hiding (_⊓_; _⊔_)
-open import Cubical.HITs.PropositionalTruncation as PT  hiding (map)
-import Cubical.HITs.PropositionalTruncation.Monad as TruncMonad
-open import Cubical.Data.Sum.Base using (_⊎_)
+open import Cubical.Foundations.Prelude
+open import Cubical.HITs.PropositionalTruncation as PT
 open import Cubical.Foundations.Powerset as P using (ℙ; _∈_; _⊆_)
-open import PowersetExt
+open import Cubical.Data.Sigma.Base using (_×_; Σ; Σ-syntax) 
+open import Cubical.Data.Sum.Base using (_⊎_) 
+open import Cubical.Data.Int
+open import Cubical.Data.List hiding (rec)
+open import Cubical.Foundations.HLevels
+open import Cubical.Data.Empty using (isProp⊥; isProp⊥* ; ⊥* ; elim*; ⊥)
+open import Cubical.Data.Unit using (Unit*; tt*)
 
-open import Data.List hiding (foldr)
--- open import List
-open import Sets
-open import Monad
-open import Table
+open import Monad_v2
+open import MonadicList 
+open import Sets 
+open import Reasoning 
 
 private 
   variable
     ℓ : Level
 
-foldrM : ∀ {ℓ₁ ℓ₂} {A : Type ℓ₁} {B : Type ℓ₂} →
-         (A → B → ℙ B) → ℙ B → List A → ℙ B
-foldrM f e []       = e 
-foldrM f e (x ∷ xs) = f x =<< foldrM f e xs
-
--- Approach 1: Use record to define ThinQ
-record ThinQ {A : Type ℓ} (Q : A → ℙ A) : Type (ℓ-suc ℓ) where
+record ThinQ {ℓ : Level} {A : Type ℓ} (Q : A → ℙ A) : Type (ℓ-suc (ℓ-suc ℓ)) where
   field
-    thin : T A → ℙ (T A)
-    universal-property-⇒ : (xs ys : T A) → ys ∈ thin xs → (table2set ys ⊆ table2set xs) × ((∀ x → x ∈T xs → Σ A (λ y → (y ∈T ys) × ((y ∈ Q x)))))
-    universal-property-⇐ : (xs ys : T A) → (table2set ys ⊆ table2set xs) × ((∀ x → x ∈T xs → Σ A (λ y → (y ∈T ys) × ((y ∈ Q x))))) → ys ∈ thin xs
+    thin : ℙ A → ℙ (ℙ A)
 
--- the proof will be moved to Fold.agda
+    -- Let T = ℙ, so `mem = collect = id`
+    -- (`t ∈ h x` is a subset `t ⊆ A`, and its members are just its elements).
+    -- (∀ x t → t ∈ h x → t ⊆ f x) means subsets of h are contained in f
 
-foldrM-fixed-point-general :
-  ∀ {A B : Type ℓ}
-  → (g : ℙ A → ℙ A)
-  → (f : B → A → ℙ A)
-  → (e : ℙ A)
-  → (∀ {m k} → g (k =<< m) ⊆ ((λ a → g (k a)) =<< g m)) -- g preserves bind
-  → ∀ xs → g (foldrM f e xs) ⊆ foldrM (λ b a → g (f b a)) (g e) xs
-foldrM-fixed-point-general = {!   !}
+    universal-property-func-⇒ : {X : Type ℓ} (f : X → ℙ A) (h : X → ℙ (ℙ A))
+                              → h ⊑ (thin ∘ f)
+                              → (∀ x t → t ∈ h x → t ⊆ f x) ×
+                                (∀ x t y0 → t ∈ h x → y0 ∈ f x → ∥ Σ A (λ y1 → (y1 ∈ t) × (y1 ∈ Q y0)) ∥₁)
+    universal-property-func-⇐ : {X : Type ℓ} (f : X → ℙ A) (h : X → ℙ (ℙ A))
+                              → (∀ x t → t ∈ h x → t ⊆ f x) ×
+                                (∀ x t y0 → t ∈ h x → y0 ∈ f x → ∥ Σ A (λ y1 → (y1 ∈ t) × (y1 ∈ Q y0)) ∥₁)
+                              → h ⊑ (thin ∘ f)
 
-foldrM-fixed-point-general₂ :
-  ∀ {A B C : Type ℓ}
-  → (g : ℙ A → ℙ C)
-  → (f : B → A → ℙ A)
-  → (h : C → A)
-  → (e : ℙ A)
-  → (∀ {m k} → g (k =<< m) ⊆ (((λ a → g (k (h a))) =<< g m)))  -- bind-preserving (跨型別)
-  → ∀ xs → foldrM (λ b c → g (f b (h c))) (g e) xs ⊆ (g ∘ foldrM f e) xs
-foldrM-fixed-point-general₂ g f h e bp [] x₁ x₂ = x₂
-foldrM-fixed-point-general₂ g f h e bp (x ∷ xs) x₁ x₂ = {!   !}
+  thin-universal-property-set-⇒ : (xs ys : ℙ A) → ys ∈ thin xs → (ys ⊆ xs) ×
+                        (∀ x → x ∈ xs → ∥ Σ A (λ y → (y ∈ ys) × (y ∈ Q x)) ∥₁)
+  thin-universal-property-set-⇒ xs ys ys∈thin = p1 , p2
+    where
+      hyp : (const {X = Unit*} (return ys)) ⊑ (thin ∘ const xs)
+      hyp _ = elem_subset_singleton (thin xs) ys ys∈thin
 
-foldrM-fixed-point-property :
-  ∀ {A B : Type ℓ}
-  → (g : T A → ℙ (T A))
-  → (f : B → A → ℙ A)
-  → (e : ℙ A)
-  → (x : B)
-  → (xs : List B)
-  → (finA : Finite A)
-  → ((g ∘ collect {finA = finA} ∘ (f x <=< table2set)) =<< (g ∘ collect  {finA = finA}  ∘ foldrM f e) xs) ⊆ (g ∘ collect  {finA = finA}  ∘ foldrM f e) (x ∷ xs)
-foldrM-fixed-point-property g f e x xs finA = {! g ∘ collect   !}
+      props = universal-property-func-⇒ {X = Unit*} (const xs) (const (return ys)) hyp
 
+      p1 : ys ⊆ xs
+      p1 = fst props tt* ys (y∈[y] ys)
 
+      p2 : ∀ x → x ∈ xs → ∥ Σ A (λ y → (y ∈ ys) × (y ∈ Q x)) ∥₁
+      p2 x x∈xs = snd props tt* ys x (y∈[y] ys) x∈xs
 
--- ((GG ∘ (f x <=< table2set)) =<< (GG ∘ foldrM f e) xs) ⊆ (GG ∘ foldrM f e) (x ∷ xs)  = GG (f x =<< foldrM f e xs)
--- GG : ℙ A → ℙ (T A)
--- 
+  thin-universal-property-set-⇐ : (xs ys : ℙ A) → (ys ⊆ xs) ×
+                  (∀ x → x ∈ xs → ∥ Σ A (λ y → (y ∈ ys) × (y ∈ Q x)) ∥₁) → ys ∈ thin xs
+  thin-universal-property-set-⇐ xs ys (ys⊆xs , q) = singleton_sub_elem (thin xs) ys ret-ys⊆thin-xs
+    where
+      cond1 : (u : Unit*) (t : ℙ A) → t ∈ return ys → t ⊆ xs
+      cond1 _ t t∈ret a a∈t =
+        rec (P.∈-isProp xs a) (λ ys≡t → ys⊆xs a (subst (λ w → a ∈ w) (sym ys≡t) a∈t)) t∈ret
+
+      cond2 : (u : Unit*) (t : ℙ A) (y0 : A) → t ∈ return ys → y0 ∈ xs
+            → ∥ Σ A (λ y1 → (y1 ∈ t) × (y1 ∈ Q y0)) ∥₁
+      cond2 _ t y0 t∈ret y0∈xs =
+        rec squash₁ (λ ys≡t → subst (λ w → ∥ Σ A (λ y1 → (y1 ∈ w) × (y1 ∈ Q y0)) ∥₁) ys≡t (q y0 y0∈xs)) t∈ret
+
+      ret-ys⊆thin-xs : return ys ⊆ thin xs
+      ret-ys⊆thin-xs = universal-property-func-⇐ {X = Unit*} (const xs) (const (return ys)) (cond1 , cond2) tt*
