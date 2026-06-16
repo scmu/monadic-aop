@@ -26,14 +26,13 @@ record ThinQ {ℓ : Level} {A : Type ℓ} (Q : A → ℙ A) : Type (ℓ-suc (ℓ
     thin : ℙ A → ℙ (ℙ A)
 
     -- Let T = ℙ, so `mem = collect = id`
-    -- (`t ∈ h x` is a subset `t ⊆ A`, and its members are just its elements).
     -- (∀ x t → t ∈ h x → t ⊆ f x) means subsets of h are contained in f
 
-    universal-property-func-⇒ : {X : Type ℓ} (f : X → ℙ A) (h : X → ℙ (ℙ A))
+    thin-universal-property-func-⇒ : {X : Type ℓ} (f : X → ℙ A) (h : X → ℙ (ℙ A))
                               → h ⊑ (thin ∘ f)
                               → (∀ x t → t ∈ h x → t ⊆ f x) ×
                                 (∀ x t y0 → t ∈ h x → y0 ∈ f x → ∥ Σ A (λ y1 → (y1 ∈ t) × (y1 ∈ Q y0)) ∥₁)
-    universal-property-func-⇐ : {X : Type ℓ} (f : X → ℙ A) (h : X → ℙ (ℙ A))
+    thin-universal-property-func-⇐ : {X : Type ℓ} (f : X → ℙ A) (h : X → ℙ (ℙ A))
                               → (∀ x t → t ∈ h x → t ⊆ f x) ×
                                 (∀ x t y0 → t ∈ h x → y0 ∈ f x → ∥ Σ A (λ y1 → (y1 ∈ t) × (y1 ∈ Q y0)) ∥₁)
                               → h ⊑ (thin ∘ f)
@@ -45,7 +44,7 @@ record ThinQ {ℓ : Level} {A : Type ℓ} (Q : A → ℙ A) : Type (ℓ-suc (ℓ
       hyp : (const {X = Unit*} (return ys)) ⊑ (thin ∘ const xs)
       hyp _ = elem_subset_singleton (thin xs) ys ys∈thin
 
-      props = universal-property-func-⇒ {X = Unit*} (const xs) (const (return ys)) hyp
+      props = thin-universal-property-func-⇒ {X = Unit*} (const xs) (const (return ys)) hyp
 
       p1 : ys ⊆ xs
       p1 = fst props tt* ys (y∈[y] ys)
@@ -67,4 +66,95 @@ record ThinQ {ℓ : Level} {A : Type ℓ} (Q : A → ℙ A) : Type (ℓ-suc (ℓ
         rec squash₁ (λ ys≡t → subst (λ w → ∥ Σ A (λ y1 → (y1 ∈ w) × (y1 ∈ Q y0)) ∥₁) ys≡t (q y0 y0∈xs)) t∈ret
 
       ret-ys⊆thin-xs : return ys ⊆ thin xs
-      ret-ys⊆thin-xs = universal-property-func-⇐ {X = Unit*} (const xs) (const (return ys)) (cond1 , cond2) tt*
+      ret-ys⊆thin-xs = thin-universal-property-func-⇐ {X = Unit*} (const xs) (const (return ys)) (cond1 , cond2) tt*
+
+  -- `f x` is monotonic on (⪰) for all x, where `y ∈ Q x` reads as `y ⪰ x`.
+  -- This is exactly the monotonicity assumption of the Thinning Theorem
+  -- (paper Appendix A, the `{- monotonicity -}` step): if v ⪰ w, then any
+  -- result z of stepping w is matched by some result z' of stepping v with z' ⪰ z.
+  Monotonic : {X : Type ℓ} → (f : X → A → ℙ A) → Type ℓ
+  Monotonic {X} f = ∀ x v w → v ∈ Q w → ∀ z → z ∈ f x w
+                  → ∥ Σ A (λ z' → (z' ∈ f x v) × (z' ∈ Q z)) ∥₁
+
+  thin-cancel : {X : Type ℓ} (f : X → ℙ A) →
+    (x : X) (t : ℙ A) (y0 : A)
+    → t ∈ (thin ∘ f) x 
+    → y0 ∈ f x → ∥ Σ A (λ y1 → (y1 ∈ t) × (y1 ∈ Q y0)) ∥₁
+  thin-cancel {X} f = snd (thin-universal-property-func-⇒ {X} f (thin ∘ f) (⊑-refl (thin ∘ f)))
+  
+  thinning-thm : {X : Type ℓ}
+    → (f : X → A → ℙ A) → (e : ℙ A)
+    → R-trans Q
+    → Monotonic f
+    → foldrM (λ x → thin ∘ (λ s → f x =<< s)) (thin e) ⊑ thin ∘ foldrM f e
+  thinning-thm {X} f e Qt fm [] = λ t t∈ → t∈
+  thinning-thm {X} f e Qt fm (x ∷ xs) = reasoning⊆ (
+    ⊆begin
+      foldrM (λ x → thin ∘ (λ s → f x =<< s)) (thin e) (x ∷ xs)
+
+    -- definition of foldrM
+    ≡⟨ refl ⟩⊆
+      (thin ∘ (λ s → f x =<< s)) =<< foldrM (λ x → thin ∘ (λ s → f x =<< s)) (thin e) xs
+
+    -- induction hypothesis, under (thin ∘ (f x =<<_)) =<<_
+    ⊆⟨ incl (=<<-monotonic-right (thin ∘ (λ s → f x =<< s))
+               (foldrM (λ x → thin ∘ (λ s → f x =<< s)) (thin e) xs)
+               (thin (foldrM f e xs))
+               (thinning-thm {X} f e Qt fm xs)) ⟩
+      (thin ∘ (λ s → f x =<< s)) =<< thin (foldrM f e xs)
+
+    -- fusion: thin absorbs the inner (f x =<<_) ∘ thin
+    ⊆⟨ incl (lem x (foldrM f e xs)) ⟩
+      thin (f x =<< foldrM f e xs)
+
+    -- definition of foldrM
+    ≡⟨ refl ⟩⊆
+      (thin ∘ foldrM f e) (x ∷ xs)
+
+    ⊆∎)
+    where
+      -- Every t produced by thinning after one more step (over thinned inputs) 
+      -- is itself a valid thinning of the full one-step result `f x' =<< m`.
+      lem : ∀ x' (m : ℙ A)
+          → ((thin ∘ (λ s → f x' =<< s)) =<< thin m) ⊆ thin (f x' =<< m)
+      lem x' m t t∈ = rec (P.∈-isProp (thin (f x' =<< m)) t) helper t∈
+        where
+          helper : Σ (ℙ A) (λ u → (u ∈ thin m) × (t ∈ thin (f x' =<< u)))
+                 → t ∈ thin (f x' =<< m)
+          helper (u , u∈thin-m , t∈thin-f-u) =
+            thin-universal-property-set-⇐ (f x' =<< m) t (cond-a , cond-b)
+            where
+              u⊆m : u ⊆ m
+              u⊆m = fst (thin-universal-property-set-⇒ m u u∈thin-m)
+
+              -- every member of m is dominated by some member of u
+              u-dom : ∀ w → w ∈ m → ∥ Σ A (λ v → (v ∈ u) × (v ∈ Q w)) ∥₁
+              u-dom = snd (thin-universal-property-set-⇒ m u u∈thin-m)
+
+              -- every member of (f x' =<< u) is dominated by some member of t
+              t-dom : ∀ z → z ∈ (f x' =<< u) → ∥ Σ A (λ y → (y ∈ t) × (y ∈ Q z)) ∥₁
+              t-dom = snd (thin-universal-property-set-⇒ (f x' =<< u) t t∈thin-f-u)
+
+              -- (a) t ⊆ f x' =<< u ⊆ f x' =<< m
+              cond-a : t ⊆ (f x' =<< m)
+              cond-a = P.⊆-trans t (f x' =<< u) (f x' =<< m)
+                         (fst (thin-universal-property-set-⇒ (f x' =<< u) t t∈thin-f-u))
+                         (=<<-⊆-right u m (f x') u⊆m)
+
+              -- (b) every member of (f x' =<< m) is dominated by some member of t,
+              cond-b : ∀ z → z ∈ (f x' =<< m) → ∥ Σ A (λ y → (y ∈ t) × (y ∈ Q z)) ∥₁
+              cond-b z z∈fm = rec squash₁ cond-b-helper z∈fm
+                where
+                  cond-b-helper : Σ A (λ w → (w ∈ m) × (z ∈ f x' w))
+                                → ∥ Σ A (λ y → (y ∈ t) × (y ∈ Q z)) ∥₁
+                  cond-b-helper (w , w∈m , z∈fw) =
+                    rec squash₁
+                      (λ { (v , v∈u , v∈Qw) →
+                        rec squash₁
+                          (λ { (z' , z'∈fv , z'∈Qz) →
+                            rec squash₁
+                              (λ { (y , y∈t , y∈Qz') →
+                                ∣ y , y∈t , Qt z z' y z'∈Qz y∈Qz' ∣₁ })
+                              (t-dom z' ∣ v , v∈u , z'∈fv ∣₁) })
+                          (fm x' v w v∈Qw z z∈fw) })
+                      (u-dom w w∈m)
