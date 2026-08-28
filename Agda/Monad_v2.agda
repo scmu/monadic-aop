@@ -241,6 +241,18 @@ R-trans R = ∀ x y z → y ∈ R x → z ∈ R y → z ∈ R x
 <=<-assoc-right : {X : Type ℓ} → (R S T : X → ℙ X) → R <=< (S <=< T) ⊑ (R <=< S) <=< T
 <=<-assoc-right R S T x x' x'∈lhs = rec squash₁ (λ {(z , z∈S<=<Tx , x'∈Rz) → rec squash₁ (λ z₁ → ∣ z₁ .fst , z₁ .snd .fst , ∣ z , z₁ .snd .snd , x'∈Rz ∣₁ ∣₁) z∈S<=<Tx}) x'∈lhs
 
+<=<-right-id-pure : {X Y Z : Type ℓ} → (f : X → ℙ Y) → (g : Z → X)
+                  → f <=< (return ∘ g) ≡ f ∘ g
+<=<-right-id-pure f g = funExt (λ x → ret-left-id (g x) f)
+
+<=<-right-id : {X Y : Type ℓ} → (f : X → ℙ Y) 
+             → (f <=< return) ≡ f
+<=<-right-id f = funExt (λ x → ret-left-id x f)
+
+<=<-left-id : {X Y : Type ℓ} → (f : X → ℙ Y) 
+            → (return <=< f) ≡ f
+<=<-left-id f = funExt (λ x → ret-right-id (f x))
+
 -- <$> properties
 =<<-<$>-fusion : {X Y Z : Type ℓ} → (f : Y → ℙ Z) → (g : X → Y) → (xs : ℙ X) 
                → f =<< (g <$> xs) ≡ (f ∘ g) =<< xs 
