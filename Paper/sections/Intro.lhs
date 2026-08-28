@@ -1,7 +1,7 @@
 \section{Introduction}
 \label{sec:intro}
 
-Program calculation is the technique of constructing a program from a specification in a stepwise manner, where each step is justified by established properties.
+Program calculation is the technique of constructing programs from specifications in a stepwise manner, where each step is justified by established properties.
 A canonical example of functional program derivation is the \emph{maximum segment sum} problem: given a list of numbers, compute the largest possible sum of a consecutive segment.
 The problem can be specified by:
 \begin{spec}
@@ -29,7 +29,7 @@ the specification, being a function, has to pick a particular one, which the imp
 In the construction of a sorting algorithm, for example,
 having to decide, in the specification phase, what list to return when there are items having the same key would severely limit the algorithm one can derive (e.g., limiting one to construct stable sorting),
 if not making the specification impossible at all (it is hard to predict how, say, quicksort arranges items having the same key).
-One therefore needs a different framework, where a specification describes a collection of solution that is allowed by the final program, which no longer equals, but is instead contained by the specification.
+One therefore needs a different framework, where a specification describes a collection of solutions that is allowed by the final program, which no longer equals, but is instead contained by the specification.
 
 One of the possibilities is to use relations as specifications.
 Foundations of this approach were laid by \citet{BackhousedeBruin:91:Relational}, \citet{Aarts:92:Relational}, \citet{BackhouseHoogendijk:92:Elements}, etc,
@@ -37,7 +37,7 @@ before \citet{BirddeMoor:97:Algebra}, taking a more abstract, categorical approa
 presented general theories for constructing various forms of greedy, thinning, and dynamic programming algorithms.
 \citet{BirddeMoor:97:Algebra} presented a point-free calculus that is concise, elegant, and surprisingly expressive.%
 \footnote{Being ``point-free'' refers to a style where one tends not to mention arguments to a function/relation, but thinks in a higher level and construct programs by functional/relational composition, union, intersection, converses, etc. The opposite style where functions are often applied to named arguments is called ``pointwise''.}
-Concepts such as monotonicity and maximum/minimum are concisely expressed in short expressions, consisting of operators such as composition, union, intersection, and factor (a concept resembling division) of relations.
+Concepts such as monotonicity and maximum/minimum are compactly expressed in short expressions, consisting of operators such as composition, union, intersection, and factor (a concept resembling division) of relations.
 A short expression may encode rich interpretations, and algebraic properties of these operators are applied to prove properties of such expressions.
 Such conciseness and expressiveness also turned out to be a curse, however.
 For those who not sharing the background, the calculus has a sharp learning curve, which limited its popularity to a small circle of enthusiasts.
@@ -51,7 +51,8 @@ Non-determinism is resolved before functional application,
 therefore |(\x -> x - x) (0 `mplus` 1)| is always |0|,
 while |(0 `mplus` 1) - (0 `mplus` 1)| could be |-1|, |0|, and |1| ---
 $\beta$-reduction does not preserve the semantics of an expression!
-To be precise, $\beta$-reduction is applicable only to pure values.
+To be precise, $\beta$-reduction is applicable only to pure values,
+which means that before reducing |(\x -> e) y| one has to determine whether |y| is pure.
 Similarly, $\eta$-expansion also changes the non-deterministic behaviour of an expression.
 Around two decades later, \citet{BirdRabe:19:How} presented a theoretical background of pointwise ``multifunctions'', which is subsequently used by \citet{BirdGibbons:20:Algorithm}.
 While \citet{deMoorGibbons:00:Pointwise} interpreted their pointwise calculus by translating expressions to relations, \citet{BirdRabe:19:How} presented a set-theoretic semantics.
@@ -76,7 +77,7 @@ Given an input of type |List A|, the collection of all solution candidates is ge
 The function |filt :: (b -> Bool) -> b -> M b| keeps those solutions that satisfy predicate |p|, and |max :: M b -> M b| keeps only those having maximum value under some chosen ordering.
 In all cases we consider, the filtering phase can be fused into |foldR|, therefore the actual form of the problem is |max . foldR f' e'|.
 We then discuss conditions under which the specification can be refined to a fold-based greedy algorithm --- one where we greedily keep only the locally best solution in each step of the fold,
-or a \emph{thinning} algorithm, where in each step of the fold we keep a set of solution candidates that still might be useful.
+or a \emph{thinning} algorithm, where in each step of the fold we keep a set of solution candidates that might still be useful.
 
 All these were covered by \citet{BirddeMoor:97:Algebra}.
 Rather than solving new problems or discovering new algorithms, the purpose of this article is to propose new notations that make previous derivations more accessible, while still being accurate without being too cumbersome.

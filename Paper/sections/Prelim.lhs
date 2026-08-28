@@ -55,7 +55,7 @@ In addition, we let |mplus :: P a -> P a -> P a| denote non-deterministic choice
 Together they form a monoid (that is, |mplus| is associative with |mzero| as its identity element):
 \begin{align*}
   |(m <||> n) <||> k| &~=~ |m <||> (n <||> k)| \mbox{~~,}\\
-  |0 <||> m| ~=~&~ |m| ~=~ |m <||> 0| \mbox{~~.}
+  |mzero <||> m| ~=~&~ |m| ~=~ |m <||> mzero| \mbox{~~.}
 \end{align*}
 We demand that |(=<<)| distributes into |mplus| from both sides:
 \begin{align}
@@ -92,7 +92,7 @@ The expression |(\x -> x - x) (0 `mplus` 1)| of \citet{deMoorGibbons:00:Pointwis
 \end{spec}
 The presence of |(=<<)| makes it clear that one cannot perform $\beta$-reduction too early and must use distributivity to resolve the non-determinism.
 \citet{BirdRabe:19:How} uses additional judgements to determine when a value is pure,
-while pure and non-deterministic values are clearly distinguished by type and syntax in the monadic style.
+while in the monadic style pure and non-deterministic values are clearly distinguished by types and syntax.
 {\bf End of note.}
 
 \paraskip
@@ -132,8 +132,8 @@ When |m /= mzero|, we have |n << m = n|.
 |mzero| is the empty set, |mplus| is set union for two sets, |(`sse`)| is set inclusion, |return| forms a singleton set, and |f =<< m| is given by |Union {f x || x <- m }|,
 where |Union| is union for a set of sets.
 
-The set |any :: P a| contains all elements having type |a|.
-Computationally, it creates an arbitrary element of its type.
+The set |any :: P a| contains all values having type |a|.
+Computationally, it creates an arbitrary value of its type.
 The command |filt :: (a -> Bool) -> a -> P a| is defined by
 \begin{code}
 filt p x  | p x        = return x
@@ -191,7 +191,7 @@ f =<< m   = \y -> Sum{-"\!"-}[x `inn` a] (m x * f x y) {-"~~,"-}
 \end{spec}
 where |(<=>)| is propositional equality, and |Sum| denotes dependent pair.
 That is, |y| is a member of the set |return x| exactly when |x <=> y|,
-and |y| is a member of |m >>= f| if there exists a witness |x|, presented in the dependent pair, that is a member of the set |m|, and |y| is a member of the set |f x|.
+and |y| is a member of |f =<< m| if there exists a witness |x|, presented in the dependent pair, that is a member of the set |m|, and |y| is a member of the set |f x|.
 
 We would soon get stuck when we try to prove any of its properties.
 To prove the left identity law |return =<< m = m|, for example, amounts to proving that
@@ -278,7 +278,7 @@ The first few steps are:
     prefix' [1,2]
  =     {- definition of |prefix'| -}
     pre 1 =<< pre 2 =<< return []
- =     {- definition of |pre 2| -}
+ =     {- definition of |pre 2|, monad laws -}
     pre 1 =<< (return [] <|> return [2])
  =     {- definition of |pre 1| -}
     (\ys -> return [] <|> return (1 : ys)) =<< (return [] <|> return [2]) {-"~~."-}
@@ -324,11 +324,11 @@ because |preP x =<< mzero| immediately reduces to |mzero|.
 \paraskip
 \paragraph{Fixed-point properties and fusion laws}~
 The \emph{fixed-point properties} of |foldR|, which provide sufficient conditions for some |h :: List a -> P b| to contain, be contained by, or equal to |foldR f e|, are given by:
-\begin{align}
-|foldR f e `sse` h| & |{-"~"-}<=={-"~"-} e `sse` h [] {-"\,"-}&&{-"\,"-} (forall x, xs : f x =<< h xs `sse` h (x:xs))  {-"~~,"-}| \label{eq:foldRPrefixPt} \\
-|h `sse` foldR f e| & |{-"~"-}<=={-"~"-} h [] `sse` e {-"\,"-}&&{-"\,"-} (forall x, xs : h (x:xs) `sse` f x =<< h xs)  {-"~~."-}| \label{eq:foldRSuffixPt} \\
-|h = foldR f e| & |{-"~"-}<=>{-"~"-} h [] = e {-"\,"-}&&{-"\,"-} (forall x, xs : h (x:xs) = f x =<< h xs ) {-"~~."-}| \label{eq:foldRFixPt}
-\end{align}
+\begin{alignat}{5}
+& |foldR f e `sse` h| &&\quad | <== | && ~~\quad|e `sse` h []| && |{-"\,"-}&&{-"\,"-} (forall x, xs : f x =<< h xs| && |`sse` h (x:xs))  {-"~~,"-}| \label{eq:foldRPrefixPt} \\
+& |h `sse` foldR f e| &&\quad | <== | && ~~\quad|h [] `sse` e| && |{-"\,"-}&&{-"\,"-} (forall x, xs : h (x:xs)| && |`sse` f x =<< h xs)  {-"~~~,"-}| \label{eq:foldRSuffixPt} \\
+& |h = foldR f e| &&\quad | <==> | && ~~\quad|h [] = e| && |{-"\,"-}&&{-"\,"-} (forall x, xs : h (x:xs)| && |= f x =<< h xs ) {-"~~."-}| \label{eq:foldRFixPt}
+\end{alignat}
 The properties above can be proved by routine induction on the input list.
 
 For an example we try to show that |prefixP `sse` prefix|.
@@ -448,7 +448,7 @@ propScanrScanR f e =
 %endif
 
 The main property of |scanR| that we need for this article is a monadic variation of \emph{scan lemma}.
-Let the function |member| non-deterministically returns an element of the given list:
+Let the function |member| non-deterministically return an element of the given list:
 \begin{code}
 member :: List a -> P a
 member []        = mzero
@@ -546,7 +546,7 @@ propHeadScanPfInd f e x xs =
 \end{code}
 %endif
 %\end{proof}
-Proof of \eqref{eq:HeadScan} is a routine induction, which we leave to the reader as an exercise.
+Proof of \eqref{eq:HeadScan} can be a routine induction, which we leave to the reader as an exercise.
 
 \subsection{Maximum}
 
@@ -562,7 +562,7 @@ In this section we explore its definition and properties.
 In set-theoretical notation, |max_unlhd| can be defined by the following equivalence:
 for all |xs| and |ys|,
 \begin{equation}
-|ys `sse` max_unlhd xs {-"~"-}<==>{-"~"-} ys `sse` xs && (forall y `inn` ys : (forall x `inn` xs : y `unrhd` x)) {-"~~."-}|
+|ys `sse` max_unlhd xs {-"\quad"-}<==>{-"\quad"-} ys `sse` xs && (forall y `inn` ys : (forall x `inn` xs : y `unrhd` x)) {-"~~."-}|
 \label{eq:max-def-set}
 \end{equation}
 We omit the subscript |unlhd| when it is clear from the context or not relevant.
@@ -570,13 +570,23 @@ The |(==>)| direction of \eqref{eq:max-def-set}, letting |ys = max xs|, says tha
 
 In calculation, we often want to refine expressions of the form |max . f| where |f| generates a set. Therefore the following \emph{universal property} of |max| is more useful: for all |h| and |f| of type |a -> P b|,
 \begin{equation}
-|h `sse` max_unlhd . f {-"~"-}<==>{-"~"-} h `sse` f && (forall x : (forall y1 `inn` h x : (forall y0 `inn` f x : y1 `unrhd` y0))) {-"~~."-}|
+|h `sse` max_unlhd . f {-"\quad"-}<==>{-"\quad"-} h `sse` f && (forall x : (forall y1 `inn` h x : (forall y0 `inn` f x : y1 `unrhd` y0))) {-"~~."-}|
 \label{eq:max-univ-set}
 \end{equation}
 Properties \eqref{eq:max-def-set} and \eqref{eq:max-univ-set} are equivalent.
 To prove \eqref{eq:max-def-set} from \eqref{eq:max-univ-set}, for instance, one let |h = const ys| and |f = const xs|.
 
 The aim of our work, however, is to capture the ideas above in a monadic notation, such that programs can be manipulated and reasoned about in the monadic language.
+From now on we abuse the notation a bit,
+using |y `unrhd` z | to denote |filt (\(y,z) -> y `unrhd` z) (y,z)|,
+which is consistent with the notation of list comprehensions in Haskell.
+Furthermore, since the pattern
+\begin{spec}
+do  (y,z) <- any
+    y `unrhd` z
+\end{spec}
+appears very often, we abbreviate that to |do y `unrhd` z <- any|,
+which means to generate a pair of values |(y,z)| such that |y `unrhd` z|.
 It turns out that \eqref{eq:max-univ-set} can be rewritten monadically as below:
 %\begin{spec}
 %X `sse` min_R . f {-"\,"-}<=> {-"\,"-}  X `sse` f &&
@@ -588,7 +598,7 @@ It turns out that \eqref{eq:max-univ-set} can be rewritten monadically as below:
 %                                                     filt R (b0, b1) {-"\,"-}) {-"~~."-}
 %\end{spec}
 \begin{equation}
-|h `sse` max_unlhd . f|\mbox{~~}|<==>|\mbox{~~} |h `sse` f &&|~
+|h `sse` max_unlhd . f|\mbox{\quad}|<==>|\mbox{\quad} |h `sse` f &&|~
 \setlength{\jot}{-1pt}
 \left(
  \begin{aligned}
@@ -621,15 +631,6 @@ maxUnivMonadic h f unrhd = (lhs, rhs)
                      filt unrhd (y1, y0))
 \end{code}
 %endif
-In \eqref{eq:max-univ-monadic} and from now on we abuse the notation a bit,
-using |y `unrhd` z | to denote |filt (\(y,z) -> y `unrhd` z) (y,z)|,
-which is consistent with the notation of list comprehensions in Haskell.
-Furthermore, since the pattern
-\begin{spec}
-do  (y,z) <- any
-    y `unrhd` z
-\end{spec}
-appears very often, we abbreviate that to |do y `unrhd` z <- any|.
 The large pair of parentheses in \eqref{eq:max-univ-monadic} relates two monadic values. On the left-hand side we generate a pair of values |y1| and |y0|, which are respectively results of |h| and |f| for the same, arbitrarily generated input |x|. The inclusion says that |(y1, y0)| must be contained by the monad on the right-hand side, which consists of all pairs |(y1, y0)| as long as |y1 `unrhd` y0|.
 
 Letting |h := max . f| in \eqref{eq:max-univ-monadic}, the left-hand side trivally holds, and on the right-hand side we get
@@ -653,7 +654,7 @@ Letting |h := max . f| in \eqref{eq:max-univ-monadic}, the left-hand side trival
 \noindent{\bf Note}: by defining the ``split'' operator |split f g x = do { y <- f x; z <- g x; return (y,z) }|,
 \eqref{eq:max-univ-monadic} can be written more concisely as below:
 \begin{equation*}
-|h `sse` max_unlhd . f|\mbox{~~}|<==>|\mbox{~~} |h `sse` f &&|~
+|h `sse` max_unlhd . f|\mbox{\quad}|<==>|\mbox{\quad} |h `sse` f| ~~~\wedge~~~
 |split h f =<< any {-"\,"-}`sse`{-"\,"-} filt unrhd =<< any| \mbox{~~.}
 \end{equation*}
 We may then manipulate expressions using properties of the |split| operator.
@@ -691,15 +692,15 @@ For this article, we only need monotonicity to hold in more specific cases.
 Observing the counterexample above, one might conjecture that |max s `sse` max t| if |s `sse` t| and |s| somehow keeps the maximum elements of |t|. Indeed, there are two such laws.
 Provided that |unrhd| is transitive, we have:
 \begin{spec}
-max_unlhd xs `sse` max_unlhd ys  {-"~"-}<=={-"~"-} xs `sse` ys && (forall x `inn` xs, y `inn` ys : x `unrhd` y) {-"~~,"-}
-max_unlhd xs `sse` max_unlhd ys  {-"~"-}<=={-"~"-} xs `sse` ys && (forall y `inn` ys : (exists x `inn` xs : x `unrhd` y)) {-"~~."-}
+max_unlhd xs `sse` max_unlhd ys  {-"\quad"-}<=={-"\quad"-} xs `sse` ys && (forall x `inn` xs, y `inn` ys : x `unrhd` y) {-"~~,"-}
+max_unlhd xs `sse` max_unlhd ys  {-"\quad"-}<=={-"\quad"-} xs `sse` ys && (forall y `inn` ys : (exists x `inn` xs : x `unrhd` y)) {-"~~."-}
 \end{spec}
 The first one says that |max xs `sse` max ys| if all elements in |xs| are maximums.
 The second law is a bit relaxed, allowing |xs| to keep some non-maximum element, requiring only that every |y `inn` ys| is dominated by some element in |xs|.
 Their function-compositional counterparts are written as:
 \begin{spec}
-max_unlhd . f `sse` max_unlhd . g  {-"~"-}<=={-"~"-} f `sse` g && (forall z, x `inn` f z, y `inn` g z : x `unrhd` y) {-"~~,"-}
-max_unlhd . f `sse` max_unlhd . g  {-"~"-}<=={-"~"-} f `sse` g && (forall z, y `inn` g z : (exists x `inn` f z : x `unrhd` y)) {-"~~."-}
+max_unlhd . f `sse` max_unlhd . g  {-"\quad"-}<=={-"\quad"-} f `sse` g && (forall z, x `inn` f z, y `inn` g z : x `unrhd` y) {-"~~,"-}
+max_unlhd . f `sse` max_unlhd . g  {-"\quad"-}<=={-"\quad"-} f `sse` g && (forall z, y `inn` g z : (exists x `inn` f z : x `unrhd` y)) {-"~~."-}
 \end{spec}
 In this article we find the second law particularly useful.
 

@@ -25,15 +25,15 @@
 \title{A Monadic Notation for Calculating Optimisation Algorithms}
 
 \begin{abstract}
-In deriving algorithms for optimisation problems where optimal solutions are not unique, it is preferable to let the specification be non-deterministic and leave it to the derived algorithm to decide which one to return.
+In deriving algorithms for optimisation problems where optimal solutions are not unique, it is preferable to let the specification be non-deterministic and let the derived algorithm decide which one to return.
 To formally talk about non-determinism, a point-free calculus based on relations was developed in the 90's,
 which has been difficult to promote due to its complexity,
 while subsequent pointwise approaches tend to be ad-hoc and imprecise.
-We propose a notation for non-deterministic program derivation based on non-determinism monad,
+We propose a notation for non-deterministic program derivation based on monads,
 show that it is expressive enough to model concepts including maximum, monotonicity, Greedy/Thinning Theorems,
 and demonstrate how to carry out derivation in this notation.
-The notation encourages working with symbols,
-and one is allowed to use familiar proof techniques such as case analysis and structural induction, as well as fold fusion and universal properties.
+Working in it, one is encouraged to think in terms of symbols,
+and allowed to use familiar proof techniques such as case analysis and structural induction, as well as fold fusion and universal properties.
 Key properties of our calculus are verified in Agda.
 \end{abstract}
 
