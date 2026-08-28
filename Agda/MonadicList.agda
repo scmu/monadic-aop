@@ -209,14 +209,113 @@ foldrM-pure f e = funExt (λ x → help x)
                 ≡⟨ refl ⟩
             foldrM (λ x → return ∘ f x) (return e) (x ∷ xs)
                 ∎
-
-
-
-
-
 -- scan properties
 
 --  scanrM can be defined in terms of a foldrM:
+
+scanrM-pure-set : 
+  (f : A → B → B)
+  → (e : B)
+  → ∀ xs 
+  → (return ∘ (scanr f e)) xs ≡ scanrM (λ x → return ∘ f x) (return e) xs 
+scanrM-pure-set f e [] = 
+    return [ e ]
+    ≡⟨ sym (ret-left-id e (λ x → return [ x ])) ⟩
+    (return e >>= (λ x → return [ x ]))
+    ≡⟨ refl ⟩
+    scanrM (λ x → return ∘ f x) (return e) []
+    ∎
+scanrM-pure-set f e (x ∷ xs) = 
+    let 
+        qs = scanr f e xs
+        mf = (λ x → return ∘ f x)
+        me = return e
+    in 
+    (return ∘ scanr f e) (x ∷ xs)
+
+    ≡⟨ refl ⟩
+    return (f x (head qs) ∷ qs)
+
+    ≡⟨ sym (ret-left-id (f x (head qs)) (λ z → return (z ∷ qs))) ⟩
+    ((λ z → return (z ∷ qs)) =<< return (f x (head qs)))
+
+    ≡⟨ refl ⟩
+    ((λ z → return (z ∷ qs)) =<< mf x (head qs))
+
+    ≡⟨ sym (ret-left-id qs (λ ys → (λ z → return (z ∷ ys)) =<< mf x (head ys))) ⟩
+    ((λ ys → (λ z → return (z ∷ ys)) =<< mf x (head ys)) =<< return qs)
+
+    -- induction
+    ≡⟨ cong (λ k → (λ ys → (λ z → return (z ∷ ys)) =<< mf x (head ys)) =<< k) (scanrM-pure-set f e xs) ⟩
+    (λ ys → (λ z → return (z ∷ ys)) =<< mf x (head ys)) =<< scanrM mf me xs
+
+    ≡⟨ refl ⟩
+    scanrM mf me (x ∷ xs)
+    ∎ 
+
+scanrM-pure-func :
+  (f : A → B → B)
+  → (e : B)
+  → (return ∘ (scanr f e)) ≡ scanrM (λ x → return ∘ f x) (return e)
+scanrM-pure-func f e = funExt (λ x → scanrM-pure-set f e x)
+
+scanrM-monotonic :
+    (f₀ : A → B → ℙ B)
+    → (f₁ : A → B → ℙ B)
+    → (e₀ : ℙ B)
+    → (e₁ : ℙ B)
+    → (f₀⊑f₁ : ∀ x → f₀ x ⊑ f₁ x)
+    → e₀ ⊆ e₁
+    → scanrM f₀ e₀ ⊑ scanrM f₁ e₁
+scanrM-monotonic f₀ f₁ e₀ e₁ f₀⊑f₁ e₀⊆e₁ [] = <$>-monotonic wrap e₀ e₁ e₀⊆e₁
+scanrM-monotonic f₀ f₁ e₀ e₁ f₀⊑f₁ e₀⊆e₁ (x ∷ xs) = 
+    let 
+        ih = scanrM-monotonic f₀ f₁ e₀ e₁ f₀⊑f₁ e₀⊆e₁ xs
+    in
+    reasoning⊆ (
+        ⊆begin
+        scanrM f₀ e₀ (x ∷ xs)
+        ≡⟨ refl ⟩⊆
+        (scanrM f₀ e₀ xs >>= λ ys → f₀ x (head ys) >>= λ z → return (z ∷ ys))
+        ⊆⟨ incl (=<<-monotonic-right (λ ys → f₀ x (head ys) >>= λ z → return (z ∷ ys)) (scanrM f₀ e₀ xs) (scanrM f₁ e₁ xs) ih) ⟩
+        (scanrM f₁ e₁ xs >>= λ ys → f₀ x (head ys) >>= λ z → return (z ∷ ys))
+        ⊆⟨ incl (=<<-monotonic-left (scanrM f₁ e₁ xs) (λ ys → f₀ x (head ys) >>= λ z → return (z ∷ ys)) (λ ys → f₁ x (head ys) >>= λ z → return (z ∷ ys)) 
+             (λ ys → >>=-monotonic (λ z → return (z ∷ ys)) (f₀ x (head ys)) (f₁ x (head ys)) (f₀⊑f₁ x (head ys)))) ⟩
+        (scanrM f₁ e₁ xs >>= λ ys → f₁ x (head ys) >>= λ z → return (z ∷ ys))
+        ≡⟨ refl ⟩⊆
+        scanrM f₁ e₁ (x ∷ xs)
+        ⊆∎
+    )
+
+pure-scanr-⊑-scanrM :
+  (f : A → B → B)
+  → (g : A → B → ℙ B)
+  → (e : B)
+  → (p : ∀ x → (return ∘ (f x)) ⊑ g x)
+  → (return ∘ (scanr f e)) ⊑ scanrM g (return e)
+pure-scanr-⊑-scanrM f g e p = reasoning⊑ (
+    ⊑begin 
+    return ∘ (scanr f e)
+    ≡⟨ scanrM-pure-func f e ⟩⊑  
+    scanrM (λ x → return ∘ f x) (return e)
+    ⊑⟨ incl⊑ ((scanrM-monotonic (λ x → return ∘ f x) g (return e) (return e) p (P.⊆-refl (return e)))) ⟩  
+    scanrM g (return e) 
+    ⊑∎)
+
+scanrM-⊑-pure-scanr :
+  (f : A → B → B)
+  → (g : A → B → ℙ B)
+  → (e : B)
+  → (p : ∀ x →  g x ⊑ return ∘ f x)
+  → scanrM g (return e) ⊑ (return ∘ (scanr f e))
+scanrM-⊑-pure-scanr f g e p = reasoning⊑ (
+    ⊑begin 
+    scanrM g (return e)
+    ⊑⟨ incl⊑ (scanrM-monotonic g (λ x → return ∘ f x) (return e) (return e) p (P.⊆-refl (return e))) ⟩
+    scanrM (λ x → return ∘ f x) (return e)
+    ≡⟨ sym (scanrM-pure-func f e) ⟩⊑  
+    return ∘ (scanr f e)
+    ⊑∎)
 
 scanrM-head-is-foldrM : ∀ {ℓ} {A B : Type ℓ} (f : A → B → ℙ B) (e : ℙ B) (xs : List A) → head <$> scanrM f e xs ≡ foldrM f e xs 
 scanrM-head-is-foldrM f e [] = 
