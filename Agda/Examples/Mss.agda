@@ -7,9 +7,9 @@ open import Cubical.Foundations.Powerset as P using (ℙ; _∈_; _⊆_)
 open import Cubical.Data.Sigma.Base using (_×_) 
 open import Cubical.Data.Sum.Base using (_⊎_) 
 open import Cubical.Data.Int
-open import Cubical.Data.List hiding (rec)
-open import Cubical.Data.Int.Order as Order using (_≤_; ≤Dec; isTrans≤; isRefl≤; ≤-o+-cancel)
-open import Cubical.Relation.Nullary using (yes; no; Dec)
+open import Cubical.Data.List hiding (rec; foldr)
+open import Cubical.Data.Int.Order as Order using (_≤_; ≤Dec; isTrans≤; isRefl≤; ≤-o+-cancel; ≤-o+; lt; eq; gt; <-weaken)
+open import Cubical.Relation.Nullary using (yes; no; Dec; ¬_)
 open import Cubical.Foundations.HLevels
 open import Cubical.Data.Empty using (isProp⊥; isProp⊥* ; ⊥* ; elim*; ⊥)
 
@@ -38,7 +38,7 @@ Max≥ₛ = record
   { minR = λ xs maxxs → 
       ((maxxs ∈ xs) × (∀ x → x ∈ xs → fst (_≥ₛ_ x maxxs))) , 
       isProp× (snd (xs maxxs)) (isPropΠ λ x → isPropΠ λ _ → squash₁)
-      
+
   ; universal-property-⇒ = λ P f P⊑maxR∘f → 
       ( (λ x y y∈Px → fst (P⊑maxR∘f x y y∈Px))
       , (λ y y' y'∈P<=<f°y → 
@@ -46,7 +46,7 @@ Max≥ₛ = record
               (λ { (x , y∈fx , y'∈Px) → snd (P⊑maxR∘f x y' y'∈Px) y y∈fx }) 
               y'∈P<=<f°y)
       )
-      
+
   ; universal-property-⇐ = λ P f P⊑-h x y y∈Px → 
       let 
         (P⊑f , P<=<f°⊑R) = P⊑-h
@@ -89,23 +89,23 @@ minR-return-[] = P.⊆-extensionality (minR (return [])) (return []) (minR-id (r
 mss-thm : minR ∘ member ∘ scanr zplus [] ⊑ mss
 mss-thm  = reasoning⊑ (
     ⊑begin
-        
+
     (minR ∘ member ∘ scanr zplus []) 
 
-    ≡⟨ {!   !} ⟩⊑
+    -- moand laws
+    ≡⟨ cong (λ k → minR ∘ k) (sym (<=<-right-id-pure (member) (scanr zplus []))) ⟩⊑
     minR ∘ (member <=< (return ∘ scanr zplus []))
-    
-    ≡⟨ {!   !} ⟩⊑
+
+    ⊑⟨ incl⊑ (minR-conditional-monotonicity-func (m <=< u) (m <=< h) m<=<u⊑m<=<h lem-3 R-trans-≥ₛ) ⟩
     minR ∘ (member <=< scanrM maxPre (return []))
-    
-    
+
     -- Scan Lemma -- member <=< scanrM maxPre e ⊑ foldrM maxPre e <=< suffix
     ⊑⟨ incl⊑ (minR-conditional-monotonicity-func (m <=< h) (f <=< s) (scan-lemma maxPre (return [])) lem-2 R-trans-≥ₛ) ⟩
     minR ∘ (foldrM maxPre (return []) <=< suffix)
-    
+
     -- Greedy Theorem & Monotonicity
     ⊑⟨ incl⊑ (minR-conditional-monotonicity-func (f <=< s) (g <=< s) f<=<s⊑g<=<s lem-1 R-trans-≥ₛ) ⟩
-    
+
     -- minR-<=<-Promotion
     minR ∘ ((minR ∘ prefix) <=< suffix)
     ≡⟨ sym (minR-<=<-Promotion prefix suffix hasmin-prefix R-trans-≥ₛ) ⟩⊑
@@ -118,6 +118,7 @@ mss-thm  = reasoning⊑ (
         s = suffix
         m = member
         h = scanrM maxPre (return [])
+        u = (return ∘ scanr zplus [])
 
         -- minR-<=<-Promotion
         R-trans-≥ₛ : R-trans _≥ₛ_
@@ -142,12 +143,9 @@ mss-thm  = reasoning⊑ (
             in rec squash₁ (λ { (ys , ys∈fold) → 
                 rec squash₁ (λ { (y , y∈max) → ∣ y , ∣ ys , ys∈fold , y∈max ∣₁ ∣₁ }) (hasmin-pre x ys)
             }) prev-hasmin
-        
-        hasmin-f : ∀ z → ∥ Σ (List ℤ) (λ y → y ∈ prefix z) ∥₁ → ∥ Σ (List ℤ) (λ y → y ∈ foldrM maxPre (return []) z) ∥₁
-        hasmin-f z _ = hasmin-foldrMx z
 
         -- Greedy Theorem
-        
+
         hoare-mono : (x : ℤ) → Hoare-Monotonic _≥ₛ_ (pre x)
         hoare-mono x y1 y0 z0 y1≥y0 z0∈pre = rec squash₁ helper z0∈pre
           where
@@ -162,11 +160,11 @@ mss-thm  = reasoning⊑ (
             -- return [] ≡ minR (return []) 
             ≡⟨ cong (λ k → foldrM (λ x → minR ∘ pre x) k) (sym minR-return-[]) ⟩⊑
             foldrM (λ x → minR ∘ pre x) (minR (return []))
-            
+
             -- Greedy Theorem            
             ⊑⟨ incl⊑ (greedy_thm _≥ₛ_ Max≥ₛ pre hoare-mono R-trans-≥ₛ (return [])) ⟩
             minR ∘ foldrM pre (return [])
-            
+
             -- prefix ≡ foldrM pre (return []) 
             ≡⟨ cong (λ k → minR ∘ k) (sym prefix-is-foldrM) ⟩⊑
             (minR ∘ prefix)
@@ -203,7 +201,9 @@ mss-thm  = reasoning⊑ (
             }) y∈return[]
         lem-2 (x ∷ xs) y y∈fs_xxs = 
             let 
+                -- path : (f =<< (return (x ∷ xs) ∪ s xs)) ≡ f (x ∷ xs) ∪ (f <=< s) xs 
                 path = (=<<-∪-dist-left f (return (x ∷ xs)) (s xs)) ∙ (cong (λ u → u ∪ (f <=< s) xs) (ret-left-id (x ∷ xs) f))
+                -- (f <=< s) (x ∷ xs) ≡ f (x ∷ xs) ∪ (f <=< s) x
                 y∈f_xxs_∪_fs_xs = subst (λ S → y ∈ S) path y∈fs_xxs
             in rec squash₁ helper y∈f_xxs_∪_fs_xs
           where
@@ -242,3 +242,165 @@ mss-thm  = reasoning⊑ (
                         }) (hasmin-pre x (head ls))
                     }) z∈mh_xs
                 }) (lem-2 xs y y∈fs_xs)
+
+        zplus-is-maxPre : ∀ x ys → zplus x ys ∈ maxPre x ys
+        zplus-is-maxPre x ys = in-pre , is-max
+          where
+            in-pre : zplus x ys ∈ pre x ys
+            in-pre with ≤Dec (x + sumℤ ys) 0
+            ... | yes p = ∣ _⊎_.inl ∣ refl ∣₁ ∣₁
+            ... | no p = ∣ _⊎_.inr ∣ refl ∣₁ ∣₁
+
+            is-max : ∀ z → z ∈ pre x ys → fst (_≥ₛ_ z (zplus x ys))
+            is-max z z∈pre with ≤Dec (x + sumℤ ys) 0
+            ... | yes p = rec squash₁ (λ { (_⊎_.inl z≡[]) → rec squash₁ (λ []≡z → ∣ 0 , subst (λ k → sumℤ k ≡ pos 0) []≡z refl ∣₁) z≡[] ; (_⊎_.inr z≡xys) → rec squash₁ (λ x∷ys≡z → ∣ fst p , subst (λ k → (sumℤ k +pos fst p) ≡ pos 0) x∷ys≡z (snd p) ∣₁) z≡xys }) z∈pre
+            ... | no p = rec squash₁ helper' z∈pre
+              where
+                p' : 0 ≤ (x + sumℤ ys)
+                p' with (x + sumℤ ys) Order.≟ pos 0
+                ... | Order.lt a<0 = Cubical.Data.Empty.elim (p (Order.<-weaken a<0))
+                ... | Order.eq a≡0 = Cubical.Data.Empty.elim (p (subst (λ v → v ≤ pos 0) (sym a≡0) Order.isRefl≤))
+                ... | Order.gt a>0 = Order.<-weaken a>0
+
+                helper' : ∥ [] ≡ z ∥₁ ⊎ ∥ x ∷ ys ≡ z ∥₁ → ∥ sumℤ z ≤ x + sumℤ ys ∥₁
+                helper' (_⊎_.inl []≡z) = rec squash₁ (λ []≡z → ∣ subst (λ k → sumℤ k ≤ x + sumℤ ys) []≡z p' ∣₁) []≡z
+                helper' (_⊎_.inr x∷ys≡z) = rec squash₁ (λ x∷ys≡z → ∣ subst (λ k → sumℤ k ≤ x + sumℤ ys) x∷ys≡z Order.isRefl≤ ∣₁) x∷ys≡z
+
+        zplus-⊑-maxPre : ∀ x → (return ∘ zplus x) ⊑ maxPre x
+        zplus-⊑-maxPre x ys y y∈ret = rec (P.∈-isProp (maxPre x ys) y) (λ y≡zplus → subst (λ w → w ∈ maxPre x ys) y≡zplus (zplus-is-maxPre x ys)) y∈ret
+
+        m<=<u⊑m<=<h : (m <=< u) ⊑ (m <=< h)
+        m<=<u⊑m<=<h = <=<-monotonic-right m u h (pure-scanr-⊑-scanrM zplus maxPre [] zplus-⊑-maxPre)
+
+        
+        ¬≤0→0≤ : (v : ℤ) → ¬ (v ≤ 0) → 0 ≤ v
+        ¬≤0→0≤ v p with v Order.≟ pos 0
+        ... | Order.lt v<0 = Cubical.Data.Empty.elim (p (Order.<-weaken v<0))
+        ... | Order.eq v≡0 = Cubical.Data.Empty.elim (p (subst (λ w → w ≤ pos 0) (sym v≡0) Order.isRefl≤))
+        ... | Order.gt v>0 = Order.<-weaken v>0
+
+        -- sumℤ (zplus x ys) is always max 0 (x + sumℤ ys)
+        zplus-sum : ∀ x ys → sumℤ (zplus x ys) ≡ max 0 (x + sumℤ ys)
+        zplus-sum x ys with ≤Dec (x + sumℤ ys) 0
+        ... | yes p = sym (maxComm 0 (x + sumℤ ys) ∙ Order.≤→max p)
+        ... | no ¬p = sym (Order.≤→max (¬≤0→0≤ (x + sumℤ ys) ¬p))
+
+        zplus-mono : ∀ (x : ℤ) (ys zs : List ℤ)
+            → sumℤ ys ≤ sumℤ zs
+            → sumℤ (zplus x ys) ≤ sumℤ (zplus x zs)
+        zplus-mono x ys zs ys≤zs =
+            subst2 _≤_ (sym (zplus-sum x ys)) (sym (zplus-sum x zs)) mono
+          where
+            mono : max 0 (x + sumℤ ys) ≤ max 0 (x + sumℤ zs)
+            mono = Order.≤MonotoneMax {m = 0} {n = 0} Order.isRefl≤ (≤-o+ {o = x} ys≤zs)
+
+        scanrM-head-≤-pure : ∀ (xs : List ℤ) (ls_xs : List (List ℤ))
+            → ls_xs ∈ scanrM maxPre (return []) xs
+            → sumℤ (head ls_xs) ≤ sumℤ (head (scanr zplus [] xs))
+        scanrM-head-≤-pure [] ls_xs ls_xs∈h[] =
+            rec Order.isProp≤ (λ { (e , e∈[] , wrape≡ls-trunc) →
+                rec Order.isProp≤ (λ wrape≡ls →
+                    rec Order.isProp≤ (λ []≡e →
+                        let
+                            wrap[]≡ls : wrap [] ≡ ls_xs
+                            wrap[]≡ls = cong wrap []≡e ∙ wrape≡ls
+                        in subst (λ w → sumℤ (head w) ≤ sumℤ (head (scanr zplus [] []))) wrap[]≡ls Order.isRefl≤
+                    ) e∈[]
+                ) wrape≡ls-trunc
+            }) ls_xs∈h[]
+        scanrM-head-≤-pure (x ∷ xs) ls_xs ls_xs∈h_xxs =
+            rec Order.isProp≤ (λ { (ys , ys∈hxs , c) →
+            rec Order.isProp≤ (λ { (z , z∈maxPre , z∷ys≡ls_xs-trunc) →
+            rec Order.isProp≤ (λ z∷ys≡ls_xs →
+                let
+                    qs = scanr zplus [] xs
+
+                    z∈pre : z ∈ pre x (head ys)
+                    z∈pre = minR-id (pre x (head ys)) z z∈maxPre
+
+                    z≤zplus : sumℤ z ≤ sumℤ (zplus x (head ys))
+                    z≤zplus = rec Order.isProp≤ id ((zplus-is-maxPre x (head ys)) .snd z z∈pre)
+
+                    ih : sumℤ (head ys) ≤ sumℤ (head qs)
+                    ih = scanrM-head-≤-pure xs ys ys∈hxs
+
+                    mono : sumℤ (zplus x (head ys)) ≤ sumℤ (zplus x (head qs))
+                    mono = zplus-mono x (head ys) (head qs) ih
+
+                    head-ls_xs≡z : head ls_xs ≡ z
+                    head-ls_xs≡z = cong head (sym z∷ys≡ls_xs)
+                in subst (λ w → sumℤ w ≤ sumℤ (zplus x (head qs))) (sym head-ls_xs≡z) (isTrans≤ z≤zplus mono)
+            ) z∷ys≡ls_xs-trunc
+            }) c
+            }) ls_xs∈h_xxs
+        
+        scanrM-≥-pure : ∀ xs ls
+            → ls ∈ scanrM maxPre (return []) xs
+            → ∀ y → y ∈ member ls
+            → ∥ Σ (List ℤ) (λ z → (z ∈ member (scanr zplus [] xs)) × (sumℤ y ≤ sumℤ z))  ∥₁
+        scanrM-≥-pure [] ls ls∈h[] y y∈mem = rec squash₁ (λ {(e , e∈[] , ls∈[[]]) → rec squash₁ (λ [e]≡ls → rec squash₁ (λ []≡e → 
+            let
+                ls≡[[]] : ls ≡ [ [] ] 
+                ls≡[[]] = subst (λ w → ls ≡ wrap w) (sym []≡e) (sym [e]≡ls)
+
+                y∈ret[]∪∅ : y ∈ return [] ∪ ∅
+                y∈ret[]∪∅ = subst (λ w → y ∈ member w) ls≡[[]] y∈mem 
+                
+                y∈ret[] : y ∈ return []
+                y∈ret[] = subst (λ w → y ∈ w) (return-∪-∅ []) y∈ret[]∪∅
+            in 
+                rec squash₁ (λ []≡y → ∣ [] , (∣ _⊎_.inl (y∈[y] []) ∣₁ , (0 , subst (λ w → sumℤ w ≡ pos 0) []≡y refl)) ∣₁) y∈ret[])
+            e∈[]) ls∈[[]]}) ls∈h[]
+        scanrM-≥-pure (x ∷ xs) ls ls∈h_xxs y y∈mem = 
+            rec squash₁ (λ { (ls_xs , ls_xs∈hxs , c) → 
+            rec squash₁ (λ { (z' , z'∈maxPre , ls∈z'∷ls_xs) → 
+            rec squash₁ (λ z'∷ls_xs≡ls → 
+                let
+                    -- qs = scanr zplus [] xs                    
+                    y∈mem' : y ∈ member (z' ∷ ls_xs)
+                    y∈mem' = subst (λ w → y ∈ member w) (sym z'∷ls_xs≡ls) y∈mem                    
+                in rec squash₁ (λ {
+                    -- Case 1: y = z'
+                    (_⊎_.inl y≡z') →
+                        rec squash₁ (λ y≡z'↓ →
+                            let
+                                qs = scanr zplus [] xs
+
+                                z'∈pre : z' ∈ pre x (head ls_xs)
+                                z'∈pre = minR-id (pre x (head ls_xs)) z' z'∈maxPre
+
+                                z'≤zplus : sumℤ z' ≤ sumℤ (zplus x (head ls_xs))
+                                z'≤zplus = rec Order.isProp≤ id ((zplus-is-maxPre x (head ls_xs)) .snd z' z'∈pre)
+
+                                ih : sumℤ (head ls_xs) ≤ sumℤ (head qs)
+                                ih = scanrM-head-≤-pure xs ls_xs ls_xs∈hxs
+
+                                mono : sumℤ (zplus x (head ls_xs)) ≤ sumℤ (zplus x (head qs))
+                                mono = zplus-mono x (head ls_xs) (head qs) ih
+
+                                y≤zplus : sumℤ y ≤ sumℤ (zplus x (head qs))
+                                y≤zplus = subst (λ w → sumℤ w ≤ sumℤ (zplus x (head qs))) y≡z'↓ (isTrans≤ z'≤zplus mono)
+
+                                z∈scanr-mem : (zplus x (head qs)) ∈ member (scanr zplus [] (x ∷ xs))
+                                z∈scanr-mem = ∣ _⊎_.inl (y∈[y] (zplus x (head qs))) ∣₁
+                            in ∣ zplus x (head qs) , z∈scanr-mem , y≤zplus ∣₁
+                        ) y≡z'
+                    ;
+                    -- Case 2: y ∈ member ls_xs, IH
+                    (_⊎_.inr y∈ls_xs) → 
+                        rec squash₁ (λ { (z , z∈qs , y≤z) → 
+                            ∣ z , ∣ _⊎_.inr z∈qs ∣₁ , y≤z ∣₁
+                        }) (scanrM-≥-pure xs ls_xs ls_xs∈hxs y y∈ls_xs)
+                }) y∈mem'
+            ) ls∈z'∷ls_xs
+            }) c
+            }) ls∈h_xxs
+        
+        lem-3 : (m <=< h) ⊑ ((_≥ₛ_ °) <=< (m <=< u))
+        lem-3 k y y∈mh_k = 
+            rec squash₁ (λ { (ls , ls∈hk , y∈mem_ls) → 
+                rec squash₁ (λ {(z , z∈mem_u , y≤z) → 
+                    ∣ z , (∣ scanr zplus [] k , ∣ refl ∣₁ , z∈mem_u ∣₁ , ∣ y≤z ∣₁) ∣₁}) 
+                    (scanrM-≥-pure k ls ls∈hk y y∈mem_ls)
+            }) y∈mh_k
+
