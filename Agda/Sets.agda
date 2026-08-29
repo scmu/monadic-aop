@@ -1,4 +1,4 @@
-{-# OPTIONS --cubical #-}
+{-# OPTIONS --cubical --guardedness #-}
 module Sets where
 
 open import Cubical.Foundations.Prelude 

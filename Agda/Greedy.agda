@@ -1,4 +1,4 @@
-{-# OPTIONS --cubical #-}
+{-# OPTIONS --cubical --guardedness #-}
 module Greedy where
     
 open import Cubical.Data.List hiding (rec)

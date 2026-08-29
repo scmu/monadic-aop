@@ -1,4 +1,4 @@
-{-# OPTIONS --cubical #-}
+{-# OPTIONS --cubical --guardedness #-}
 module Examples.Sublists where
 
 open import Cubical.Foundations.Powerset as P -- using (ℙ; _∈_; _⊆_; ⊆-refl)

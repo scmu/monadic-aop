@@ -1,4 +1,4 @@
-{-# OPTIONS --cubical #-}
+{-# OPTIONS --cubical --guardedness #-}
 module Examples.Mss where
 
 open import Cubical.Foundations.Prelude

@@ -1,4 +1,4 @@
-{-# OPTIONS --cubical #-}
+{-# OPTIONS --cubical --guardedness #-}
 module MonadicList where
 
 open import Cubical.Data.List hiding (foldr; rec)

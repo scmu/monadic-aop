@@ -1,4 +1,4 @@
-{-# OPTIONS --cubical #-}
+{-# OPTIONS --cubical --guardedness #-}
 module Monad_v2 where
 
 open import Cubical.Foundations.Prelude 
@@ -10,7 +10,6 @@ import Cubical.HITs.PropositionalTruncation.Monad as TruncMonad
 open import Cubical.Data.Sum.Base using (_⊎_)
 open import Cubical.Foundations.Powerset as P using (ℙ; _∈_; _⊆_)
 open import Sets
--- open import PowersetExt
 open import Cubical.Data.Empty using (isProp⊥; isProp⊥* ; ⊥* ; elim*)
 
 private

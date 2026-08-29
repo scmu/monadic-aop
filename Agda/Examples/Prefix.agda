@@ -1,4 +1,4 @@
-{-# OPTIONS --cubical #-}
+{-# OPTIONS --cubical --guardedness #-}
 module Examples.Prefix where
     
 open import Data.List hiding (foldr; head)
