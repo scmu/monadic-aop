@@ -3,13 +3,16 @@ module MonadicList where
 
 open import Cubical.Data.List hiding (foldr; rec)
 open import Cubical.Foundations.Prelude
+open import Cubical.Foundations.Path using (inspect; [_]ᵢ)
 open import Cubical.HITs.PropositionalTruncation as PT
 open import Cubical.Foundations.Powerset as P using (ℙ; _∈_; _⊆_)
 open import Cubical.Data.Sigma.Base using (_×_) 
 open import Cubical.Data.Sum.Base using (_⊎_)
-open import Cubical.Data.Empty using (isProp⊥; isProp⊥* ; ⊥* ; elim*; ⊥)
+open import Cubical.Data.Empty using (isProp⊥; isProp⊥* ; ⊥* ; elim*; ⊥; rec*)
+import Cubical.Data.Empty
 open import Cubical.Data.Unit
 open import Cubical.Data.Bool using (Bool; true; false)
+open import Cubical.Data.Bool.Properties using (true≢false; false≢true)
 open import Reasoning
 
 open import Monad_v2
@@ -90,6 +93,24 @@ filt : (p : X → Bool) (x : X) → ℙ X
 filt p x with p x
 ... | true  = return x 
 ... | false = ∅
+
+filt-true : {X : Type ℓ} (p : X → Bool) (x : X) → p x ≡ true → filt p x ≡ return x
+filt-true p x eq with p x
+... | true  = refl
+... | false = Cubical.Data.Empty.rec (false≢true eq)
+
+filt-false : {X : Type ℓ} (p : X → Bool) (x : X) → p x ≡ false → filt p x ≡ ∅
+filt-false p x eq with p x
+... | true  = Cubical.Data.Empty.rec (true≢false eq)
+... | false = refl
+
+filt-⊆ : {X : Type ℓ} (p : X → Bool) (S : ℙ X) → (filt p =<< S) ⊆ S
+filt-⊆ p S z z∈ = rec (P.∈-isProp S z) helper z∈
+  where
+    helper : Σ _ (λ y → (y ∈ S) × (z ∈ filt p y)) → z ∈ S
+    helper (y , y∈S , z∈fpy) with p y | inspect p y
+    ... | true  | [ eq ]ᵢ = rec (P.∈-isProp S z) (λ y≡z → subst (λ v → v ∈ S) y≡z y∈S) z∈fpy
+    ... | false | [ eq ]ᵢ = rec* z∈fpy
 
 -- scan
 
@@ -544,4 +565,29 @@ prefix-is-foldrM = foldrM-fixed-point-properties-eq⇐ pre (return []) prefix (r
           (_⊎_.inl zs≡[]) → ∣ _⊎_.inl zs≡[] ∣₁ ;
           (_⊎_.inr zs≡x∷ys) → ∣ _⊎_.inr ∣ ys , ys∈pfx , zs≡x∷ys ∣₁ ∣₁
         }) zs∈prexys
+      })
+
+-- subsequences
+
+subseq : List X → ℙ (List X)
+subseq [] = return []
+subseq (x ∷ xs) = subseq xs ∪ (_∷_ x) <$> subseq xs
+
+subs : X → List X → ℙ (List X)
+subs x y = return y ∪ return (x ∷ y)
+
+subseq-is-foldrM : {X : Type ℓ} → subseq {X = X} ≡ foldrM {A = X} subs (return [])
+subseq-is-foldrM = foldrM-fixed-point-properties-eq⇐ subs (return []) subseq (refl , p)
+  where
+    p : ∀ x xs → subseq (x ∷ xs) ≡ (subs x =<< subseq xs)
+    p x xs = P.⊆-antisym _ _
+      (λ zs → rec squash₁ λ {
+        (_⊎_.inl zs∈sxs) → ∣ zs , zs∈sxs , ∣ _⊎_.inl ∣ refl ∣₁ ∣₁ ∣₁ ;
+        (_⊎_.inr m) → rec squash₁ (λ { (ys , ys∈sxs , eq) → ∣ ys , ys∈sxs , ∣ _⊎_.inr eq ∣₁ ∣₁ }) m
+      })
+      (λ zs → rec squash₁ λ {
+        (ys , ys∈sxs , zs∈subxys) → rec squash₁ (λ {
+          (_⊎_.inl ys≡zs) → ∣ _⊎_.inl (rec (P.∈-isProp (subseq xs) zs) (λ ys≡zs' → subst (λ w → w ∈ subseq xs) ys≡zs' ys∈sxs) ys≡zs) ∣₁ ;
+          (_⊎_.inr x∷ys≡zs) → ∣ _⊎_.inr ∣ ys , ys∈sxs , x∷ys≡zs ∣₁ ∣₁
+        }) zs∈subxys
       })
