@@ -9,6 +9,7 @@ open import Cubical.Data.Sigma.Base using (_×_)
 open import Cubical.Data.Sum.Base using (_⊎_)
 open import Cubical.Data.Empty using (isProp⊥; isProp⊥* ; ⊥* ; elim*; ⊥)
 open import Cubical.Data.Unit
+open import Cubical.Data.Bool using (Bool; true; false)
 open import Reasoning
 
 open import Monad_v2
@@ -59,11 +60,6 @@ prefix' = foldrM pre (return [])
 wrap : X → List X
 wrap x = [ x ]
 
--- maxlist : List⁺ X → (R : ) → X
--- -- maxlist [ x ]⁺ = x
--- maxlist [ x ]⁺ = {!   !}
--- maxlist (x ∷⁺ xs) = {!   !}
-
 postulate
   impossible-head : ∀ {ℓ} {X : Type ℓ} → X
 
@@ -74,6 +70,26 @@ head (x ∷ xs) = x
 member : List X → ℙ X
 member [] = ∅
 member (x ∷ xs) = return x ∪ member xs
+
+bmax : (R : X → ℙ X)
+        → (x y : X) 
+        → (x ∈ R y) ⊎ (y ∈ R x)
+        → X
+bmax R x y (_⊎_.inl x≤y) = y
+bmax R x y (_⊎_.inr y≤x) = x 
+
+
+maxlist : (R : X → ℙ X)
+        → (total : ∀ x y → (x ∈ R y) ⊎ (y ∈ R x))
+        → List X → X
+maxlist R total []           = impossible-head
+maxlist R total (x ∷ [])        = x
+maxlist R total (x ∷ y ∷ xs) = bmax R x (maxlist R total (y ∷ xs)) (total x (maxlist R total (y ∷ xs)))
+
+filt : (p : X → Bool) (x : X) → ℙ X
+filt p x with p x
+... | true  = return x 
+... | false = ∅
 
 -- scan
 
