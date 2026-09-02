@@ -234,12 +234,6 @@ record MinR {ℓ : Level} {Y : Type ℓ} (R : Y → ℙ Y) : Type (ℓ-suc ℓ) 
         }) y'∈Gh
 
 
-
-  -- [todo] : delete or move it to somewhere 
-  uname0 : (A B : ℙ Y) → (f : ℙ Y → ℙ Y) → (∀ X Y → X ⊆ Y → f Y ⊆ f X) → f (A ∪ B) ⊆ (f A ∪ f B)
-  uname0 A B f p = λ x z → ∣ _⊎_.inl (p A (A ∪  B) (λ x₁ z₁ → ∣ _⊎_.inl z₁ ∣₁) x z) ∣₁ 
-
-
   minR_union_subset : (A B : ℙ Y) → minR (A ∪ B) ⊆ (minR A ∪ minR B)
   minR_union_subset A B y y∈minR_AB =
     let y∈AB : y ∈ (A ∪ B)

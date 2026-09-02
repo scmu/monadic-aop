@@ -19,9 +19,6 @@ private
     Y : Type ℓ₂
     Z : Type ℓ₃
 
-∅ : ℙ X
-∅ x = ⊥* , isProp⊥*
-
 id : ∀ {l} {X : Set l} → X → X
 id x = x
 
@@ -329,7 +326,17 @@ R-trans R = ∀ x y z → y ∈ R x → z ∈ R y → z ∈ R x
 =<<-⊑-left f g m f⊑g y y∈fm = 
   rec squash₁ (λ { (x , x∈m , y∈fx) → ∣ x , x∈m , f⊑g x y y∈fx ∣₁ }) y∈fm
 
-
+<<-⊆-left : {X Y : Type ℓ} → (m : ℙ X) → (n : ℙ Y) → (m << n) ⊆ m
+<<-⊆-left m n x x∈ =
+  rec (P.∈-isProp m x)
+      (λ { (x' , x'∈m , x∈inner) →
+             rec (P.∈-isProp m x)
+                 (λ { (y , y∈n , x'≡x) →
+                        rec (P.∈-isProp m x)
+                            (λ eq → subst (λ w → w ∈ m) eq x'∈m)
+                            x'≡x })
+                 x∈inner })
+      x∈
 -- [ Helper Functions ]
 
 const : ℙ Y → X → ℙ Y
