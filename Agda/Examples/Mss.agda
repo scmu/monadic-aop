@@ -69,7 +69,51 @@ open MinR Max≥ₛ
 ... | Order.eq x≡y = ∣ _⊎_.inr ∣ 0 , x≡y ∣₁ ∣₁
 ... | Order.gt y<x = ∣ _⊎_.inl ∣ Order.<-weaken y<x ∣₁ ∣₁
 
+-- maxlist/bmax expect a total order in the "≤" sense (R b = down-set of b),
+-- which is the converse of _≥ₛ_; and it must be untruncated since maxlist computes with it.
+≥ₛ°-total : ∀ x y → (x ∈ (_≥ₛ_ °) y) ⊎ (y ∈ (_≥ₛ_ °) x)
+≥ₛ°-total x y with (sumℤ x) Order.≟ (sumℤ y)
+... | Order.lt x<y = _⊎_.inl ∣ Order.<-weaken x<y ∣₁
+... | Order.eq x≡y = _⊎_.inl ∣ 0 , x≡y ∣₁
+... | Order.gt y<x = _⊎_.inr ∣ Order.<-weaken y<x ∣₁
+
 open HasMinProps _≥ₛ_ Max≥ₛ ≥ₛ-refl ≥ₛ-trans ≥ₛ-total
+
+
+-- lemma for maxlist-⊆-minR
+
+maxlist-in-member : (x : List ℤ) (xs : List (List ℤ)) → maxlist (_≥ₛ_ °) ≥ₛ°-total (x ∷ xs) ∈ member (x ∷ xs)
+maxlist-in-member x [] = ∣ _⊎_.inl (y∈[y] x) ∣₁
+maxlist-in-member x (y ∷ xs) with ≥ₛ°-total x (maxlist (_≥ₛ_ °) ≥ₛ°-total (y ∷ xs))
+... | _⊎_.inl _ = ∣ _⊎_.inr (maxlist-in-member y xs) ∣₁
+... | _⊎_.inr _ = ∣ _⊎_.inl (y∈[y] x) ∣₁
+
+maxlist-is-max : (x : List ℤ) (xs : List (List ℤ)) → ∀ z → z ∈ member (x ∷ xs) → maxlist (_≥ₛ_ °) ≥ₛ°-total (x ∷ xs) ∈ _≥ₛ_ z
+maxlist-is-max x [] z z∈mem = rec (P.∈-isProp (_≥ₛ_ z) x) helper z∈mem
+  where
+    helper : (z ∈ return x) ⊎ (z ∈ ∅) → x ∈ _≥ₛ_ z
+    helper (_⊎_.inl z∈retx) = rec (P.∈-isProp (_≥ₛ_ z) x) (λ x≡z → subst (λ w → x ∈ _≥ₛ_ w) x≡z (≥ₛ-refl x)) z∈retx
+    helper (_⊎_.inr z∈∅) = elim* z∈∅
+maxlist-is-max x (y ∷ xs) z z∈mem with ≥ₛ°-total x (maxlist (_≥ₛ_ °) ≥ₛ°-total (y ∷ xs))
+... | _⊎_.inl x∈≥maxYs = rec (P.∈-isProp (_≥ₛ_ z) (maxlist (_≥ₛ_ °) ≥ₛ°-total (y ∷ xs))) helper z∈mem
+  where
+    helper : (z ∈ return x) ⊎ (z ∈ member (y ∷ xs)) → maxlist (_≥ₛ_ °) ≥ₛ°-total (y ∷ xs) ∈ _≥ₛ_ z
+    helper (_⊎_.inl z∈retx) = rec (P.∈-isProp (_≥ₛ_ z) (maxlist (_≥ₛ_ °) ≥ₛ°-total (y ∷ xs))) (λ x≡z → subst (λ w → maxlist (_≥ₛ_ °) ≥ₛ°-total (y ∷ xs) ∈ _≥ₛ_ w) x≡z x∈≥maxYs) z∈retx
+    helper (_⊎_.inr z∈mem') = maxlist-is-max y xs z z∈mem'
+... | _⊎_.inr maxYs∈≥x = rec (P.∈-isProp (_≥ₛ_ z) x) helper z∈mem
+  where
+    helper : (z ∈ return x) ⊎ (z ∈ member (y ∷ xs)) → x ∈ _≥ₛ_ z
+    helper (_⊎_.inl z∈retx) = rec (P.∈-isProp (_≥ₛ_ z) x) (λ x≡z → subst (λ w → x ∈ _≥ₛ_ w) x≡z (≥ₛ-refl x)) z∈retx
+    helper (_⊎_.inr z∈mem') = ≥ₛ-trans x (maxlist (_≥ₛ_ °) ≥ₛ°-total (y ∷ xs)) z maxYs∈≥x (maxlist-is-max y xs z z∈mem')
+
+-- return (maxlist xs) ⊆ max⊴ (member xs)
+maxlist-⊆-minR : (x : List ℤ) (xs : List (List ℤ)) → return (maxlist (_≥ₛ_ °) ≥ₛ°-total (x ∷ xs)) ⊆ minR (member (x ∷ xs))
+maxlist-⊆-minR x xs y y∈ret = rec (P.∈-isProp (minR (member (x ∷ xs))) y)
+    (λ max≡y → subst (λ w → w ∈ minR (member (x ∷ xs))) max≡y
+        (minR-property-⇐ (member (x ∷ xs)) (maxlist (_≥ₛ_ °) ≥ₛ°-total (x ∷ xs))
+            (maxlist-in-member x xs) (maxlist-is-max x xs)))
+    y∈ret
+
 
 
 mss : List ℤ → ℙ (List ℤ)
