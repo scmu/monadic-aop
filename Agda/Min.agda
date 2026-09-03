@@ -52,22 +52,29 @@ record MinR {ℓ : Level} {Y : Type ℓ} (R : Y → ℙ Y) : Type (ℓ-suc ℓ) 
   minR⊑id = λ ys y y∈ → mf⊑f (const ys) y y y∈
   -- set property
 
-  set-property-⇒ : (xs ys : ℙ Y) → (ys ⊆ minR xs) → (ys ⊆ xs × (∀ y → y ∈ ys → ∀ x → x ∈ xs → y ∈ R x))
+  set-property-⇒ : (xs ys : ℙ Y) 
+                 → (ys ⊆ minR xs) 
+                 → (ys ⊆ xs × (∀ y → y ∈ ys → ∀ x → x ∈ xs → y ∈ R x))
   set-property-⇒ xs ys lhs = (λ x → pf1 x x) , (λ y y∈ x x∈ → snd (universal-property-⇒ (const ys) (const xs) λ _ → lhs) x y ∣ y , x∈ , y∈ ∣₁)
     where
       pf1 = ⊑-trans {r = const ys} {s = const (minR xs)} {t = const xs} (⊆2⊑ ys (minR xs) lhs) (mf⊑f (const xs))
         
-  set-property-⇐ : (xs ys : ℙ Y) → ys ⊆ xs → (p : (∀ y → y ∈ ys → ∀ x → x ∈ xs → y ∈ R x)) → (ys ⊆ minR xs)
+  set-property-⇐ : (xs ys : ℙ Y) 
+                 → ys ⊆ xs → (p : (∀ y → y ∈ ys → ∀ x → x ∈ xs → y ∈ R x)) 
+                 → (ys ⊆ minR xs)
   set-property-⇐ xs ys ys⊆xs p y y∈ys = 
     universal-property-⇐ {X = Y} (const ys) (const xs) 
       ( (λ _ → ys⊆xs) 
       , (λ y0 y1 q → rec (P.∈-isProp (R y0) y1) (λ { (u , y0∈xs , y1∈ys) → p y1 y1∈ys y0 y0∈xs }) q) 
       ) y y y∈ys
 
-  set-property-elem-⇒ : (y : Y) → (xs : ℙ Y)→ (y ∈ minR xs) → ((y ∈ xs) × (∀ x → x ∈ xs → y ∈ R x))
+  set-property-elem-⇒ : (y : Y) 
+                      → (xs : ℙ Y)→ (y ∈ minR xs) 
+                      → ((y ∈ xs) × (∀ x → x ∈ xs → y ∈ R x))
   set-property-elem-⇒ y xs y∈minxs = ((minR⊑id xs y) y∈minxs) , (λ x x∈xs → snd(set-property-⇒ xs (return y) λ y' y'∈[y] → rec (P.∈-isProp (minR xs) y') (λ eq → subst (λ v → v ∈ minR xs) eq  y∈minxs) y'∈[y]) y (y∈[y] y) x x∈xs)
 
-  minR-property : (xs : ℙ Y) → (minR xs ⊆ xs × (∀ y → y ∈ minR xs → ∀ x → x ∈ xs → y ∈ R x))
+  minR-property : (xs : ℙ Y) 
+                → (minR xs ⊆ xs × (∀ y → y ∈ minR xs → ∀ x → x ∈ xs → y ∈ R x))
   minR-property xs = set-property-⇒ xs (minR xs) (P.⊆-refl (minR xs))
 
   minR-id : (xs : ℙ Y) → (minR xs ⊆ xs)
@@ -79,7 +86,9 @@ record MinR {ℓ : Level} {Y : Type ℓ} (R : Y → ℙ Y) : Type (ℓ-suc ℓ) 
   minR-contained : (A : ℙ Y) → ∀ y → y ∈ minR A → y ∈ A
   minR-contained A y y∈minRA = minR-id A y y∈minRA  
 
-  minR-property-⇐ : (xs : ℙ Y) (y : Y) → y ∈ xs → (p : (∀ x → x ∈ xs → y ∈ R x)) → (y ∈ minR xs)
+  minR-property-⇐ : (xs : ℙ Y) (y : Y) 
+                  → y ∈ xs → (p : (∀ x → x ∈ xs → y ∈ R x)) 
+                  → (y ∈ minR xs)
   minR-property-⇐ xs y y∈xs p = set-property-⇐ xs (return y) ([y]⊆xs y xs y∈xs) lem2 y (y∈[y] y)
     where
       [y]⊆xs : (y : Y) → (xs : ℙ Y) →  y ∈ xs → return y ⊆ xs
@@ -88,13 +97,19 @@ record MinR {ℓ : Level} {Y : Type ℓ} (R : Y → ℙ Y) : Type (ℓ-suc ℓ) 
       lem2 : (y₁ : Y) → y₁ ∈ return y → (x : Y) → x ∈ xs → y₁ ∈ R x
       lem2 = λ y₁ y₁∈y x x∈ → rec (P.∈-isProp (R x) y₁) (λ y₁≡y → subst (λ v → v ∈ R x) y₁≡y (p x x∈)) y₁∈y
 
-  minR-property-⇒ : (xs : ℙ Y) (y : Y) → (y ∈ minR xs) → (y ∈ xs) × (∀ x → x ∈ xs → y ∈ R x)
+  minR-property-⇒ : (xs : ℙ Y) (y : Y) 
+                  → (y ∈ minR xs) 
+                  → (y ∈ xs) × (∀ x → x ∈ xs → y ∈ R x)
   minR-property-⇒ xs t y∈Mxs = minR-id xs t y∈Mxs , minR-minimum xs t y∈Mxs
+
   -- from set property to universal-property
 
   from-set-to-universal⇒ : 
-      (set-property-⇒ : (xs ys : ℙ Y) → (ys ⊆ minR xs) → (ys ⊆ xs × (∀ y → y ∈ ys → ∀ x → x ∈ xs → y ∈ R x)))
-      → ({X : Type _} → ∀ (P f : X → ℙ Y) → (P ⊑ minR ∘ f) → ((P ⊑ f) × ((P <=< (f °)) ⊑ R ))) -- universal-property-⇒
+      (set-property-⇒ : (xs ys : ℙ Y) → (ys ⊆ minR xs) 
+                      → (ys ⊆ xs × (∀ y → y ∈ ys → ∀ x → x ∈ xs → y ∈ R x)))
+      → ({X : Type _} → ∀ (P f : X → ℙ Y) 
+          → (P ⊑ minR ∘ f) 
+          → ((P ⊑ f) × ((P <=< (f °)) ⊑ R ))) -- universal-property-⇒
   from-set-to-universal⇒ set-prop-⇒ P f P⊑minR∘f = let
       P⊑f : P ⊑ f
       P⊑f x = fst (set-prop-⇒ (f x) (P x) (P⊑minR∘f x))
@@ -103,11 +118,18 @@ record MinR {ℓ : Level} {Y : Type ℓ} (R : Y → ℙ Y) : Type (ℓ-suc ℓ) 
     in P⊑f , P<=<f°⊑R
 
   from-set-to-universal-⇐ : 
-      (set-property-⇐ : (xs ys : ℙ Y) → ys ⊆ xs → (p : (∀ y → y ∈ ys → ∀ x → x ∈ xs → y ∈ R x)) → (ys ⊆ minR xs))
-      → ({X : Type _} → ∀ (P f : X → ℙ Y) → ((P ⊑ f) × ((P <=< (f °)) ⊑ R )) → (P ⊑ minR ∘ f)) -- universal-property-⇐
+      (set-property-⇐ : (xs ys : ℙ Y) 
+                      → ys ⊆ xs → (p : (∀ y → y ∈ ys → ∀ x → x ∈ xs → y ∈ R x)) 
+                      → (ys ⊆ minR xs))
+      → ({X : Type _} → ∀ (P f : X → ℙ Y) 
+          → ((P ⊑ f) × ((P <=< (f °)) ⊑ R )) 
+          → (P ⊑ minR ∘ f)) -- universal-property-⇐
   from-set-to-universal-⇐ set-prop-⇐ P f (P⊑f , P<=<f°⊑R) = λ x → set-prop-⇐ (f x) (P x) (P⊑f x) λ y z x₁ z₁ → P<=<f°⊑R x₁ y ∣ x , z₁ , z ∣₁  
   
-  minR-conditional-anti-monotonicity : {X : Type _} (f g : X → ℙ Y) → f ⊑ g → minR ∘ g ⊑ f → (minR ∘ g) ⊑ minR ∘ f 
+  minR-conditional-anti-monotonicity : {X : Type _} (f g : X → ℙ Y) 
+    → f ⊑ g 
+    → minR ∘ g ⊑ f 
+    → (minR ∘ g) ⊑ minR ∘ f 
   minR-conditional-anti-monotonicity {X} f g f⊑g min∘g⊑f = universal-property-⇐ (minR ∘ g) f (min∘g⊑f , pf2)
     where      
       lem1 : ((minR ∘ g) <=< (f °)) ⊑ ((minR ∘ g) <=< (g °))
@@ -121,10 +143,10 @@ record MinR {ℓ : Level} {Y : Type ℓ} (R : Y → ℙ Y) : Type (ℓ-suc ℓ) 
   -- minR-monotonicity' xs ys xs⊆ys = {!   !}
 
   minR-conditional-monotonicity : (xs ys : ℙ Y) 
-      → xs ⊆ ys 
-      → (p : ∀ y → y ∈ ys → y ∈ ((R °) =<< xs))
-      → (R-trans : R-trans R)
-      → minR xs ⊆ minR ys
+    → xs ⊆ ys 
+    → (p : ∀ y → y ∈ ys → y ∈ ((R °) =<< xs))
+    → (R-trans : R-trans R)
+    → minR xs ⊆ minR ys
   minR-conditional-monotonicity xs ys xs⊆ys p R-trans x x∈minRxs = 
     minR-property-⇐ ys x x∈ys x-is-bound-for-ys
       where
@@ -256,27 +278,35 @@ record MinR {ℓ : Level} {Y : Type ℓ} (R : Y → ℙ Y) : Type (ℓ-suc ℓ) 
               y∈minRB = minR-property-⇐ B y y∈B cond-B
           in ∣ _⊎_.inr y∈minRB ∣₁
 
-  left-monot-for-minR : {X Z : Type _} (f : Z → ℙ Y) (g : X → ℙ Z) → ((minR ∘ f) <=< g) ⊑ (f <=< g)
+  left-monot-for-minR : {X Z : Type _} (f : Z → ℙ Y) (g : X → ℙ Z) 
+    → ((minR ∘ f) <=< g) ⊑ (f <=< g)
   left-monot-for-minR f g = <=<-monotonic-left g ( minR ∘ f) f (mf⊑f f)
 
-  left-monot-for-minR-un : {X Z : Type _} (f : Z → ℙ Y) (g : X → ℙ Z) → (f ⊑ minR ∘ f) → (f <=< g) ⊑ ((minR ∘ f) <=< g)
+  left-monot-for-minR-un : {X Z : Type _} (f : Z → ℙ Y) (g : X → ℙ Z) 
+    → (f ⊑ minR ∘ f) 
+    → (f <=< g) ⊑ ((minR ∘ f) <=< g)
   left-monot-for-minR-un f g f⊑minf = <=<-monotonic-left g f (minR ∘ f) f⊑minf
 
   -- too strong 
   -- minR-monotonicity-2 : (A B : ℙ Y) → (A ⊆ B) →  (p : ∀ x → ∀ y → x ∈ R y) → minR A ⊆ minR B
   -- minR-monotonicity-2 A B A⊆B p =  set-property-⇐ B (minR A) (minR-preserves-order (λ _ → A) (λ _ → B) (λ x x₁ x₂ → A⊆B x₁ x₂) p) (λ x x∈minRA → λ y y∈B → p x y)
 
-  minR-monotonicity-3 : (A B : ℙ Y) → (A ⊆ B) → (p : ∀ x → x ∈ A → ∀ y → y ∈ B → x ∈ R y) → minR A ⊆ minR B
+  minR-monotonicity-3 : (A B : ℙ Y) → (A ⊆ B) 
+    → (p : ∀ x → x ∈ A → ∀ y → y ∈ B → x ∈ R y) 
+    → minR A ⊆ minR B
   minR-monotonicity-3 A B A⊆B p = set-property-⇐ B (minR A) (minR-preserves-order (λ _ → A) (λ _ → B) (λ x x₁ x₂ → A⊆B x₁ x₂) p) λ y y∈minRA y' y'∈B → p y (minR-contained A y y∈minRA) y' y'∈B
 
-
-  minR-<=<-Promotion : {X Z : Type _}  → (f : Z → ℙ Y) → (g : X → ℙ Z) → 
-    (hasmin : ∀ z → ∥ Σ Y (λ y' → y' ∈ minR (f z)) ∥₁) → 
-    R-trans R → 
-    minR ∘ (f <=< g) ≡ minR ∘ ((minR ∘ f) <=< g)
+  minR-<=<-Promotion : {X Z : Type _}  → (f : Z → ℙ Y) → (g : X → ℙ Z)
+    → (hasmin : ∀ z → ∥ Σ Y (λ y' → y' ∈ minR (f z)) ∥₁)
+    → R-trans R
+    → minR ∘ (f <=< g) ≡ minR ∘ ((minR ∘ f) <=< g)
   minR-<=<-Promotion {X} {Z} f g hasmin R-trans = ⊑-extensionality (minR ∘ (f <=< g)) (minR ∘ ((minR ∘ f) <=< g)) (minR-promote-<=<-left f g , (minR-promote-<=<-right f g hasmin))
+
     where
-      minR-promote-<=<-right : {X Z : Type _} (f : Z → ℙ Y) → (g : X → ℙ Z) → (hasmin : ∀ z → ∥ Σ Y (λ y' → y' ∈ minR (f z)) ∥₁)  → minR ∘ ((minR ∘ f) <=< g) ⊑ (minR ∘ (f <=< g))
+
+      minR-promote-<=<-right : {X Z : Type _} (f : Z → ℙ Y) → (g : X → ℙ Z) 
+         → (hasmin : ∀ z → ∥ Σ Y (λ y' → y' ∈ minR (f z)) ∥₁)  
+         → minR ∘ ((minR ∘ f) <=< g) ⊑ (minR ∘ (f <=< g))
       minR-promote-<=<-right {X} {Z} f g hasmin x = let 
           
           m = g x
@@ -287,7 +317,8 @@ record MinR {ℓ : Level} {Y : Type ℓ} (R : Y → ℙ Y) : Type (ℓ-suc ℓ) 
           t1 : ((R °) =<< ((minR ∘ f) =<< m)) ≡ ((λ x → (R °) =<< ((minR ∘ f) x)) =<< m)
           t1 = >>=-assoc m ((minR ∘ f)) (R °)
 
-          t2 : f ⊑ (λ x → (R °) =<< ((minR ∘ f) x)) → (f =<< m) ⊆ ((λ x → (R °) =<< ((minR ∘ f) x)) =<< m) 
+          t2 : f ⊑ (λ x → (R °) =<< ((minR ∘ f) x)) 
+             → (f =<< m) ⊆ ((λ x → (R °) =<< ((minR ∘ f) x)) =<< m) 
           t2 p = <=<-monotonic-left g f (λ x → (R °) =<< ((minR ∘ f) x)) p x
                   
           t3 : f ⊑ (λ x → (R °) =<< ((minR ∘ f) x))
@@ -309,10 +340,13 @@ record MinR {ℓ : Level} {Y : Type ℓ} (R : Y → ℙ Y) : Type (ℓ-suc ℓ) 
           
         in minR-conditional-monotonicity (((minR ∘ f) <=< g) x) ((f <=< g) x)
           lem-1 lem-2 R-trans
-      minR-promote-<=<-left : {X Z : Type _} (f : Z → ℙ Y) → (g : X → ℙ Z) → minR ∘ (f <=< g) ⊑ minR ∘ ((minR ∘ f) <=< g)
+
+      minR-promote-<=<-left : {X Z : Type _} (f : Z → ℙ Y) → (g : X → ℙ Z) 
+        → minR ∘ (f <=< g) ⊑ minR ∘ ((minR ∘ f) <=< g)
       minR-promote-<=<-left  {X} {Z} f g = universal-property-⇐ (minR ∘ (f <=< g)) ((minR ∘ f) <=< g) (lem-1 f g , lem-2 f g)
         where
-          lem-1 : {X Z : Type _} (f : Z → ℙ Y) → (g : X → ℙ Z) → minR ∘ (f <=< g) ⊑ ((minR ∘ f) <=< g)
+          lem-1 : {X Z : Type _} (f : Z → ℙ Y) → (g : X → ℙ Z) 
+                → minR ∘ (f <=< g) ⊑ ((minR ∘ f) <=< g)
           lem-1 f g x y y∈minR_union = 
             let 
               y∈union = minR-id ((f <=< g) x) y y∈minR_union  -- minR-id ((f <=< g) x) y y∈minR_union
@@ -322,7 +356,8 @@ record MinR {ℓ : Level} {Y : Type ℓ} (R : Y → ℙ Y) : Type (ℓ-suc ℓ) 
                   ∣ z , (z∈gx , (minR-property-⇐ (f z) y y∈fz λ y' y'∈fz → 
                   minR-minimum ((f <=< g) x) y y∈minR_union y' ∣ z , (z∈gx , y'∈fz) ∣₁))  ∣₁}) 
                 y∈union 
-          lem-2 : {X Z : Type _} (f : Z → ℙ Y) → (g : X → ℙ Z) → ((minR ∘ (f <=< g)) <=< (((minR ∘ f) <=< g) °)) ⊑ R
+          lem-2 : {X Z : Type _} (f : Z → ℙ Y) → (g : X → ℙ Z) 
+                → ((minR ∘ (f <=< g)) <=< (((minR ∘ f) <=< g) °)) ⊑ R
           lem-2 f g y y' p = rec 
             (P.∈-isProp (R y) y') 
             (λ {(x , left-h , right-h) → rec 
@@ -332,9 +367,12 @@ record MinR {ℓ : Level} {Y : Type ℓ} (R : Y → ℙ Y) : Type (ℓ-suc ℓ) 
                 }) 
             p
 
-
-  ∈-bind-⇒ : {X Z : Type _} → (f : Z → ℙ Y) → (y : Y) → ∀ m → y ∈ f =<< m → ∥ Σ Z (λ x → (x ∈ m) × (y ∈ f x)) ∥₁ 
+  ∈-bind-⇒ : {X Z : Type _} → (f : Z → ℙ Y) → (y : Y) → ∀ m 
+           → y ∈ f =<< m 
+           → ∥ Σ Z (λ x → (x ∈ m) × (y ∈ f x)) ∥₁ 
   ∈-bind-⇒ f y m y∈fm = y∈fm
   
-  ∈-bind-⇐ : {X Z : Type _} → (f : Z → ℙ Y) → (y : Y) → ∀ m → ∥ Σ Z (λ x → (x ∈ m) × (y ∈ f x)) ∥₁ → y ∈ f =<< m
+  ∈-bind-⇐ : {X Z : Type _} → (f : Z → ℙ Y) → (y : Y) → ∀ m 
+           → ∥ Σ Z (λ x → (x ∈ m) × (y ∈ f x)) ∥₁ 
+           → y ∈ f =<< m
   ∈-bind-⇐ f y m p = p

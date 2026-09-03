@@ -82,13 +82,16 @@ open HasMinProps _≥ₛ_ Max≥ₛ ≥ₛ-refl ≥ₛ-trans ≥ₛ-total
 
 -- lemma for maxlist-⊆-minR
 
-maxlist-in-member : (x : List ℤ) (xs : List (List ℤ)) → maxlist (_≥ₛ_ °) ≥ₛ°-total (x ∷ xs) ∈ member (x ∷ xs)
+maxlist-in-member : (x : List ℤ) (xs : List (List ℤ)) 
+    → maxlist (_≥ₛ_ °) ≥ₛ°-total (x ∷ xs) ∈ member (x ∷ xs)
 maxlist-in-member x [] = ∣ _⊎_.inl (y∈[y] x) ∣₁
 maxlist-in-member x (y ∷ xs) with ≥ₛ°-total x (maxlist (_≥ₛ_ °) ≥ₛ°-total (y ∷ xs))
 ... | _⊎_.inl _ = ∣ _⊎_.inr (maxlist-in-member y xs) ∣₁
 ... | _⊎_.inr _ = ∣ _⊎_.inl (y∈[y] x) ∣₁
 
-maxlist-is-max : (x : List ℤ) (xs : List (List ℤ)) → ∀ z → z ∈ member (x ∷ xs) → maxlist (_≥ₛ_ °) ≥ₛ°-total (x ∷ xs) ∈ _≥ₛ_ z
+maxlist-is-max : (x : List ℤ) (xs : List (List ℤ)) → ∀ z 
+    → z ∈ member (x ∷ xs) 
+    → maxlist (_≥ₛ_ °) ≥ₛ°-total (x ∷ xs) ∈ _≥ₛ_ z
 maxlist-is-max x [] z z∈mem = rec (P.∈-isProp (_≥ₛ_ z) x) helper z∈mem
   where
     helper : (z ∈ return x) ⊎ (z ∈ ∅) → x ∈ _≥ₛ_ z
@@ -107,13 +110,14 @@ maxlist-is-max x (y ∷ xs) z z∈mem with ≥ₛ°-total x (maxlist (_≥ₛ_ �
     helper (_⊎_.inr z∈mem') = ≥ₛ-trans x (maxlist (_≥ₛ_ °) ≥ₛ°-total (y ∷ xs)) z maxYs∈≥x (maxlist-is-max y xs z z∈mem')
 
 -- return (maxlist xs) ⊆ max⊴ (member xs)
-maxlist-⊆-minR : (x : List ℤ) (xs : List (List ℤ)) → return (maxlist (_≥ₛ_ °) ≥ₛ°-total (x ∷ xs)) ⊆ minR (member (x ∷ xs))
+maxlist-⊆-minR : (x : List ℤ) (xs : List (List ℤ)) 
+    → return (maxlist (_≥ₛ_ °) ≥ₛ°-total (x ∷ xs)) 
+         ⊆ minR (member (x ∷ xs))
 maxlist-⊆-minR x xs y y∈ret = rec (P.∈-isProp (minR (member (x ∷ xs))) y)
     (λ max≡y → subst (λ w → w ∈ minR (member (x ∷ xs))) max≡y
         (minR-property-⇐ (member (x ∷ xs)) (maxlist (_≥ₛ_ °) ≥ₛ°-total (x ∷ xs))
             (maxlist-in-member x xs) (maxlist-is-max x xs)))
     y∈ret
-
 
 
 mss : List ℤ → ℙ (List ℤ)
@@ -219,7 +223,8 @@ mss-thm  = reasoning⊑ (
         f<=<s⊑g<=<s : f <=< s ⊑ g <=< s
         f<=<s⊑g<=<s k x x∈fs_k = rec squash₁ (λ { (b , b∈sk , x∈fb) → ∣ b , b∈sk , greedy-proof b x x∈fb ∣₁ }) x∈fs_k
 
-        lem-1 : ∀ k y → y ∈ (g <=< s) k → y ∈ ((_≥ₛ_ °) =<< (f <=< s) k)
+        lem-1 : ∀ k y → y ∈ (g <=< s) k 
+                → y ∈ ((_≥ₛ_ °) =<< (f <=< s) k)
         lem-1 k y y∈gs_k = rec squash₁ (λ { (b , b∈sk , y∈gb) → 
                 rec squash₁ (λ { (x , x∈fb) → 
                     let 
@@ -229,7 +234,9 @@ mss-thm  = reasoning⊑ (
                 }) (hasmin-foldrMx b)
             }) y∈gs_k
 
-        lem-2 : (k y : List ℤ) → y ∈ (f <=< s) k → y ∈ ((_≥ₛ_ °) =<< (m <=< h) k)
+        lem-2 : (k y : List ℤ) 
+              → y ∈ (f <=< s) k 
+              → y ∈ ((_≥ₛ_ °) =<< (m <=< h) k)
         lem-2 [] y y∈fs_[] = 
             let 
                 y∈return[] : y ∈ return []

@@ -26,7 +26,9 @@ open import Examples.Knapsack.Order
 knapsack : Wgt → List Item → ℙ (List Item)
 knapsack w = minR ∘ (filt (withinW w) <=< subseq)
 
-step : ∀ w x y → (subsw w x =<< filt (withinW w) y) ⊆ (filt (withinW w) =<< subs x y)
+step : ∀ w x y 
+     → (subsw w x =<< filt (withinW w) y) 
+          ⊆ (filt (withinW w) =<< subs x y)
 step w x y z z∈lhs with withinW w y | inspect (withinW w) y
 ... | false | _ = rec* (subst (λ S → z ∈ S) (=<<-∅ (subsw w x)) z∈lhs)
 ... | true | [ eq ]ᵢ = rec (P.∈-isProp (filt (withinW w) =<< subs x y) z) helper
@@ -35,11 +37,14 @@ step w x y z z∈lhs with withinW w y | inspect (withinW w) y
     fty : filt (withinW w) y ≡ return y
     fty = filt-true (withinW w) y eq
 
-    helper : (z ∈ return y) ⊎ (z ∈ filt (withinW w) (x ∷ y)) → z ∈ (filt (withinW w) =<< subs x y)
+    helper : (z ∈ return y) ⊎ (z ∈ filt (withinW w) (x ∷ y)) 
+           → z ∈ (filt (withinW w) =<< subs x y)
     helper (_⊎_.inl y≡z) = ∣ y , ∣ _⊎_.inl ∣ refl ∣₁ ∣₁ , subst (λ S → z ∈ S) (sym fty) y≡z ∣₁
     helper (_⊎_.inr z∈fxy) = ∣ x ∷ y , ∣ _⊎_.inr ∣ refl ∣₁ ∣₁ , z∈fxy ∣₁
 
-fusion-cond : ∀ w x m → (subsw w x =<< (filt (withinW w) =<< m)) ⊆ (filt (withinW w) =<< (subs x =<< m))
+fusion-cond : ∀ w x m 
+            → (subsw w x =<< (filt (withinW w) =<< m)) 
+                ⊆ (filt (withinW w) =<< (subs x =<< m))
 fusion-cond w x m = reasoning⊆ (
   ⊆begin
   subsw w x =<< (filt (withinW w) =<< m)
@@ -61,7 +66,8 @@ knapsack-fusion : ∀ w → foldrM (subsw w) (filt (withinW w) =<< return [])
                         ⊑ (λ n → filt (withinW w) =<< n) ∘ foldrM subs (return [])
 knapsack-fusion w = foldrM-fusion (subsw w) subs (return []) (λ n → filt (withinW w) =<< n) (fusion-cond w)
 
-knapsack-sound : ∀ w → foldrM (subsw w) (return []) ⊑ (filt (withinW w) <=< subseq)
+knapsack-sound : ∀ w → foldrM (subsw w) (return []) 
+                       ⊑ (filt (withinW w) <=< subseq)
 knapsack-sound w = reasoning⊑ (
   ⊑begin
   foldrM (subsw w) (return [])
@@ -80,7 +86,9 @@ knapsack-sound w = reasoning⊑ (
 -- Weight only grows as items are added, so eagerly discarding an over-capacity
 -- extension (subsw) never throws away anything that generate-then-filter would keep.
 
-swap-lemma : ∀ w x S → ((λ y → filt (withinW w) (x ∷ y)) =<< S) ≡ ((λ y → filt (withinW w) (x ∷ y)) =<< (filt (withinW w) =<< S))
+swap-lemma : ∀ w x S 
+           → ((λ y → filt (withinW w) (x ∷ y)) =<< S)
+             ≡ ((λ y → filt (withinW w) (x ∷ y)) =<< (filt (withinW w) =<< S))
 swap-lemma w x S = P.⊆-antisym _ _ lhs⊆rhs rhs⊆lhs
   where
     lhs⊆rhs : ((λ y → filt (withinW w) (x ∷ y)) =<< S) ⊆ ((λ y → filt (withinW w) (x ∷ y)) =<< (filt (withinW w) =<< S))
@@ -100,7 +108,9 @@ swap-lemma w x S = P.⊆-antisym _ _ lhs⊆rhs rhs⊆lhs
     rhs⊆lhs : ((λ y → filt (withinW w) (x ∷ y)) =<< (filt (withinW w) =<< S)) ⊆ ((λ y → filt (withinW w) (x ∷ y)) =<< S)
     rhs⊆lhs = =<<-monotonic-right (λ y → filt (withinW w) (x ∷ y)) (filt (withinW w) =<< S) S (filt-⊆ (withinW w) S)
 
-knapsack-main-step : ∀ w x xs → (filt (withinW w) <=< subseq) (x ∷ xs) ≡ subsw w x =<< (filt (withinW w) <=< subseq) xs
+knapsack-main-step : ∀ w x xs 
+                   → (filt (withinW w) <=< subseq) (x ∷ xs)
+                      ≡ subsw w x =<< (filt (withinW w) <=< subseq) xs
 knapsack-main-step w x xs =
   filt (withinW w) =<< (subseq xs ∪ (_∷_ x) <$> subseq xs)
   ≡⟨ =<<-∪-dist-left (filt (withinW w)) (subseq xs) ((_∷_ x) <$> subseq xs) ⟩
@@ -121,7 +131,8 @@ knapsack-main-step w x xs =
   ∎
   where h = filt (withinW w) <=< subseq
 
-knapsack-eq : ∀ w → (filt (withinW w) <=< subseq {X = Item}) ≡ foldrM (subsw w) (return [])
+knapsack-eq : ∀ w → (filt (withinW w) <=< subseq {X = Item}) 
+                  ≡ foldrM (subsw w) (return [])
 knapsack-eq w = foldrM-fixed-point-properties-eq⇐ {A = Item} {B = List Item} (subsw w) (return []) (filt (withinW w) <=< subseq)
                   (h-e-eq w , knapsack-main-step w)
 

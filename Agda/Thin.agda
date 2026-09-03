@@ -31,14 +31,22 @@ record ThinQ {ℓ : Level} {A : Type ℓ} (Q : A → ℙ A) : Type (ℓ-suc (ℓ
     thin-universal-property-func-⇒ : {X : Type ℓ} (f : X → ℙ A) (h : X → ℙ (ℙ A))
                               → h ⊑ (thin ∘ f)
                               → (∀ x t → t ∈ h x → t ⊆ f x) ×
-                                (∀ x t y0 → t ∈ h x → y0 ∈ f x → ∥ Σ A (λ y1 → (y1 ∈ t) × (y1 ∈ Q y0)) ∥₁)
+                                (∀ x t y0 
+                                   → t ∈ h x 
+                                   → y0 ∈ f x 
+                                   → ∥ Σ A (λ y1 → (y1 ∈ t) × (y1 ∈ Q y0)) ∥₁)
     thin-universal-property-func-⇐ : {X : Type ℓ} (f : X → ℙ A) (h : X → ℙ (ℙ A))
                               → (∀ x t → t ∈ h x → t ⊆ f x) ×
-                                (∀ x t y0 → t ∈ h x → y0 ∈ f x → ∥ Σ A (λ y1 → (y1 ∈ t) × (y1 ∈ Q y0)) ∥₁)
+                                (∀ x t y0 
+                                   → t ∈ h x 
+                                   → y0 ∈ f x 
+                                   → ∥ Σ A (λ y1 → (y1 ∈ t) × (y1 ∈ Q y0)) ∥₁)
                               → h ⊑ (thin ∘ f)
 
-  thin-universal-property-set-⇒ : (xs ys : ℙ A) → ys ∈ thin xs → (ys ⊆ xs) ×
-                        (∀ x → x ∈ xs → ∥ Σ A (λ y → (y ∈ ys) × (y ∈ Q x)) ∥₁)
+  thin-universal-property-set-⇒ : (xs ys : ℙ A) 
+      → ys ∈ thin xs 
+      → (ys ⊆ xs) ×
+        (∀ x → x ∈ xs → ∥ Σ A (λ y → (y ∈ ys) × (y ∈ Q x)) ∥₁)
   thin-universal-property-set-⇒ xs ys ys∈thin = p1 , p2
     where
       hyp : (const {X = Unit*} (return ys)) ⊑ (thin ∘ const xs)
@@ -52,15 +60,20 @@ record ThinQ {ℓ : Level} {A : Type ℓ} (Q : A → ℙ A) : Type (ℓ-suc (ℓ
       p2 : ∀ x → x ∈ xs → ∥ Σ A (λ y → (y ∈ ys) × (y ∈ Q x)) ∥₁
       p2 x x∈xs = snd props tt* ys x (y∈[y] ys) x∈xs
 
-  thin-universal-property-set-⇐ : (xs ys : ℙ A) → (ys ⊆ xs) ×
-                  (∀ x → x ∈ xs → ∥ Σ A (λ y → (y ∈ ys) × (y ∈ Q x)) ∥₁) → ys ∈ thin xs
+  thin-universal-property-set-⇐ : (xs ys : ℙ A) 
+     → (ys ⊆ xs) ×
+       (∀ x → x ∈ xs → ∥ Σ A (λ y → (y ∈ ys) × (y ∈ Q x)) ∥₁) 
+     → ys ∈ thin xs
   thin-universal-property-set-⇐ xs ys (ys⊆xs , q) = singleton_sub_elem (thin xs) ys ret-ys⊆thin-xs
     where
-      cond1 : (u : Unit*) (t : ℙ A) → t ∈ return ys → t ⊆ xs
+      cond1 : (u : Unit*) (t : ℙ A) 
+            → t ∈ return ys → t ⊆ xs
       cond1 _ t t∈ret a a∈t =
         rec (P.∈-isProp xs a) (λ ys≡t → ys⊆xs a (subst (λ w → a ∈ w) (sym ys≡t) a∈t)) t∈ret
 
-      cond2 : (u : Unit*) (t : ℙ A) (y0 : A) → t ∈ return ys → y0 ∈ xs
+      cond2 : (u : Unit*) (t : ℙ A) (y0 : A) 
+            → t ∈ return ys 
+            → y0 ∈ xs
             → ∥ Σ A (λ y1 → (y1 ∈ t) × (y1 ∈ Q y0)) ∥₁
       cond2 _ t y0 t∈ret y0∈xs =
         rec squash₁ (λ ys≡t → subst (λ w → ∥ Σ A (λ y1 → (y1 ∈ w) × (y1 ∈ Q y0)) ∥₁) ys≡t (q y0 y0∈xs)) t∈ret
@@ -76,10 +89,11 @@ record ThinQ {ℓ : Level} {A : Type ℓ} (Q : A → ℙ A) : Type (ℓ-suc (ℓ
   Monotonic {X} f = ∀ x v w → v ∈ Q w → ∀ z → z ∈ f x w
                   → ∥ Σ A (λ z' → (z' ∈ f x v) × (z' ∈ Q z)) ∥₁
 
-  thin-cancel : {X : Type ℓ} (f : X → ℙ A) →
-    (x : X) (t : ℙ A) (y0 : A)
+  thin-cancel : {X : Type ℓ} (f : X → ℙ A)
+    → (x : X) (t : ℙ A) (y0 : A)
     → t ∈ (thin ∘ f) x 
-    → y0 ∈ f x → ∥ Σ A (λ y1 → (y1 ∈ t) × (y1 ∈ Q y0)) ∥₁
+    → y0 ∈ f x 
+    → ∥ Σ A (λ y1 → (y1 ∈ t) × (y1 ∈ Q y0)) ∥₁
   thin-cancel {X} f = snd (thin-universal-property-func-⇒ {X} f (thin ∘ f) (⊑-refl (thin ∘ f)))
   
   thinning-thm : {X : Type ℓ}
@@ -128,11 +142,15 @@ record ThinQ {ℓ : Level} {A : Type ℓ} (Q : A → ℙ A) : Type (ℓ-suc (ℓ
               u⊆m = fst (thin-universal-property-set-⇒ m u u∈thin-m)
 
               -- every member of m is dominated by some member of u
-              u-dom : ∀ w → w ∈ m → ∥ Σ A (λ v → (v ∈ u) × (v ∈ Q w)) ∥₁
+              u-dom : ∀ w 
+                    → w ∈ m 
+                    → ∥ Σ A (λ v → (v ∈ u) × (v ∈ Q w)) ∥₁
               u-dom = snd (thin-universal-property-set-⇒ m u u∈thin-m)
 
               -- every member of (f x' =<< u) is dominated by some member of t
-              t-dom : ∀ z → z ∈ (f x' =<< u) → ∥ Σ A (λ y → (y ∈ t) × (y ∈ Q z)) ∥₁
+              t-dom : ∀ z 
+                    → z ∈ (f x' =<< u) 
+                    → ∥ Σ A (λ y → (y ∈ t) × (y ∈ Q z)) ∥₁
               t-dom = snd (thin-universal-property-set-⇒ (f x' =<< u) t t∈thin-f-u)
 
               -- (a) t ⊆ f x' =<< u ⊆ f x' =<< m
@@ -142,7 +160,9 @@ record ThinQ {ℓ : Level} {A : Type ℓ} (Q : A → ℙ A) : Type (ℓ-suc (ℓ
                          (=<<-⊆-right u m (f x') u⊆m)
 
               -- (b) every member of (f x' =<< m) is dominated by some member of t,
-              cond-b : ∀ z → z ∈ (f x' =<< m) → ∥ Σ A (λ y → (y ∈ t) × (y ∈ Q z)) ∥₁
+              cond-b : ∀ z 
+                     → z ∈ (f x' =<< m) 
+                     → ∥ Σ A (λ y → (y ∈ t) × (y ∈ Q z)) ∥₁
               cond-b z z∈fm = rec squash₁ cond-b-helper z∈fm
                 where
                   cond-b-helper : Σ A (λ w → (w ∈ m) × (z ∈ f x' w))

@@ -40,7 +40,8 @@ module _ (thinD : Thinning.ThinT _⊴_) where
   -- candidate that some survivor dominates, and dominance implies ⪰ (⊴-⊆-≥ₛ),
   -- so a ⪰-maximum of the thinned set is still a ⪰-maximum of the original.
   minR-thin : {Y : Type ℓ-zero} (g : Y → ℙ (List Item))
-            → (minR ∘ mem) <=< (thin ∘ collect ∘ g) ⊑ minR ∘ g
+            → (minR ∘ mem) <=< (thin ∘ collect ∘ g) 
+                ⊑ minR ∘ g
   minR-thin g x y y∈ = rec (P.∈-isProp (minR (g x)) y) helper y∈
     where
       helper : Σ (T (List Item)) (λ t → (t ∈ thin (collect (g x))) × (y ∈ minR (mem t)))
@@ -81,8 +82,10 @@ module _ (thinD : Thinning.ThinT _⊴_) where
               y'∈ret
 
   knapsack-main-derivation-part-1 : ∀ w
-    → (minR ∘ mem) <=< foldrM (λ x → thin ∘ collect ∘ subsw w x <=< mem) ((thin ∘ collect) (return []))
-    ⊑ knapsack w
+    → (minR ∘ mem) <=< 
+        foldrM (λ x → thin ∘ collect ∘ subsw w x <=< mem) 
+               ((thin ∘ collect) (return []))
+      ⊑ knapsack w
   knapsack-main-derivation-part-1 w = reasoning⊑ (
     ⊑begin
     (minR ∘ mem) <=< foldrM (λ x → thin ∘ collect ∘ subsw w x <=< mem) ((thin ∘ collect) (return []))
@@ -104,7 +107,9 @@ module _ (thinD : Thinning.ThinT _⊴_) where
     knapsack w
     ⊑∎)
 
-  knapsack-main-derivation-part-2 : ∀ t → ∀ w → ∀ x → return (thinmerge t (add w x t)) ⊆ (thin ∘ collect ∘ subsw w x <=< mem) t
+  knapsack-main-derivation-part-2 : ∀ t → ∀ w → ∀ x 
+      → return (thinmerge t (add w x t)) 
+          ⊆ (thin ∘ collect ∘ subsw w x <=< mem) t
   knapsack-main-derivation-part-2 t w x = reasoning⊆ (
     ⊆begin
     return (thinmerge t (add w x t))
@@ -141,7 +146,8 @@ module _ (thinD : Thinning.ThinT _⊴_) where
           ∎
 
       -- collect turns that ∪ into a mergeT, and collect addSet *is* add w x t
-      collect-dist : collect (subsw w x =<< mem t) ≡ mergeT (collect (mem t)) (add w x t)
+      collect-dist : collect (subsw w x =<< mem t) 
+                       ≡ mergeT (collect (mem t)) (add w x t)
       collect-dist = cong collect dist ∙ collect-∪ (mem t) addSet
 
       -- thinmerge p q is a valid thinning of the merge of p and q: (a) every
@@ -163,7 +169,8 @@ module _ (thinD : Thinning.ThinT _⊴_) where
 
   knapsack-main-derivation-part-3 : ∀ w
     → return ∘ head ∘ foldr (λ x t → thinmerge t (add w x t)) [ [] ]
-      ⊑ (minR ∘ mem) <=< foldrM (λ x → thin ∘ collect ∘ subsw w x <=< mem) ((thin ∘ collect) (return []))
+      ⊑ (minR ∘ mem) <=< foldrM (λ x → thin ∘ collect ∘ subsw w x <=< mem) 
+                                ((thin ∘ collect) (return []))
   knapsack-main-derivation-part-3 w = reasoning⊑ (
     ⊑begin
     return ∘ head ∘ foldr (λ x t → thinmerge t (add w x t)) [ [] ]
@@ -191,7 +198,8 @@ module _ (thinD : Thinning.ThinT _⊴_) where
 
       pure-fold⊑foldrM :
         (return ∘ foldr (λ x t → thinmerge t (add w x t)) [ [] ])
-        ⊑ foldrM (λ x → thin ∘ collect ∘ subsw w x <=< mem) ((thin ∘ collect) (return []))
+        ⊑ foldrM (λ x → thin ∘ collect ∘ subsw w x <=< mem) 
+                 ((thin ∘ collect) (return []))
       pure-fold⊑foldrM = reasoning⊑ (
         ⊑begin
         return ∘ foldr (λ x t → thinmerge t (add w x t)) [ [] ]
@@ -211,7 +219,8 @@ module _ (thinD : Thinning.ThinT _⊴_) where
         ⊑∎)
 
   knapsack-main-derivation-final : ∀ w 
-    → return ∘ head ∘ foldr (λ x t → thinmerge t (add w x t)) [ [] ] ⊑ knapsack w
+    → return ∘ head ∘ foldr (λ x t → thinmerge t (add w x t)) [ [] ] 
+       ⊑ knapsack w
   knapsack-main-derivation-final w =
     ⊑-trans {r = return ∘ head ∘ foldr (λ x t → thinmerge t (add w x t)) [ [] ]}
             {s = (minR ∘ mem) <=< foldrM (λ x → thin ∘ collect ∘ subsw w x <=< mem) ((thin ∘ collect) (return []))}
@@ -220,5 +229,6 @@ module _ (thinD : Thinning.ThinT _⊴_) where
 
   
   -- The final result
-  knapsack-main-derivation-final-eq : ∀ w → return ∘ (knapsackImpl w) ⊑ knapsack w
+  knapsack-main-derivation-final-eq : ∀ w 
+      → return ∘ (knapsackImpl w) ⊑ knapsack w
   knapsack-main-derivation-final-eq w = knapsack-main-derivation-final w

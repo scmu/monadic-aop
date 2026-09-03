@@ -174,27 +174,39 @@ fmap f m = m >>= λ x → return (f x)
 
 -- monotonicity
 
-<$>-monotonic : {X Y : Type ℓ} → (f : X → Y) → (xs ys : ℙ X) → xs ⊆ ys → (f <$> xs) ⊆ (f <$> ys)
+<$>-monotonic : {X Y : Type ℓ} → (f : X → Y) → (xs ys : ℙ X) 
+    → xs ⊆ ys 
+    → (f <$> xs) ⊆ (f <$> ys)
 <$>-monotonic f xs ys xs⊆ys y y∈ = 
   rec squash₁ (λ { (x , x∈xs , fx≡y) → ∣ x , xs⊆ys x x∈xs , fx≡y ∣₁ }) y∈
 
->>=-monotonic : {X Y : Type ℓ} → (f : X → ℙ Y) → (xs ys : ℙ X) → xs ⊆ ys → (xs >>= f) ⊆ (ys >>= f)
+>>=-monotonic : {X Y : Type ℓ} → (f : X → ℙ Y) → (xs ys : ℙ X) 
+    → xs ⊆ ys 
+    → (xs >>= f) ⊆ (ys >>= f)
 >>=-monotonic f xs ys xs⊆ys y y∈ = 
   rec squash₁ (λ { (x , x∈xs , y∈fx) → ∣ x , xs⊆ys x x∈xs , y∈fx ∣₁ }) y∈
 
-=<<-monotonic-right : {X Y : Type ℓ} → (f : X → ℙ Y) → (xs ys : ℙ X) → xs ⊆ ys → (f =<< xs) ⊆ (f =<< ys)
+=<<-monotonic-right : {X Y : Type ℓ} → (f : X → ℙ Y) → (xs ys : ℙ X) 
+    → xs ⊆ ys 
+    → (f =<< xs) ⊆ (f =<< ys)
 =<<-monotonic-right f xs ys xs⊆ys y y∈ = 
   rec squash₁ (λ { (x , x∈xs , y∈fx) → ∣ x , xs⊆ys x x∈xs , y∈fx ∣₁ }) y∈
 
-=<<-monotonic-left : {X Y : Type ℓ} → (xs : ℙ X) → (f₁ f₂ : X → ℙ Y) → f₁ ⊑ f₂ → (f₁ =<< xs) ⊆ (f₂ =<< xs)
+=<<-monotonic-left : {X Y : Type ℓ} → (xs : ℙ X) → (f₁ f₂ : X → ℙ Y) 
+    → f₁ ⊑ f₂ 
+    → (f₁ =<< xs) ⊆ (f₂ =<< xs)
 =<<-monotonic-left xs f₁ f₂ f₁⊑f₂ y y∈ = 
   rec squash₁ (λ { (x , x∈xs , y∈f₁x) → ∣ x , x∈xs , f₁⊑f₂ x y y∈f₁x ∣₁ }) y∈
 
-<=<-monotonic-left : {X Y Z : Type ℓ} → (f : X → ℙ Y) → (g₁ g₂ : Y → ℙ Z) → g₁ ⊑ g₂ → (g₁ <=< f) ⊑ (g₂ <=< f)
+<=<-monotonic-left : {X Y Z : Type ℓ} → (f : X → ℙ Y) → (g₁ g₂ : Y → ℙ Z) 
+    → g₁ ⊑ g₂ 
+    → (g₁ <=< f) ⊑ (g₂ <=< f)
 <=<-monotonic-left f g₁ g₂ g₁⊑g₂ x z z∈ = 
   rec squash₁ (λ { (y , y∈fx , z∈g₁y) → ∣ y , y∈fx , g₁⊑g₂ y z z∈g₁y ∣₁ }) z∈
 
-<=<-monotonic-right : {X Y Z : Type ℓ} → (g : Y → ℙ Z) → (f₁ f₂ : X → ℙ Y) → f₁ ⊑ f₂ → (g <=< f₁) ⊑ (g <=< f₂)
+<=<-monotonic-right : {X Y Z : Type ℓ} → (g : Y → ℙ Z) → (f₁ f₂ : X → ℙ Y) 
+    → f₁ ⊑ f₂ 
+    → (g <=< f₁) ⊑ (g <=< f₂)
 <=<-monotonic-right g f₁ f₂ f₁⊑f₂ x z z∈ = 
   rec squash₁ (λ { (y , y∈f₁x , z∈gy) → ∣ y , f₁⊑f₂ x y y∈f₁x , z∈gy ∣₁ }) z∈
 
@@ -206,10 +218,12 @@ _° : {X Y : Type ℓ} → (X → ℙ Y) → (Y → ℙ X)
 °-idempotent : {X Y : Type ℓ} → (r : X → ℙ Y) → (r °) ° ≡ r
 °-idempotent r = refl
 
-°-order-preserving-⇒ : {X Y : Type ℓ} → (f g : X → ℙ Y) → (f °) ⊑ (g °) → f ⊑ g
+°-order-preserving-⇒ : {X Y : Type ℓ} → (f g : X → ℙ Y) 
+    → (f °) ⊑ (g °) → f ⊑ g
 °-order-preserving-⇒ f g p x x₁ x₂ = p x₁ x x₂
 
-°-order-preserving-⇐ : {X Y : Type ℓ} → (f g : X → ℙ Y) → f ⊑ g → (f °) ⊑ (g °)
+°-order-preserving-⇐ : {X Y : Type ℓ} → (f g : X → ℙ Y) 
+    → f ⊑ g → (f °) ⊑ (g °)
 °-order-preserving-⇐ f g p x x₁ x₂ = p x₁ x x₂
 
 --   -- factor
@@ -217,10 +231,14 @@ _° : {X Y : Type ℓ} → (X → ℙ Y) → (Y → ℙ X)
 _/_ : {X Y Z : Type ℓ} → (X → ℙ Z) → (X → ℙ Y) → (Y → ℙ Z)
 (t / s) y z = ∥ (∀ x → y ∈ s x → z ∈ t x) ∥₁ , squash₁
 
-/-universal-⇒ : {X Y Z : Type ℓ} → (r : Y → ℙ Z) → (s : X → ℙ Y) → (t : X → ℙ Z) → r <=< s ⊑ t → r ⊑ t / s
+/-universal-⇒ : {X Y Z : Type ℓ} → (r : Y → ℙ Z) → (s : X → ℙ Y) → (t : X → ℙ Z) 
+    → r <=< s ⊑ t 
+    → r ⊑ t / s
 /-universal-⇒ r s t r<=<s⊑t y z z∈ry = ∣ (λ x y∈sx → r<=<s⊑t x z ∣ (y , y∈sx , z∈ry) ∣₁) ∣₁
 
-/-universal-⇐ : {X Y Z : Type ℓ} → (r : Y → ℙ Z) → (s : X → ℙ Y) → (t : X → ℙ Z) → r ⊑ t / s → r <=< s ⊑ t 
+/-universal-⇐ : {X Y Z : Type ℓ} → (r : Y → ℙ Z) → (s : X → ℙ Y) → (t : X → ℙ Z) 
+    → r ⊑ t / s 
+    → r <=< s ⊑ t 
 /-universal-⇐ r s t r⊑t/s x z z∈r<=<s'x = rec (t x z .snd) (λ {(y , y∈sx , z∈ry) → rec (t x z .snd) (λ f → f x y∈sx) (r⊑t/s y z z∈ry) }) z∈r<=<s'x
 
 
@@ -228,17 +246,20 @@ _/_ : {X Y Z : Type ℓ} → (X → ℙ Z) → (X → ℙ Y) → (Y → ℙ Z)
 R-trans : {X : Type ℓ} → (R : X → ℙ X) → Type ℓ
 R-trans R = ∀ x y z → y ∈ R x → z ∈ R y → z ∈ R x
 
-<=<-refl : {X : Type ℓ} → (R : X → ℙ X) → (R-trans R) → (R <=< R) ⊑ R
+<=<-refl : {X : Type ℓ} → (R : X → ℙ X) → (R-trans R) 
+    → (R <=< R) ⊑ R
 <=<-refl R R-trans x x₁ x₁∈lhs = rec (P.∈-isProp (R x) x₁) (λ { (y , y∈Rx , z∈Ry) → R-trans x y x₁ y∈Rx z∈Ry}) x₁∈lhs
 
-<=<-assoc-left : {X : Type ℓ} → (R S T : X → ℙ X) → (R <=< S) <=< T ⊑ R <=< (S <=< T)
+<=<-assoc-left : {X : Type ℓ} → (R S T : X → ℙ X) 
+    → (R <=< S) <=< T ⊑ R <=< (S <=< T)
 <=<-assoc-left R S T x x' x'∈lhs = rec squash₁ (λ {(y ,  y∈Tx , x'∈R<=<Sy) → rec squash₁ (λ {(z , z∈Sy , x'∈Rz) → ∣ z , ∣ y , y∈Tx , z∈Sy ∣₁ , x'∈Rz  ∣₁ }) x'∈R<=<Sy }) x'∈lhs
 
-<=<-assoc-right : {X : Type ℓ} → (R S T : X → ℙ X) → R <=< (S <=< T) ⊑ (R <=< S) <=< T
+<=<-assoc-right : {X : Type ℓ} → (R S T : X → ℙ X) 
+    → R <=< (S <=< T) ⊑ (R <=< S) <=< T
 <=<-assoc-right R S T x x' x'∈lhs = rec squash₁ (λ {(z , z∈S<=<Tx , x'∈Rz) → rec squash₁ (λ z₁ → ∣ z₁ .fst , z₁ .snd .fst , ∣ z , z₁ .snd .snd , x'∈Rz ∣₁ ∣₁) z∈S<=<Tx}) x'∈lhs
 
 <=<-right-id-pure : {X Y Z : Type ℓ} → (f : X → ℙ Y) → (g : Z → X)
-                  → f <=< (return ∘ g) ≡ f ∘ g
+    → f <=< (return ∘ g) ≡ f ∘ g
 <=<-right-id-pure f g = funExt (λ x → ret-left-id (g x) f)
 
 <=<-right-id : {X Y : Type ℓ} → (f : X → ℙ Y) 

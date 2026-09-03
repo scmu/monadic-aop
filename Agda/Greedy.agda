@@ -21,8 +21,8 @@ module _ {ℓ : Level} {Y : Type ℓ} (R : Y → ℙ Y) (M : MinR R) where
     greedy_thm-proved-by-induction : {X : Type ℓ} (f : X → Y → ℙ Y) 
         → (hoare : ∀ x → Hoare-Monotonic R (f x))
         → (trans : R-trans R) 
-        → (e : ℙ Y) → 
-        foldrM (λ x → minR ∘ f x) (minR e) ⊑ minR ∘ foldrM f e
+        → (e : ℙ Y) 
+        → foldrM (λ x → minR ∘ f x) (minR e) ⊑ minR ∘ foldrM f e
     
     -- Base case: foldrM f e [] is e, so we just need minR e ⊆ minR e
     greedy_thm-proved-by-induction f hoare trans e [] y y∈ = y∈
@@ -72,8 +72,8 @@ module _ {ℓ : Level} {Y : Type ℓ} (R : Y → ℙ Y) (M : MinR R) where
     greedy_thm : {X : Type ℓ} (f : X → Y → ℙ Y) 
         → (hoare : ∀ x → Hoare-Monotonic R (f x))
         → (trans : R-trans R) 
-        → (e : ℙ Y) → 
-        foldrM (λ x → minR ∘ f x) (minR e) ⊑ minR ∘ foldrM f e
+        → (e : ℙ Y) 
+        → foldrM (λ x → minR ∘ f x) (minR e) ⊑ minR ∘ foldrM f e
     greedy_thm {X} f hoare trans e = foldrM-fixed-point-properties-⇐ (λ x → minR ∘ f x) (minR e)
       (minR ∘ foldrM f e) (P.⊆-refl (minR e)) pf2
       where 
