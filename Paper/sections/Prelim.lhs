@@ -181,7 +181,10 @@ A first attempt was to represent a set |P| by its characteristic predicate:
 P : Type -> Type 1
 P a = a -> Type {-"~~."-}
 \end{spec}
-Given |x : a|, |P x| is a type, or a proposition, stating the conditions under which |x| is in the set denoted by |P x|.
+Let |a| be a type, and let |m| be of type |P a|, that is,
+|a -> Type|.
+For all |x : a|, |m x| yields a type, or a proposition in the broad sense, stating the conditions under which |x| is in the set denoted by |m|.
+Terms having type |m x| are proofs that |x| is in the set.
 Monad operators |return| and |(=<<)| are defined by
 \begin{spec}
 return : {a : Type} -> a -> P a
@@ -198,34 +201,41 @@ To prove the left identity law |return =<< m = m|, for example, amounts to provi
 \begin{spec}
   (\y -> Sum{-"\!"-}[x `inn` a] (m x * x <=> y)) {-"~"-}<=>{-"~"-} m {-"~~."-}
 \end{spec}
-The right-hand side |m| is a function which yields, for each member |y|, a proof that |y| is in |m|,
-while the left-hand side is a function which produces, for each member |y|, a dependent pair consisting of a value |x : a| , a proof that |x| is in |m|, and a proof that |x <=> y|.
+Consider the right-hand side.
+For all |y|, terms having type |m y| are proofs that |y| is in |m|.
+Meanwhile, applying the function on the left-hand side to |y|,
+we get a type whose terms are dependent pairs consisting of a value |x : a|, a proof that |x| is in |m|, and a proof that |x <=> y|.
 While logically we recognize that they are equivalent, in the type theory of Agda the two sides are different, albeit isomorphic, types.
 
 \paraskip
 \paragraph{Cubical Agda}~
 To make the proofs easier we prefer a type theory where such types denote ``the same'' properties are indeed considered equivalent.
-We move to Cubical Agda \cite{Vezzosi:19:Cubical}, and make use of its definition of |P|, in terms of |hprop| (Homotopic Type Theory (HoTT) propositions), which expands to:
+We move to Cubical Agda \cite{Vezzosi:19:Cubical}, and make use of its definition of |P|, in terms of |hProp| (Homotopy Type Theory (HoTT) propositions), which expands to:
 \begin{spec}
 P : Type l -> Type (1+l)
 P a = a -> Sum{-"\!"-}[b `inn` Type _] ((y0 y1 : b) -> y0 <=> y1) {-"~~."-}
 \end{spec}
-That is, given |x| of type |a|, |P x| is a type |b| whose terms are proofs that |x| is in the set |P x|, \emph{paired with a proof that any two terms |y0| and |y1| having type |b| are ``equal''}.
+That is, let |m : P a| and |x : a|,
+|m x| is a type whose terms are pairs.
+The first component of the pair has type |b| ----
+the intention is that a term of type |b| is a proof that |x| is in the set denoted by |m|.
+The second component is a proof that \emph{any two terms |y0| and |y1| having type |b| are ``equal''}.
 Here the equality |(<=>)| is defined in the HoTT sense, that there is a path from |y0| to |y1|.
 
 %format squash1 = "\Varid{squash_{1}}"
 %format sem1(e) = "\Vert" e "\Vert_{1}"
 In the terminology of Cubical Agda and HoTT, a \emph{proposition} is a type whose terms are always equal.
-The operator |sem1(_)| converts a type to a proposition, and |squash1| is a proof that any two terms of the said type are equal (that is, there exists a path between them).
-They are defined as constructors of a \emph{higher-order inductive type}, but we omit the details.
+The operator |sem1(_)| converts a type to a proposition, and |squash1| is a proof that any two terms of type |sem1(a)| are equal (that is, there exists a path between them).
+They are defined as constructors of a \emph{higher inductive type}, but we omit the details.
 Operators |return| and |(=<<)| are defined by:
 \begin{spec}
 return : a -> P a
-return x  = \y -> sem1(x <=> y) , squash1 {-"~~,"-}
+return x  = \y -> (sem1(x <=> y) , squash1) {-"~~,"-}
 
 (=<<) : {a b : Type l} -> (a -> P b) -> P a -> P b
-f =<< m   = \y -> sem1(\Sum _ (\ x -> fst (m x) * fst (f x y))) , squash1 {-"~~."-}
+f =<< m   = \y -> (sem1(\Sum _ (\ x -> fst (m x) * fst (f x y))) , squash1) {-"~~."-}
 \end{spec}
+Note that in |fst (m x)| and |fst (f x y)|, the function |fst| extracts the first components of the pairs, that is, proofs that |x| is in the set denoted by |m| and that |y| is in the set denoted by |f x|.
 
 Properties such as the left identity may then be proved in Agda:
 %format leftId = "\Varid{left}{\textendash}\Varid{id}"
@@ -234,7 +244,7 @@ leftId : (m : P a) -> (return =<< m) <=> m
 leftId = ...
 \end{spec}
 Proof of these primitive properties typically involves use of functional extensionality,
-and the |rec| operator, of type |isProp P -> (b -> P) -> sem1 b -> P|, which says that if every |b| satisfies proposition |P|, every |sem1 b| satisfies |P| as well.
+and the |rec| operator, of type |isProp Q -> (b -> Q) -> sem1 b -> Q| for all |Q|, which says that if every |b| satisfies proposition |Q|, every |sem1 b| satisfies |Q| as well.
 Interested readers are referred to the accompanying Agda code.
 Other properties may then be established on these primitive properties, without touching these details.
 
