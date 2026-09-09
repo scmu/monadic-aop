@@ -60,12 +60,12 @@ To the users, the two calculus are rather similar. While their foundations are s
 
 Another problem shared by all approaches above is that it is hard to fit them into the curriculum of a functional programming course.
 Imagine a functional programming course with an emphasis on correctness and reasoning,
-covering topics include definition and proof by induction.
+covering topics including inductive definitions and proofs.
 Everything looks fine, until we wish to demonstrate that, given the ability to reason about programs, one can derive an algorithm solving a optimisation problem, such as 0-1 knapsack, which returns not the optimal value but the solution itself.
-Suddenly we have to extend the language, move to a different semantics, be it relations or multifunctions, which seems to challenge one's established understanding of the language and break some rules (e.g $\beta$-reduction or $\eta$-expansion) one relied on, only to cover some ``corner cases.''
+Suddenly we have to extend the language, move to a different semantics, be it relations or multifunctions, which seems to challenge one's established understanding of the language and break some rules (e.g $\beta$-reduction or $\eta$-expansion) one has been relying on, only to cover some ``corner cases.''
 These extensions appear to be invented only for this section of the course, and are then forgotten when we move on to the next part.
 
-Meanwhile, we already have \emph{monads}, a general framework for modelling non-determinsm as well as other effects, which a functional programming course must talk about anyway.
+Meanwhile, we already have \emph{monads}, a general framework for modelling non-determinism as well as other effects, which a functional programming course must talk about anyway.
 
 \paraskip
 \paragraph{This article} We propose a monadic notation for specifying optimisation problems and derive from them algorithms. We consider problems having the form:

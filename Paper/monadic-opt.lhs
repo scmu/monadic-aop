@@ -29,7 +29,7 @@ In deriving algorithms for optimisation problems where optimal solutions are not
 To formally talk about non-determinism, a point-free calculus based on relations was developed in the 90's,
 which has been difficult to promote due to its complexity,
 while subsequent pointwise approaches tend to be ad-hoc and imprecise.
-We propose a notation for non-deterministic program derivation based on monads,
+We propose a notation for deriving non-deterministic programs based on monads,
 show that it is expressive enough to model concepts including maximum, monotonicity, Greedy/Thinning Theorems,
 and demonstrate how to carry out derivation in this notation.
 Working in it, one is encouraged to think in terms of symbols,

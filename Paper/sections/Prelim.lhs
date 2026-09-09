@@ -106,13 +106,14 @@ Every value |m| might yield is a value allowed by |n|.
 We also lift the relation to functions: |f `sse` g = (forall x : f x `sse` g x)|.
 
 The containment relation is reflexive and transitive.
-Monadic bind |(=<<)| (and thus |(<=<)|) is monotonic with respect to containment,
+Monadic bind |(=<<)| is monotonic with respect to containment:
 \begin{align*}
   |m `sse` n| &~\Rightarrow~ |f =<< m `sse` f =<< n| \mbox{~~,}\\
   |f `sse` g| &~\Rightarrow~ |f =<< m `sse` g =<< m| \mbox{~~.}
 \end{align*}
+Therefore, |(<=<)| is also monotonic with respect to containment.
 Meanwhile, function application (and composition) in general is \emph{not} monotonic with respect to containment, that is, having |m `sse` n| certainly does not guarantee that |h m `sse` h n| for arbitrary |h :: M a -> M b|, nor does |f `sse` g| guarantee |h . f `sse` h . g|.
-Later in this article we will need monotonicity in more specific cases, where we will discuss conditions for such monotonicity to hold.%
+Later in this article we will need monotonicity in more specific cases, where we will discuss conditions for them to hold.%
 \footnote{That |(.)| being not monotonic may look restrictive, but it is just a common phenomena that was often overlooked due to notational differences.
 Consider \citet{BirddeMoor:97:Algebra}, for example, the equivalent of our |h . f| should be written as |h . {-"\Lambda\,"-} f| in their formulation, and the $\Lambda$ operator, which collects the results of a relation in a set, is \emph{not} monotonic.
 The |(.)| operator of Bird and de Moor, denoting composition of relations, corresponds to our |(<=<)|, and is indeed monotonic with respect to |(`sse`)|.}
@@ -209,7 +210,7 @@ While logically we recognize that they are equivalent, in the type theory of Agd
 
 \paraskip
 \paragraph{Cubical Agda}~
-To make the proofs easier we prefer a type theory where such types denote ``the same'' properties are indeed considered equivalent.
+We prefer to work in a type theory where such types denote ``the same'' properties are indeed considered equivalent.
 We move to Cubical Agda \cite{Vezzosi:19:Cubical}, and make use of its definition of |P|, in terms of |hProp| (Homotopy Type Theory (HoTT) propositions), which expands to:
 \begin{spec}
 P : Type l -> Type (1+l)
@@ -229,7 +230,7 @@ The operator |sem1(_)| converts a type to a proposition, and |squash1| is a proo
 They are defined as constructors of a \emph{higher inductive type}, but we omit the details.
 Operators |return| and |(=<<)| are defined by:
 \begin{spec}
-return : a -> P a
+return : {a : Type l} -> a -> P a
 return x  = \y -> (sem1(x <=> y) , squash1) {-"~~,"-}
 
 (=<<) : {a b : Type l} -> (a -> P b) -> P a -> P b
