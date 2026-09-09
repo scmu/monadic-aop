@@ -83,39 +83,39 @@ open HasMinProps _≥ₛ_ Max≥ₛ ≥ₛ-refl ≥ₛ-trans ≥ₛ-total
 -- lemma for maxlist-⊆-minR
 
 maxlist-in-member : (x : List ℤ) (xs : List (List ℤ)) 
-    → maxlist (_≥ₛ_ °) ≥ₛ°-total (x ∷ xs) ∈ member (x ∷ xs)
+    → maxlist (_≥ₛ_ °) ≥ₛ°-total (x ∷ xs) tt ∈ member (x ∷ xs)
 maxlist-in-member x [] = ∣ _⊎_.inl (y∈[y] x) ∣₁
-maxlist-in-member x (y ∷ xs) with ≥ₛ°-total x (maxlist (_≥ₛ_ °) ≥ₛ°-total (y ∷ xs))
+maxlist-in-member x (y ∷ xs) with ≥ₛ°-total x (maxlist (_≥ₛ_ °) ≥ₛ°-total (y ∷ xs) tt)
 ... | _⊎_.inl _ = ∣ _⊎_.inr (maxlist-in-member y xs) ∣₁
 ... | _⊎_.inr _ = ∣ _⊎_.inl (y∈[y] x) ∣₁
 
 maxlist-is-max : (x : List ℤ) (xs : List (List ℤ)) → ∀ z 
     → z ∈ member (x ∷ xs) 
-    → maxlist (_≥ₛ_ °) ≥ₛ°-total (x ∷ xs) ∈ _≥ₛ_ z
+    → maxlist (_≥ₛ_ °) ≥ₛ°-total (x ∷ xs) tt ∈ _≥ₛ_ z
 maxlist-is-max x [] z z∈mem = rec (P.∈-isProp (_≥ₛ_ z) x) helper z∈mem
   where
     helper : (z ∈ return x) ⊎ (z ∈ ∅) → x ∈ _≥ₛ_ z
     helper (_⊎_.inl z∈retx) = rec (P.∈-isProp (_≥ₛ_ z) x) (λ x≡z → subst (λ w → x ∈ _≥ₛ_ w) x≡z (≥ₛ-refl x)) z∈retx
     helper (_⊎_.inr z∈∅) = elim* z∈∅
-maxlist-is-max x (y ∷ xs) z z∈mem with ≥ₛ°-total x (maxlist (_≥ₛ_ °) ≥ₛ°-total (y ∷ xs))
-... | _⊎_.inl x∈≥maxYs = rec (P.∈-isProp (_≥ₛ_ z) (maxlist (_≥ₛ_ °) ≥ₛ°-total (y ∷ xs))) helper z∈mem
+maxlist-is-max x (y ∷ xs) z z∈mem with ≥ₛ°-total x (maxlist (_≥ₛ_ °) ≥ₛ°-total (y ∷ xs) tt)
+... | _⊎_.inl x∈≥maxYs = rec (P.∈-isProp (_≥ₛ_ z) (maxlist (_≥ₛ_ °) ≥ₛ°-total (y ∷ xs) tt)) helper z∈mem
   where
-    helper : (z ∈ return x) ⊎ (z ∈ member (y ∷ xs)) → maxlist (_≥ₛ_ °) ≥ₛ°-total (y ∷ xs) ∈ _≥ₛ_ z
-    helper (_⊎_.inl z∈retx) = rec (P.∈-isProp (_≥ₛ_ z) (maxlist (_≥ₛ_ °) ≥ₛ°-total (y ∷ xs))) (λ x≡z → subst (λ w → maxlist (_≥ₛ_ °) ≥ₛ°-total (y ∷ xs) ∈ _≥ₛ_ w) x≡z x∈≥maxYs) z∈retx
+    helper : (z ∈ return x) ⊎ (z ∈ member (y ∷ xs)) → maxlist (_≥ₛ_ °) ≥ₛ°-total (y ∷ xs) tt ∈ _≥ₛ_ z
+    helper (_⊎_.inl z∈retx) = rec (P.∈-isProp (_≥ₛ_ z) (maxlist (_≥ₛ_ °) ≥ₛ°-total (y ∷ xs) tt)) (λ x≡z → subst (λ w → maxlist (_≥ₛ_ °) ≥ₛ°-total (y ∷ xs) tt ∈ _≥ₛ_ w) x≡z x∈≥maxYs) z∈retx
     helper (_⊎_.inr z∈mem') = maxlist-is-max y xs z z∈mem'
 ... | _⊎_.inr maxYs∈≥x = rec (P.∈-isProp (_≥ₛ_ z) x) helper z∈mem
   where
     helper : (z ∈ return x) ⊎ (z ∈ member (y ∷ xs)) → x ∈ _≥ₛ_ z
     helper (_⊎_.inl z∈retx) = rec (P.∈-isProp (_≥ₛ_ z) x) (λ x≡z → subst (λ w → x ∈ _≥ₛ_ w) x≡z (≥ₛ-refl x)) z∈retx
-    helper (_⊎_.inr z∈mem') = ≥ₛ-trans x (maxlist (_≥ₛ_ °) ≥ₛ°-total (y ∷ xs)) z maxYs∈≥x (maxlist-is-max y xs z z∈mem')
+    helper (_⊎_.inr z∈mem') = ≥ₛ-trans x (maxlist (_≥ₛ_ °) ≥ₛ°-total (y ∷ xs) tt) z maxYs∈≥x (maxlist-is-max y xs z z∈mem')
 
 -- return (maxlist xs) ⊆ max⊴ (member xs)
 maxlist-⊆-minR : (x : List ℤ) (xs : List (List ℤ)) 
-    → return (maxlist (_≥ₛ_ °) ≥ₛ°-total (x ∷ xs)) 
+    → return (maxlist (_≥ₛ_ °) ≥ₛ°-total (x ∷ xs) tt) 
          ⊆ minR (member (x ∷ xs))
 maxlist-⊆-minR x xs y y∈ret = rec (P.∈-isProp (minR (member (x ∷ xs))) y)
     (λ max≡y → subst (λ w → w ∈ minR (member (x ∷ xs))) max≡y
-        (minR-property-⇐ (member (x ∷ xs)) (maxlist (_≥ₛ_ °) ≥ₛ°-total (x ∷ xs))
+        (minR-property-⇐ (member (x ∷ xs)) (maxlist (_≥ₛ_ °) ≥ₛ°-total (x ∷ xs) tt)
             (maxlist-in-member x xs) (maxlist-is-max x xs)))
     y∈ret
 
@@ -263,34 +263,40 @@ mss-thm  = reasoning⊑ (
                 rec squash₁ (λ { (ys , ys∈f_xs , y∈maxPre_x_ys) → 
                     let 
                         path-h = scanrM-head-is-foldrM maxPre (return []) xs
-                        ys∈map-h = subst (λ S → ys ∈ S) (sym path-h) ys∈f_xs
-                    in rec squash₁ (λ { (ls , ls∈hxs , head_ls≡ys) → rec squash₁ (λ head-ls≡ys →
+                        ys∈headM-h = subst (λ S → ys ∈ S) (sym path-h) ys∈f_xs
+                    in rec squash₁ (λ { (ls , ls∈hxs , ys∈headM_ls) →
                         let 
-                            y∈maxPre_x_head_ls = subst (λ w → y ∈ maxPre x w) (sym head-ls≡ys) y∈maxPre_x_ys
+                            -- onHead g ls = g =<< headM ls, so ys ∈ headM ls and y ∈ maxPre x ys implies y ∈ onHead (maxPre x) ls
+                            y∈onHead : y ∈ onHead (maxPre x) ls
+                            y∈onHead = subst (λ S → y ∈ S) (sym (onHead-headM (maxPre x) ls))
+                                             ∣ ys , ys∈headM_ls , y∈maxPre_x_ys ∣₁
                             ls_xxs = y ∷ ls
                             ls_xxs_∈_h_xxs : ls_xxs ∈ h (x ∷ xs)
-                            ls_xxs_∈_h_xxs = ∣ ls , ls∈hxs , ∣ y , y∈maxPre_x_head_ls , y∈[y] ls_xxs ∣₁ ∣₁
+                            ls_xxs_∈_h_xxs = ∣ ls , ls∈hxs , ∣ y , y∈onHead , y∈[y] ls_xxs ∣₁ ∣₁
                             y∈m_ls_xxs : y ∈ member ls_xxs
                             y∈m_ls_xxs = ∣ _⊎_.inl ∣ refl ∣₁ ∣₁
                             z∈mh_xxs : y ∈ (m <=< h) (x ∷ xs)
                             z∈mh_xxs = ∣ ls_xxs , ls_xxs_∈_h_xxs , y∈m_ls_xxs ∣₁
-                        in ∣ y , z∈mh_xxs , ≥ₛ-refl y ∣₁) head_ls≡ys
-                    }) ys∈map-h
+                        in ∣ y , z∈mh_xxs , ≥ₛ-refl y ∣₁
+                    }) ys∈headM-h
                 }) y∈f_xxs
             helper (_⊎_.inr y∈fs_xs) = 
                 rec squash₁ (λ { (z , z∈mh_xs , y≥z) → 
                     rec squash₁ (λ { (ls , ls∈hxs , z∈member_ls) → 
+                      let ls-ne = scanrM-NonEmpty maxPre (return []) xs ls ls∈hxs in
                         rec squash₁ (λ { (z' , z'∈maxPre) → 
                             let 
+                                z'∈onHead : z' ∈ onHead (maxPre x) ls
+                                z'∈onHead = subst (λ S → z' ∈ S) (sym (onHead-head (maxPre x) ls ls-ne)) z'∈maxPre
                                 ls_xxs = z' ∷ ls
                                 ls_xxs_∈_h_xxs : ls_xxs ∈ h (x ∷ xs)
-                                ls_xxs_∈_h_xxs = ∣ ls , ls∈hxs , ∣ z' , z'∈maxPre , y∈[y] ls_xxs ∣₁ ∣₁
+                                ls_xxs_∈_h_xxs = ∣ ls , ls∈hxs , ∣ z' , z'∈onHead , y∈[y] ls_xxs ∣₁ ∣₁
                                 z∈m_ls_xxs : z ∈ member ls_xxs
                                 z∈m_ls_xxs = ∣ _⊎_.inr z∈member_ls ∣₁
                                 z∈mh_xxs : z ∈ (m <=< h) (x ∷ xs)
                                 z∈mh_xxs = ∣ ls_xxs , ls_xxs_∈_h_xxs , z∈m_ls_xxs ∣₁
                             in ∣ z , z∈mh_xxs , y≥z ∣₁
-                        }) (hasmin-pre x (head ls))
+                        }) (hasmin-pre x (head ls ls-ne))
                     }) z∈mh_xs
                 }) (lem-2 xs y y∈fs_xs)
 
@@ -345,42 +351,48 @@ mss-thm  = reasoning⊑ (
             mono : max 0 (x + sumℤ ys) ≤ max 0 (x + sumℤ zs)
             mono = Order.≤MonotoneMax {m = 0} {n = 0} Order.isRefl≤ (≤-o+ {o = x} ys≤zs)
 
-        scanrM-head-≤-pure : ∀ (xs : List ℤ) (ls_xs : List (List ℤ))
+        scanrM-head-≤-pure : ∀ (xs : List ℤ) (ls_xs : List (List ℤ)) (ne : NonEmpty ls_xs)
             → ls_xs ∈ scanrM maxPre (return []) xs
-            → sumℤ (head ls_xs) ≤ sumℤ (head (scanr zplus [] xs))
-        scanrM-head-≤-pure [] ls_xs ls_xs∈h[] =
+            → sumℤ (head ls_xs ne) ≤ sumℤ (head (scanr zplus [] xs) (scanr-NonEmpty zplus [] xs))
+        scanrM-head-≤-pure [] ls_xs ne ls_xs∈h[] =
             rec Order.isProp≤ (λ { (e , e∈[] , wrape≡ls-trunc) →
                 rec Order.isProp≤ (λ wrape≡ls →
                     rec Order.isProp≤ (λ []≡e →
                         let
                             wrap[]≡ls : wrap [] ≡ ls_xs
                             wrap[]≡ls = cong wrap []≡e ∙ wrape≡ls
-                        in subst (λ w → sumℤ (head w) ≤ sumℤ (head (scanr zplus [] []))) wrap[]≡ls Order.isRefl≤
+                        in subst (λ w → (nw : NonEmpty w)
+                                      → sumℤ (head w nw)
+                                        ≤ sumℤ (head (scanr zplus [] []) (scanr-NonEmpty zplus [] [])))
+                                 wrap[]≡ls (λ _ → Order.isRefl≤) ne
                     ) e∈[]
                 ) wrape≡ls-trunc
             }) ls_xs∈h[]
-        scanrM-head-≤-pure (x ∷ xs) ls_xs ls_xs∈h_xxs =
+        scanrM-head-≤-pure (x ∷ xs) ls_xs ne ls_xs∈h_xxs =
             rec Order.isProp≤ (λ { (ys , ys∈hxs , c) →
-            rec Order.isProp≤ (λ { (z , z∈maxPre , z∷ys≡ls_xs-trunc) →
+            rec Order.isProp≤ (λ { (z , z∈onHead , z∷ys≡ls_xs-trunc) →
             rec Order.isProp≤ (λ z∷ys≡ls_xs →
                 let
                     qs = scanr zplus [] xs
+                    qs-ne = scanr-NonEmpty zplus [] xs
+                    ys-ne = scanrM-NonEmpty maxPre (return []) xs ys ys∈hxs
 
-                    z∈pre : z ∈ pre x (head ys)
-                    z∈pre = minR-id (pre x (head ys)) z z∈maxPre
+                    z∈maxPre : z ∈ maxPre x (head ys ys-ne)
+                    z∈maxPre = subst (λ S → z ∈ S) (onHead-head (maxPre x) ys ys-ne) z∈onHead
 
-                    z≤zplus : sumℤ z ≤ sumℤ (zplus x (head ys))
-                    z≤zplus = rec Order.isProp≤ id ((zplus-is-maxPre x (head ys)) .snd z z∈pre)
+                    z∈pre : z ∈ pre x (head ys ys-ne)
+                    z∈pre = minR-id (pre x (head ys ys-ne)) z z∈maxPre
 
-                    ih : sumℤ (head ys) ≤ sumℤ (head qs)
-                    ih = scanrM-head-≤-pure xs ys ys∈hxs
+                    z≤zplus : sumℤ z ≤ sumℤ (zplus x (head ys ys-ne))
+                    z≤zplus = rec Order.isProp≤ id ((zplus-is-maxPre x (head ys ys-ne)) .snd z z∈pre)
 
-                    mono : sumℤ (zplus x (head ys)) ≤ sumℤ (zplus x (head qs))
-                    mono = zplus-mono x (head ys) (head qs) ih
+                    ih : sumℤ (head ys ys-ne) ≤ sumℤ (head qs qs-ne)
+                    ih = scanrM-head-≤-pure xs ys ys-ne ys∈hxs
 
-                    head-ls_xs≡z : head ls_xs ≡ z
-                    head-ls_xs≡z = cong head (sym z∷ys≡ls_xs)
-                in subst (λ w → sumℤ w ≤ sumℤ (zplus x (head qs))) (sym head-ls_xs≡z) (isTrans≤ z≤zplus mono)
+                    mono : sumℤ (zplus x (head ys ys-ne)) ≤ sumℤ (zplus x (head qs qs-ne))
+                    mono = zplus-mono x (head ys ys-ne) (head qs qs-ne) ih
+                in subst (λ w → (nw : NonEmpty w) → sumℤ (head w nw) ≤ sumℤ (zplus x (head qs qs-ne)))
+                         z∷ys≡ls_xs (λ _ → isTrans≤ z≤zplus mono) ne
             ) z∷ys≡ls_xs-trunc
             }) c
             }) ls_xs∈h_xxs
@@ -404,7 +416,7 @@ mss-thm  = reasoning⊑ (
             e∈[]) ls∈[[]]}) ls∈h[]
         scanrM-≥-pure (x ∷ xs) ls ls∈h_xxs y y∈mem = 
             rec squash₁ (λ { (ls_xs , ls_xs∈hxs , c) → 
-            rec squash₁ (λ { (z' , z'∈maxPre , ls∈z'∷ls_xs) → 
+            rec squash₁ (λ { (z' , z'∈onHead , ls∈z'∷ls_xs) → 
             rec squash₁ (λ z'∷ls_xs≡ls → 
                 let
                     -- qs = scanr zplus [] xs                    
@@ -416,25 +428,30 @@ mss-thm  = reasoning⊑ (
                         rec squash₁ (λ y≡z'↓ →
                             let
                                 qs = scanr zplus [] xs
+                                qs-ne = scanr-NonEmpty zplus [] xs
+                                ls_xs-ne = scanrM-NonEmpty maxPre (return []) xs ls_xs ls_xs∈hxs
 
-                                z'∈pre : z' ∈ pre x (head ls_xs)
-                                z'∈pre = minR-id (pre x (head ls_xs)) z' z'∈maxPre
+                                z'∈maxPre : z' ∈ maxPre x (head ls_xs ls_xs-ne)
+                                z'∈maxPre = subst (λ S → z' ∈ S) (onHead-head (maxPre x) ls_xs ls_xs-ne) z'∈onHead
 
-                                z'≤zplus : sumℤ z' ≤ sumℤ (zplus x (head ls_xs))
-                                z'≤zplus = rec Order.isProp≤ id ((zplus-is-maxPre x (head ls_xs)) .snd z' z'∈pre)
+                                z'∈pre : z' ∈ pre x (head ls_xs ls_xs-ne)
+                                z'∈pre = minR-id (pre x (head ls_xs ls_xs-ne)) z' z'∈maxPre
 
-                                ih : sumℤ (head ls_xs) ≤ sumℤ (head qs)
-                                ih = scanrM-head-≤-pure xs ls_xs ls_xs∈hxs
+                                z'≤zplus : sumℤ z' ≤ sumℤ (zplus x (head ls_xs ls_xs-ne))
+                                z'≤zplus = rec Order.isProp≤ id ((zplus-is-maxPre x (head ls_xs ls_xs-ne)) .snd z' z'∈pre)
 
-                                mono : sumℤ (zplus x (head ls_xs)) ≤ sumℤ (zplus x (head qs))
-                                mono = zplus-mono x (head ls_xs) (head qs) ih
+                                ih : sumℤ (head ls_xs ls_xs-ne) ≤ sumℤ (head qs qs-ne)
+                                ih = scanrM-head-≤-pure xs ls_xs ls_xs-ne ls_xs∈hxs
 
-                                y≤zplus : sumℤ y ≤ sumℤ (zplus x (head qs))
-                                y≤zplus = subst (λ w → sumℤ w ≤ sumℤ (zplus x (head qs))) y≡z'↓ (isTrans≤ z'≤zplus mono)
+                                mono : sumℤ (zplus x (head ls_xs ls_xs-ne)) ≤ sumℤ (zplus x (head qs qs-ne))
+                                mono = zplus-mono x (head ls_xs ls_xs-ne) (head qs qs-ne) ih
 
-                                z∈scanr-mem : (zplus x (head qs)) ∈ member (scanr zplus [] (x ∷ xs))
-                                z∈scanr-mem = ∣ _⊎_.inl (y∈[y] (zplus x (head qs))) ∣₁
-                            in ∣ zplus x (head qs) , z∈scanr-mem , y≤zplus ∣₁
+                                y≤zplus : sumℤ y ≤ sumℤ (zplus x (head qs qs-ne))
+                                y≤zplus = subst (λ w → sumℤ w ≤ sumℤ (zplus x (head qs qs-ne))) y≡z'↓ (isTrans≤ z'≤zplus mono)
+
+                                z∈scanr-mem : (zplus x (head qs qs-ne)) ∈ member (scanr zplus [] (x ∷ xs))
+                                z∈scanr-mem = ∣ _⊎_.inl (y∈[y] (zplus x (head qs qs-ne))) ∣₁
+                            in ∣ zplus x (head qs qs-ne) , z∈scanr-mem , y≤zplus ∣₁
                         ) y≡z'
                     ;
                     -- Case 2: y ∈ member ls_xs, IH
