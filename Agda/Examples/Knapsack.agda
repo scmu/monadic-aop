@@ -168,12 +168,12 @@ module _ (thinD : Thinning.ThinT _⊴_) where
     (P.⊆-refl (mem t) , λ a a∈mem-t → ∣ a , a∈mem-t , ⊴-refl a ∣₁)
 
   knapsack-main-derivation-part-3 : ∀ w
-    → return ∘ head ∘ foldr (λ x t → thinmerge t (add w x t)) [ [] ]
+    → return ∘ knapsackImpl w
       ⊑ (minR ∘ mem) <=< foldrM (λ x → thin ∘ collect ∘ subsw w x <=< mem) 
                                 ((thin ∘ collect) (return []))
   knapsack-main-derivation-part-3 w = reasoning⊑ (
     ⊑begin
-    return ∘ head ∘ foldr (λ x t → thinmerge t (add w x t)) [ [] ]
+    return ∘ knapsackImpl w
 
     -- T is a sorted list
     ⊑⟨ incl⊑ (head-is-max w) ⟩
@@ -219,10 +219,10 @@ module _ (thinD : Thinning.ThinT _⊴_) where
         ⊑∎)
 
   knapsack-main-derivation-final : ∀ w 
-    → return ∘ head ∘ foldr (λ x t → thinmerge t (add w x t)) [ [] ] 
+    → return ∘ knapsackImpl w 
        ⊑ knapsack w
   knapsack-main-derivation-final w =
-    ⊑-trans {r = return ∘ head ∘ foldr (λ x t → thinmerge t (add w x t)) [ [] ]}
+    ⊑-trans {r = return ∘ knapsackImpl w}
             {s = (minR ∘ mem) <=< foldrM (λ x → thin ∘ collect ∘ subsw w x <=< mem) ((thin ∘ collect) (return []))}
             {t = knapsack w}
             (knapsack-main-derivation-part-3 w) (knapsack-main-derivation-part-1 w)

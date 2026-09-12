@@ -38,12 +38,8 @@ Sorted : T (List Item) → Type ℓ-zero
 Sorted []      = Unit
 Sorted (b ∷ t) = Below b t × Sorted t
 
-NonEmpty : T (List Item) → Type ℓ-zero
-NonEmpty []      = ⊥
-NonEmpty (_ ∷ _) = Unit
-
 -- A sorted non-empty list's head is a ⪰-maximum of its members.
-sorted-head-max : ∀ t → NonEmpty t → Sorted t → return (head t) ⊆ minR (mem t)
+sorted-head-max : ∀ t (ne : NonEmpty t) → Sorted t → return (head t ne) ⊆ minR (mem t)
 sorted-head-max (b ∷ t) _ (below , _) =
   set-property-⇐ (mem (b ∷ t)) (return b)
     (elem_subset_singleton (mem (b ∷ t)) b ∣ _⊎_.inl (y∈[y] b) ∣₁)
@@ -358,11 +354,11 @@ fold-NE w (x ∷ xs) = thinmerge-NE _ _ (_⊎_.inl (fold-NE w xs))
 
 -- The head of the fold's result is a ⪰-maximum of its members.
 head-is-max : ∀ w xs
-  → return (head (foldr (λ x t → thinmerge t (add w x t)) [ [] ] xs))
+  → return (head (foldr (λ x t → thinmerge t (add w x t)) [ [] ] xs) (fold-NE w xs))
     ⊆ minR (mem (foldr (λ x t → thinmerge t (add w x t)) [ [] ] xs))
 head-is-max w xs =
   sorted-head-max (foldr (λ x t → thinmerge t (add w x t)) [ [] ] xs)
     (fold-NE w xs) (fold-Sorted w xs)
 
 knapsackImpl : Wgt → List Item → List Item
-knapsackImpl w = head ∘ foldr (λ x t → thinmerge t (add w x t)) [ [] ]
+knapsackImpl w xs = head (foldr (λ x t → thinmerge t (add w x t)) [ [] ] xs) (fold-NE w xs)
