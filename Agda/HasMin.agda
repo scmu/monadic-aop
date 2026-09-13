@@ -6,6 +6,9 @@ open import Cubical.HITs.PropositionalTruncation as PT hiding (map)
 open import Cubical.Data.Sum.Base using (_⊎_; inl; inr)
 open import Cubical.Data.Sigma.Base using (_×_; Σ)
 open import Cubical.Foundations.Powerset as P using (ℙ; _∈_; _⊆_)
+open import Cubical.Data.List hiding (foldr; rec)
+open import Cubical.Data.Empty using (elim*; rec*; ⊥*)
+open import Cubical.Data.Bool using (Bool; true; false)
 
 open import Sets
 open import Monad_v2
@@ -20,13 +23,13 @@ module HasMinProps {ℓ : Level} {Y : Type ℓ} (R : Y → ℙ Y)
 
     open MinR minR-inst
 
-    -- 1. The minimum of a singleton set `return y` is just `y`
+    -- The minimum of a singleton set `return y` is just `y`
     hasmin-return : ∀ (y : Y) → ∥ Σ Y (λ y' → y' ∈ minR (return y)) ∥₁
     hasmin-return y = ∣ y , (minR-property-⇐ (return y) y (y∈[y] y) (λ x x∈[y] → 
         rec (P.∈-isProp (R x) y) 
             (λ y≡x → subst (λ v → fst (R v y)) y≡x (R-refl y)) x∈[y])) ∣₁ 
 
-    -- 2. If A and B have minimums, their union A ∪ B also has a minimum
+    -- If A and B have minimums, their union A ∪ B also has a minimum
     hasmin-union : (A B : ℙ Y) 
         → ∥ Σ Y (λ y → y ∈ minR A) ∥₁ 
         → ∥ Σ Y (λ y → y ∈ minR B) ∥₁ 
@@ -60,7 +63,7 @@ module HasMinProps {ℓ : Level} {Y : Type ℓ} (R : Y → ℙ Y)
     is-mono : (Y → Y) → Type ℓ
     is-mono f = ∀ x y → x ∈ R y → f x ∈ R (f y)
 
-    -- 3. If A has a minimum and f is monotonic, f <$> A has a minimum
+    -- If A has a minimum and f is monotonic, f <$> A has a minimum
     hasmin-fmap : (A : ℙ Y) (f : Y → Y) 
         → is-mono f 
         → ∥ Σ Y (λ y → y ∈ minR A) ∥₁ 
@@ -131,24 +134,112 @@ module HasMinProps {ℓ : Level} {Y : Type ℓ} (R : Y → ℙ Y)
         }) minA
 
 
-    -- 5. foldrM preserves hasmin
-    -- hasmin-foldrM : {X : Type _} (f : X → Y → ℙ Y) (e : ℙ Y)
-    --     → (∀ x → Hoare-Monotonic R (f x))
-    --     → (∀ x y → ∥ Σ Y (λ z → z ∈ minR (f x y)) ∥₁)
-    --     → ∥ Σ Y (λ y → y ∈ minR e) ∥₁
-    --     → ∀ xs → ∥ Σ Y (λ y → y ∈ minR (foldrM f e xs)) ∥₁
-    -- hasmin-foldrM f e f-hoare f-hasmin e-hasmin [] = ?
-    -- hasmin-foldrM f e f-hoare f-hasmin e-hasmin (x ∷ xs) = ?
-        -- let 
-        --     ih = hasmin-foldrM f e f-hoare f-hasmin e-hasmin xs
-        -- in hasmin-bind (foldrM f e xs) (f x) (f-hoare x) ih (f-hasmin x)
+    -- Sufficient condition for nonemptiness of foldrM f e xs:
+    -- e is nonempty and f x y is nonempty for every x and y
+    foldrM-nonempty : {X : Type ℓ} (f : X → Y → ℙ Y) (e : ℙ Y)
+        → ∥ Σ Y (λ y → y ∈ e) ∥₁
+        → (∀ x y → ∥ Σ Y (λ z → z ∈ f x y) ∥₁)
+        → (xs : List X)
+        → ∥ Σ Y (λ y → y ∈ foldrM f e xs) ∥₁
+    foldrM-nonempty f e e-ne f-ne []       = e-ne
+    foldrM-nonempty f e e-ne f-ne (x ∷ xs) =
+        rec squash₁ (λ { (y , y∈fold) →
+        rec squash₁ (λ { (z , z∈fxy) → ∣ z , ∣ y , y∈fold , z∈fxy ∣₁ ∣₁ })
+            (f-ne x y) })
+            (foldrM-nonempty f e e-ne f-ne xs)
 
-    hasmin-minR : (A : ℙ Y) 
-        → ∥ Σ Y (λ y → y ∈ minR A) ∥₁ 
-        → ∥ Σ Y (λ y → y ∈ minR (minR A)) ∥₁
-    hasmin-minR A h = PT.map (λ { (y , y∈minA) → 
-        y , (mf⊑mmf (const A) h y y∈minA) 
-        }) h
+    -- [ Finitely enumerable sets ]
+
+    -- A is finitely enumerable: it is the member set of some list
+    Finite : ℙ Y → Type (ℓ-suc ℓ)
+    Finite A = ∥ Σ (List Y) (λ ys → A ≡ member ys) ∥₁
+
+    member-++ : (xs ys : List Y) → member (xs ++ ys) ≡ member xs ∪ member ys
+    member-++ []       ys = sym (∪-∅-unit-l (member ys))
+    member-++ (x ∷ xs) ys =
+        cong (return x ∪_) (member-++ xs ys) ∙ sym (∪-assoc (return x) (member xs) (member ys))
+
+    -- Closure properties: these let Finite be discharged for concrete step
+    -- functions without ever writing down the enumerating list.
+    finite-∅ : Finite ∅
+    finite-∅ = ∣ [] , refl ∣₁
+
+    finite-return : (y : Y) → Finite (return y)
+    finite-return y = ∣ y ∷ [] , sym (∪-∅-unit-r (return y)) ∣₁
+
+    finite-∪ : (A B : ℙ Y) → Finite A → Finite B → Finite (A ∪ B)
+    finite-∪ A B = rec2 squash₁ (λ { (xs , A≡xs) (ys , B≡ys) →
+        ∣ xs ++ ys , cong₂ _∪_ A≡xs B≡ys ∙ sym (member-++ xs ys) ∣₁ })
+
+    finite-filt : (p : Y → Bool) (y : Y) → Finite (filt p y)
+    finite-filt p y = go (p y) refl
+      where
+        go : (b : Bool) → p y ≡ b → Finite (filt p y)
+        go true  eq = subst Finite (sym (filt-true  p y eq)) (finite-return y)
+        go false eq = subst Finite (sym (filt-false p y eq)) finite-∅
+
+    -- The member set of a list has a minimum whenever it is nonempty.
+    -- Only R-total is used (via hasmin-union); no decidability of R is needed.
+    hasmin-member : (ys : List Y)
+        → ∥ Σ Y (λ y → y ∈ member ys) ∥₁
+        → ∥ Σ Y (λ y → y ∈ minR (member ys)) ∥₁
+    hasmin-member []            ne = rec squash₁ (λ { (y , y∈∅) → elim* y∈∅ }) ne
+    hasmin-member (y ∷ [])      _  =
+        subst (λ S → ∥ Σ Y (λ y' → y' ∈ minR S) ∥₁) (sym (∪-∅-unit-r (return y))) (hasmin-return y)
+    hasmin-member (y ∷ y' ∷ ys) _  =
+        hasmin-union (return y) (member (y' ∷ ys)) (hasmin-return y)
+            (hasmin-member (y' ∷ ys) ∣ y' , ∣ inl (y∈[y] y') ∣₁ ∣₁)
+
+    -- Every nonempty finitely enumerable set has a minimum
+    finite-hasmin : (A : ℙ Y)
+        → Finite A
+        → ∥ Σ Y (λ y → y ∈ A) ∥₁
+        → ∥ Σ Y (λ y → y ∈ minR A) ∥₁
+    finite-hasmin A fin ne = rec squash₁ (λ { (ys , A≡ys) →
+        subst (λ S → ∥ Σ Y (λ y → y ∈ minR S) ∥₁) (sym A≡ys)
+              (hasmin-member ys (subst (λ S → ∥ Σ Y (λ y → y ∈ S) ∥₁) A≡ys ne)) }) fin
+
+    -- Bind preserves finiteness when f is finitely branching
+    finite-bind : (f : Y → ℙ Y) (A : ℙ Y)
+        → (∀ y → Finite (f y))
+        → Finite A
+        → Finite (f =<< A)
+    finite-bind f A f-fin = rec squash₁ (λ { (ys , A≡ys) →
+        subst (λ S → Finite (f =<< S)) (sym A≡ys) (go ys) })
+      where
+        go : (ys : List Y) → Finite (f =<< member ys)
+        go []       = ∣ [] , =<<-∅ f ∣₁
+        go (y ∷ ys) =
+            rec squash₁ (λ { (zs , fy≡zs) →
+            rec squash₁ (λ { (ws , rest≡ws) →
+                ∣ zs ++ ws
+                , ( =<<-∪-dist-left f (return y) (member ys)
+                  ∙ cong₂ _∪_ (ret-left-id y f ∙ fy≡zs) rest≡ws
+                  ∙ sym (member-++ zs ws) ) ∣₁
+            }) (go ys)
+            }) (f-fin y)
+
+    -- foldrM f e xs is finite when e is finite and f is finitely branching
+    foldrM-finite : {X : Type ℓ} (f : X → Y → ℙ Y) (e : ℙ Y)
+        → Finite e
+        → (∀ x y → Finite (f x y))
+        → (xs : List X)
+        → Finite (foldrM f e xs)
+    foldrM-finite f e e-fin f-fin []       = e-fin
+    foldrM-finite f e e-fin f-fin (x ∷ xs) =
+        finite-bind (f x) (foldrM f e xs) (f-fin x) (foldrM-finite f e e-fin f-fin xs)
+
+    -- Hence foldrM over a finitely branching f has a minimum,
+    -- with no assumption on Y beyond R-refl / R-trans / R-total
+    hasmin-foldrM-finite : {X : Type ℓ} (f : X → Y → ℙ Y) (e : ℙ Y)
+        → Finite e
+        → (∀ x y → Finite (f x y))
+        → ∥ Σ Y (λ y → y ∈ e) ∥₁
+        → (∀ x y → ∥ Σ Y (λ z → z ∈ f x y) ∥₁)
+        → (xs : List X)
+        → ∥ Σ Y (λ y → y ∈ minR (foldrM f e xs)) ∥₁
+    hasmin-foldrM-finite f e e-fin f-fin e-ne f-ne xs =
+        finite-hasmin (foldrM f e xs) (foldrM-finite f e e-fin f-fin xs) (foldrM-nonempty f e e-ne f-ne xs)
 
 
 
