@@ -201,30 +201,29 @@ A general specification of thinning algorithms should allow such flexibility.
 
 We assume a data structure |T| used to store potentially useful partial solutions.
 Conceptually, |T a| is just a set of |a|'s.
-It could be implemented as a list, a tree, an array... the choice of implementation is problem-specific and often crucial to the efficiency of the algorithm.
-Regarding |T|, we assume the existence of a number of operators. Firstly,
+We could let |T = P|, but we prefer to treat |T| and |P| as distinct types, since they serve different purposes:
+|P| denotes non-determinism, while |T| denotes a \emph{finite} collection of potential solutions.
+The type |T| could be implemented as a list, a tree, an array... the choice of implementation is problem-specific and often crucial to the efficiency of the algorithm.
+Regarding |T|, we assume the existence of a number of operators:
 \begin{spec}
 mem      :: T a -> P a {-"~~,"-}
-collect  :: P a -> T a {-"~~,"-}
+emptyT   :: T a {-"~~,"-}
+singleT  :: a -> T a {-"~~,"-}
+mergeT   :: T a -> T a -> T a {-"~~."-}
 \end{spec}
 %if False
 \begin{code}
 mem      :: T a -> P a {-"~~,"-}
 mem = undefined
-collect  :: P a -> T a {-"~~,"-}
-collect = undefined
 \end{code}
 %endif
-where |mem| non-deterministically yields an element in |T|, while |collect m| collects the results of |m| and stores them in the data structure |T|.
-Both |T| and |P| represent sets. If we let |T = P|, we would have |mem = collect = id|, and some notations could be much simplified.
-However, we prefer to treat |T| and |P| as distinct types, since they serve different purposes: |P| denotes non-determinism, while |T| denotes a \emph{finite} collection of potential solutions.
-For finite |m :: P a|, we demand that |mem (collect m) = m|; for |t :: T a| we want |collect (mem t) = t|.
-
-Furthermore, we assume the existence of methods |emptyT :: T a|, which denotes an empty table, |singleT :: a -> T a|, which builds a table with one entry, and |mergeT :: T a -> T a -> T a|, which merges two tables, such that the following holds:
+The function |mem| non-deterministically yields an element in |T|;
+|emptyT| denotes an empty table; |singleT| builds a table with one entry; |mergeT| merges two tables.
+Together they satisfy:
 \begin{align*}
-|collect mzero|      & ~=~ |emptyT {-"~~,"-}| \\
-|collect (return x)| & ~=~ |singleT x {-"~~,"-}| \\
-|collect (t <||> u)|  & ~=~ |mergeT (collect t) (collect u) {-"~~."-}|
+ |mem emptyT| & ~=~ |mzero| \mbox{~~,}\\
+ |mem (singleT x)| &~=~ |return x| \mbox{~~,}\\
+ |mem (mergeT t u)| &~=~ |mem t <||> mem u| \mbox{~~.}
 \end{align*}
 %if False
 \begin{code}
@@ -238,36 +237,34 @@ mergeT (xs:t)  (ys:u)  | wgt xs >= wgt ys  = xs : mergeT t (ys:u)
 
 \paraskip
 \paragraph{Thinning}
-Given a preorder |preceq| on some type |b| that is not necessarily connected, and a table |xs :: T b|,
-|thinT_preceq xs| computes a table that is possibly smaller, but still contains necessary elements that lead to an optimal solution.
-There could be many such tables, therefore we let |thinT_preceq| have type |T b -> P (T b)|. The tables it computes meets the following criteria:
+Given a preorder |preceq| on some type |b| that is not necessarily connected, and a \emph{finite} set of values |xs :: P b|,
+|thin_preceq xs| computes a table out of |xs|.
+The table might possibly drop some elements in |xs|, but still contains necessary elements that lead to an optimal solution.
+There could be many such tables, therefore we let |thin_preceq| have type |P b -> P (T b)|. The tables it computes meets the following criteria:
 %if False
 \begin{code}
-thinT :: T b -> P (T b)
-thinT = undefined
 thin :: P b -> P (T b)
-thin = thinT . collect
-thinT_preceq = thinT
+thin = undefined
+thin_preceq = thin
 \end{code}
 %endif
 \begin{equation}
-|ys `inn` thinT_preceq xs {-"~"-}<==>{-"~"-} ys `sse` xs && (forall x `inn` xs : (exists y `inn` ys : y `succeq` x)) {-"~~."-}|
+|t `inn` thin_preceq xs {-"~"-}<==>{-"~"-} mem t `sse` xs && (forall x `inn` xs : (exists y `inn` mem t : y `succeq` x)) {-"~~."-}|
 \label{eq:thin-def-set}
 \end{equation}
-That is, |thin_preceq xs| contains all the table |ys| that is a sub-table of |xs|
-(we overload the subset relation |(`sse`)| and membership relation |(`inn`)| to tables), and for every element in |xs| there exists some element in |ys| that is at least as good.
-The monadic function |thinT_preceq| can be seen as a specification that contains all possible ways to thin a table,
+That is, |thin_preceq xs| contains all the table |t| whose elements form a subset of |xs|, and for every element in |xs| there exists some element in |t| that is at least as good.
+The monadic function |thin_preceq| can be seen as a specification that contains all possible ways to thin a set to a table,
 of which the actual algorithm that maintains the table is a refinement.
 The algorithm may aggressively remove all candidates that are not needed in each step.
 It may also remove some but not all the redundant candidates, if that turns out to be more efficient.
-In particular, we have |xs `inn` thin_preceq xs|, meaning that the algorithm may sometimes just keep the table unchanged.
+In particular, we have |t `inn` thin_preceq xs| if |mem t = xs|, meaning that the algorithm may sometimes just keep the table unchanged.
 
 Property \eqref{eq:thin-def-set} can be wrapped into the following universal property:
 for all |f :: a -> P b| and |h :: a -> P (T b)|,
 \begin{equation}
 \setlength{\jot}{-1pt}
 \begin{split}
-|h `sse` thinT_preceq . collect . f |\mbox{~~}|<==>|&\mbox{~~} |(mem <=< h) `sse` f &&|\\
+|h `sse` thin_preceq . f |\mbox{~~}|<==>|&\mbox{~~} |(mem <=< h) `sse` f &&|\\
 &
 \left(
  \begin{aligned}
@@ -291,7 +288,7 @@ for all |f :: a -> P b| and |h :: a -> P (T b)|,
 \begin{code}
 propThinUniv :: (a -> P (T b)) -> (a -> P b) -> ((b, b) -> Bool) -> a -> P (T b)
 propThinUniv h f succeq =
-    h `sse` thinT . collect . f
+    h `sse` thin . f
  where pre0 = (mem <=< h) `sse` f
        pre1 = (do x <- any
                   t1 <- h x
@@ -304,17 +301,10 @@ propThinUniv h f succeq =
 \end{code}
 %endif
 Think of |f| as a function that non-deterministically generates some solution candidates, and |h| a function that non-deterministically builds a table of possibly useful solutions.
-In |thinT_preceq. collect . f|, the results of |f| is collected into a table of type |T b| and passed to |thinT_preceq|.
+In |thin_preceq . f|, the results of |f| is collected into a table of type |T b|, with some redundant elements possibly removed.
 The monadic inclusion in the big brackets encodes the combination of universal and existential quantification in \eqref{eq:thin-def-set}:
 for all table |t1| returned by |h|, and for all |y0| returned by |f|,
 there must exists an element |y1| in |t1| such that |y1 `succeq` y0|.
-
-Since |thinT_preceq| and |collect| often appear together, we will use the following abbreviation:
-given a preorder |(`preceq`)| on some type |b|, define
-\begin{code}
-thin_preceq :: P b -> P (T b)
-thin_preceq = thinT_preceq . collect {-"~~."-}
-\end{code}
 
 Letting |h := thin_preceq . f| in \eqref{eq:thin-univ-monadic}, we get |mem <=< thin_preceq . f `sse` f |,
 %if False
@@ -455,9 +445,7 @@ into a functional |foldr|.
 %if False
 \begin{code}
 thinReturnDer =
-         thin_leqvw (return [])
- ===     thinT (collect (return []))
- ===     thinT [[]]
+         thin (return [])
  `spse`  return [[]]
 \end{code}
 %endif
@@ -473,33 +461,31 @@ tstepDer x t =
  ===       {- definition of |(<=<)| -}
          thin (subsw x =<< mem t)
  ===       {- definition of |subsw|, |(=<<)| distributes into |(<||>)|, monad laws -}
-         thin (mem t <|> ((filt ((w>) . wgt) . (x:)) =<< mem t))
- ===       {- definition of |thin|, |collect| distributes into |(<||>)| -}
-         thinT (mergeT (collect (mem t)) (collect ((filt ((w>) . wgt) . (x:)) =<< mem t)))
- ===       {-  |collect (mem t) = t| -}
-         thinT (mergeT t (collect ((filt ((w>) . wgt) . (x:)) =<< mem t)))
- ===       {- construct |addw x t = collect ((filt ((w>) . wgt) . (x:)) =<< mem t)| -}
-         thinT (mergeT t (addw x t))
+         thin (mem t <|> (filt ((w>) . wgt) . (x:) =<< mem t))
+ ===       {- construct |mem (addw x t) = filt ((w>) . wgt) . (x:) =<< mem t|, see below -}
+         thin (mem t <|> mem (addw x t))
+ ===       {- since |mem (mergeT t u) = mem t <||> mem u| -}
+         thin (mem (mergeT t (addw x t)))
  `spse`    {- by \eqref{eq:thinmerge-refine}, see below -}
          return (thinmerge t (addw x t)) {-"~~."-}
 \end{code}
 
-In the penultimate step, one may define
+In the third step, we want to construct |addw| such that
 \begin{spec}
-  addw x t = collect ((filt ((w>) . wgt) . (x:)) =<< mem t) {-"~~."-}
+  mem (addw x t) = filt ((w>) . wgt) . (x:) =<< mem t {-"~~."-}
 \end{spec}
-That is, we attach |x| to each member in |t|, and throws away those entries whose weights exceed the limit |w|.
+The right-hand side almost works as a definition: we attach |x| to each member in |t|, and throws away those entries whose weights exceed the limit |w|.
 But given that |t :: T (List Item)| is sorted by decreasing weights and values, we can come up with a slightly more efficient implementation.
-Intuitively speaking, |(... (x:) =<< mem t)| can be implemented by |map (x:)|, and since |t| is sorted by weight, |filt ((w>) . wgt)| and |collect| can be implemented by a |dropWhile|. Define:
+Intuitively speaking, |(... (x:) =<< mem t)| can be implemented by |map (x:)|, and since |t| is sorted by weight, |filt ((w>) . wgt)| can be implemented by a |dropWhile|. Define:
 \begin{code}
 addw :: Item -> T (List Item) -> T (List Item)
 addw x = dropWhile ((w <=) . wgt) . map (x:) {-"~~."-}
 \end{code}
-One may show that |collect ((filt ((w>) . wgt) . (x:)) =<< mem t = addw x t|.
+One may show that it meets the specification.
 
-In the last step, we assume a function |thinmerge| that refines |thinT . mergeT|, that is, for |xss, yss :: T (List Item)| sorted by decreasing weights, a function that satisfies:
+In the last step, we assume a function |thinmerge| that refines |thin . mem| after |mergeT|, that is, for |xss, yss :: T (List Item)| sorted by decreasing weights, a function that satisfies:
 \begin{equation}
-|return (thinmerge xss yss) `sse` thinT (mergeT xss yss)| \mbox{~~.}
+|return (thinmerge xss yss) `sse` thin (mem (mergeT xss yss))| \mbox{~~.}
 \label{eq:thinmerge-refine}
 \end{equation}
 One may define |thinmerge xss yss| by calling |mergeT xss yss| before removing unneeded entries, but it turns out to be easier if we perform merging and thinning in one recursive function.
