@@ -472,3 +472,29 @@ mss-thm  = reasoning⊑ (
                     (scanrM-≥-pure k ls ls∈hk y y∈mem_ls)
             }) y∈mh_k
 
+
+-- maxlist specialised to (_≥ₛ_ °) with the totality proof baked in.
+-- To be usable with ∘ it must be total, so the (never reached) empty case
+-- returns a default; scanr always produces a non-empty list.
+maxlist' : List (List ℤ) → List ℤ
+maxlist' []       = []
+maxlist' (x ∷ xs) = maxlist (_≥ₛ_ °) ≥ₛ°-total (x ∷ xs) tt
+
+-- return ∘ maxlist' ⊑ minR ∘ member, on non-empty lists
+maxlist'-⊆-minR : (xs : List (List ℤ)) → NonEmpty xs
+    → return (maxlist' xs) ⊆ minR (member xs)
+maxlist'-⊆-minR (x ∷ xs) tt = maxlist-⊆-minR x xs
+
+final-step : return ∘ maxlist' ∘ scanr zplus [] ⊑ minR ∘ member ∘ scanr zplus []
+final-step xs = maxlist'-⊆-minR (scanr zplus [] xs) (scanr-NonEmpty zplus [] xs)
+
+mss-final-result : return ∘ maxlist' ∘ scanr zplus [] ⊑ mss
+mss-final-result = reasoning⊑ (
+    ⊑begin
+    return ∘ maxlist' ∘ scanr zplus []
+    ⊑⟨ incl⊑ final-step ⟩
+    minR ∘ member ∘ scanr zplus []
+    ⊑⟨ incl⊑ mss-thm ⟩
+    mss
+    ⊑∎
+    )
