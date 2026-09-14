@@ -1,5 +1,5 @@
 {-# OPTIONS --cubical --guardedness #-}
-module Thin where
+module ThinP where
 
 open import Cubical.Foundations.Prelude
 open import Cubical.HITs.PropositionalTruncation as PT
@@ -21,7 +21,7 @@ private
   variable
     ℓ : Level
 
-record ThinQ {ℓ : Level} {A : Type ℓ} (Q : A → ℙ A) : Type (ℓ-suc (ℓ-suc ℓ)) where
+record ThinP {ℓ : Level} {A : Type ℓ} (Q : A → ℙ A) : Type (ℓ-suc (ℓ-suc ℓ)) where
   field
     thin : ℙ A → ℙ (ℙ A)
 

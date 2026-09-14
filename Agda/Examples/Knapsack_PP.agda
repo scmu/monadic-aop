@@ -32,7 +32,7 @@ open import Sets
 open import Reasoning
 open import NatBool
 open import HasMin
-import Thin as Thinning
+import ThinP as Thinning
 
 open import Examples.Knapsack.Base    public
 open import Examples.Knapsack.Order   public
@@ -45,8 +45,8 @@ open HasMinProps _≥ₛ_ Max≥ₛ ≥ₛ-refl ≥ₛ-trans ≥ₛ-total
 -- `thin` and `thinmerge` are abstract: take an implementation of the thinning
 -- interface for _⊴_ and of the thinmerge specification as parameters, exactly
 -- as `Max≥ₛ` supplies `minR` for _≥ₛ_ above.
-module _ (thinD : Thinning.ThinQ _⊴_) (tmD : ThinMerge) where
-  open Thinning.ThinQ thinD
+module _ (thinD : Thinning.ThinP _⊴_) (tmD : ThinMerge) where
+  open Thinning.ThinP thinD
   open ThinMerge tmD
 
   -- The step of the thinned fold: thin after one step of subsw.  Written in
