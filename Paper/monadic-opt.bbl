@@ -259,7 +259,7 @@
   language with univalence and higher inductive types}. In
   \bibinfo{booktitle}{\emph{Proceedings of the ACM on Programming Languages}},
   \bibfield{editor}{\bibinfo{person}{Fran{\c{c}}ois Pottier}} (Ed.),
-  Vol.~\bibinfo{volume}{3}. \bibinfo{publisher}{Academic Press},
+  Vol.~\bibinfo{volume}{3, Issue ICFP}. \bibinfo{publisher}{Academic Press},
   \bibinfo{pages}{1--29}.
 \newblock
 
