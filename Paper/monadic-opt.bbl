@@ -2,7 +2,7 @@
 %%% Do NOT edit. File created by BibTeX with style
 %%% ACM-Reference-Format-Journals [18-Jan-2012].
 
-\begin{thebibliography}{19}
+\begin{thebibliography}{20}
 
 %%% ====================================================================
 %%% NOTE TO THE USER: you can override these defaults by providing
@@ -127,6 +127,21 @@
   \bibinfo{number}{1816})}, \bibfield{editor}{\bibinfo{person}{Teodor Rus}}
   (Ed.). \bibinfo{publisher}{Springer-Verlag}, \bibinfo{pages}{371--390}.
 \newblock
+
+
+\bibitem[Escard{\'{o}}(2019)]%
+        {Escardo:19:Univalent}
+\bibfield{author}{\bibinfo{person}{Mart{\'{\i}}n~H{\"{o}}tzel Escard{\'{o}}}.}
+  \bibinfo{year}{2019}\natexlab{}.
+\newblock \showarticletitle{Introduction to univalent foundations of
+  mathematics with {A}gda}.
+\newblock \bibinfo{journal}{\emph{Computing Research Repository (CoRR)}}
+  \bibinfo{volume}{abs/1911.00580} (\bibinfo{year}{2019}).
+\newblock
+\urldef\tempurl%
+\url{http://arxiv.org/abs/1911.00580}
+\showURL{%
+\tempurl}
 
 
 \bibitem[Gibbons and Hinze(2011)]%

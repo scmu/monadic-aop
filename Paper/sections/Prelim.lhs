@@ -261,7 +261,8 @@ join m = id =<< m {-"~~,"-}
 (=<<) :: (a -> P b) -> P a -> P b
 f =<< m = join (f <$> m) {-"~~."-}
 \end{spec}
-However, this definition does not work in |Agda| since, given |a :: Type l|, |P (P a)| is in |Type (2+l)|, where as we want |(=<<)| to stay in the realm of |Type (1+l)|.
+However, the definition of |join| above is rejected by Agda due to problems with levels.
+In fact, one cannot define |join| in Agda unless one assumes \emph{propositional resizing}, which is equivalent to saying that all propositions of every universe are small (this was discussed in depth by \citet{Escardo:19:Univalent}, Section~36.6).
 For our purpose, we found it possible to avoid |join| and present all our specifications and theorems in terms of |return| and |(=<<)|.
 
 \subsection{Monadic fold}
