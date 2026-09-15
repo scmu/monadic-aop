@@ -114,9 +114,9 @@ Monadic bind |(=<<)| is monotonic with respect to containment:
 Therefore, |(<=<)| is also monotonic with respect to containment.
 Meanwhile, function application (and composition) in general is \emph{not} monotonic with respect to containment, that is, having |m `sse` n| certainly does not guarantee that |h m `sse` h n| for arbitrary |h :: M a -> M b|, nor does |f `sse` g| guarantee |h . f `sse` h . g|.
 Later in this article we will need monotonicity in more specific cases, where we will discuss conditions for them to hold.%
-\footnote{That |(.)| being not monotonic may look restrictive, but it is just a common phenomena that was often overlooked due to notational differences.
-Consider \citet{BirddeMoor:97:Algebra}, for example, the equivalent of our |h . f| should be written as |h . {-"\Lambda\,"-} f| in their formulation, and the $\Lambda$ operator, which collects the results of a relation in a set, is \emph{not} monotonic.
-The |(.)| operator of Bird and de Moor, denoting composition of relations, corresponds to our |(<=<)|, and is indeed monotonic with respect to |(`sse`)|.}
+\footnote{That |(.)| being not monotonic may look active, but it is just a common phenomena that was often overlooked due to notational differences.
+Consider the work of \citet{BirddeMoor:97:Algebra}, for example. The equivalent of our |h . f| should be written as |h . {-"\Lambda\,"-} f| in their formulation, and the $\Lambda$ operator, which collects the results of a relation in a set, is \emph{not} monotonic.
+The relational composition operator |(.)| of Bird and de Moor corresponds to our |(<=<)|, which is indeed monotonic with respect to |(`sse`)|.}
 
 The following law relates |(<<)| and |(`sse`)|:
 \begin{equation}
@@ -172,7 +172,7 @@ suffix []      = return []
 suffix (x:xs)  = return (x:xs) <|> suffix xs {-"~~."-}
 \end{code}
 Evaluating |suffix [1,2,3]| yields |[1,2,3]|, |[2,3]|, |[3]|, and |[]|.
-We get all segments of a list by |prefix <=< suffix|.
+We get an arbitrary segment of a list by |prefix <=< suffix|.
 
 \subsection{Formalisation in Agda}
 
@@ -346,13 +346,15 @@ The properties above can be proved by routine induction on the input list.
 For an example we try to show that |prefixP `sse` prefix|.
 One may go back to first principles and use an induction on the input list.
 Alternatively, one may use property \eqref{eq:foldRSuffixPt}, exploiting the fact that |prefix| is a |foldR|.
-It will soon turn out that it is easier to prove instead the following equivalence using \eqref{eq:foldRFixPt}:
-\begin{spec}
-   return [] <|> prefixP xs = prefix xs {-"~~,"-}
-\end{spec}
+It will soon turn out that it is easier to prove, instead of |prefixP `sse` prefix|, the following equivalence:
+\begin{equation}
+   |return [] <||> prefixP xs = prefix xs {-"~~,"-}|
+   \label{eq:returnPrefixPPrefix}
+\end{equation}
 from which |prefixP `sse` prefix|, that is, |prefixP <||> prefix = prefix|, follows.
 This is a case where a stronger variation of a property is easier to prove since it is more informative.
-The first antecedent of \eqref{eq:foldRFixPt} is immediate. For the second antecedent, we need to show that
+The property \eqref{eq:returnPrefixPPrefix} can be proved using \eqref{eq:foldRFixPt}.
+The first antecedent is immediate. For the second antecedent, we need to show that
 |return [] <||> prefixP (x:xs) = pre x =<< (return [] <||> prefixP xs)|, which is established by utilising monad laws and distributivity:
 %if False
 \begin{code}
@@ -401,6 +403,12 @@ Introducing a |scanr| is often a key step in speeding up algorithms related to l
 For those who not familiar with it, |scanr :: (a -> b -> b) -> b -> List a -> List b|
 is like |foldr|, but records the intermediate results of each step in a list.
 For example, while |foldr (+) 0| computes the sum of a list, |scanr (+) 0| computes the running sum: |scanr (+) 0 [1,2,3] = [1+(2+(3+0)), 2+(3+0), 3+0, 0]| |= [6,5,3,0]|.
+An inductive definition of |scanr| is given by:
+\begin{spec}
+scanr f e []      =  [e]
+scanr f e (x:xs)  =  let ys = scanr f e xs
+                     in f x (head ys) : ys {-"~~."-}
+\end{spec}
 An important property of |scanr| is the following \emph{scan lemma}:
 \begin{spec}
   scanr f e = map (foldr f e) . tails {-"~~,"-}
@@ -591,7 +599,7 @@ To prove \eqref{eq:max-def-set} from \eqref{eq:max-univ-set}, for instance, one 
 The aim of our work, however, is to capture the ideas above in a monadic notation, such that programs can be manipulated and reasoned about in the monadic language.
 From now on we abuse the notation a bit,
 using |y `unrhd` z | to denote |filt (\(y,z) -> y `unrhd` z) (y,z)|,
-which is consistent with the notation of list comprehensions in Haskell.
+which is consistent with the notation for boolean guards in list comprehensions in Haskell.
 Furthermore, since the pattern
 \begin{spec}
 do  (y,z) <- any
@@ -645,8 +653,8 @@ maxUnivMonadic h f unrhd = (lhs, rhs)
 %endif
 The large pair of parentheses in \eqref{eq:max-univ-monadic} relates two monadic values. On the left-hand side we generate a pair of values |y1| and |y0|, which are respectively results of |h| and |f| for the same, arbitrarily generated input |x|. The inclusion says that |(y1, y0)| must be contained by the monad on the right-hand side, which consists of all pairs |(y1, y0)| as long as |y1 `unrhd` y0|.
 
-Letting |h := max . f| in \eqref{eq:max-univ-monadic}, the left-hand side trivally holds, and on the right-hand side we get
-|max . f `sse` f|, meaning that any result returned by |max . f| is a result of |f|, and the |max|-cancelation law:
+Letting |h := max . f| in \eqref{eq:max-univ-monadic}, the left-hand side trivially holds, and on the right-hand side we get
+|max . f `sse` f|, meaning that any result returned by |max . f| is a result of |f|, and the |max|-cancellation law:
 \begin{equation}
 \setlength{\jot}{-1pt}
  \begin{aligned}
@@ -659,7 +667,7 @@ Letting |h := max . f| in \eqref{eq:max-univ-monadic}, the left-hand side trival
  \begin{aligned}
  |do|~ & |y1 `unrhd` y0 <- any| \mbox{~~.}
  \end{aligned}
- \label{eq:max-cancelation}
+ \label{eq:max-cancellation}
 \end{equation}
 
 \paraskip
@@ -670,7 +678,7 @@ Letting |h := max . f| in \eqref{eq:max-univ-monadic}, the left-hand side trival
 |split h f =<< any {-"\,"-}`sse`{-"\,"-} filt unrhd =<< any| \mbox{~~.}
 \end{equation*}
 We may then manipulate expressions using properties of the |split| operator.
-The |max|-cancelation law \eqref{eq:max-cancelation} is written neatly as
+The |max|-cancellation law \eqref{eq:max-cancellation} is written neatly as
 \begin{equation*}
   |split (max_unlhd . f) f =<< any {-"\,"-}`sse`{-"\,"-} filt unrhd =<< any| \mbox{~~.}
 \end{equation*}
@@ -790,7 +798,7 @@ minMonoPf f g unrhd =
             filt unrhd (w,y)
             x <- max (f z)
             return (x,y)
- `sse`   {- |max|-cancelation -}
+ `sse`   {- |max|-cancellation -}
         do  (x,y,w) <- any
             filt unrhd (w,y)
             filt unrhd (x,w)
@@ -811,7 +819,7 @@ minMonoPf f g unrhd =
             w `unrhd` y
             x <- max (f z)
             return (x,y)
- `sse`   {- |max|-cancelation -}
+ `sse`   {- |max|-cancellation -}
         do  (x,y,w) <- any
             w `unrhd` y
             x `unrhd` w
@@ -825,7 +833,7 @@ minMonoPf f g unrhd =
 \paragraph{The match-and-rewrite technique}
 In the first step of the proof above, we match |z <- any| and |y <- g z| against the left-hand side of |(`sse`)| in the big parentheses in \eqref{eq:max-monotonic-monadic}, and rewrite them to the right-hand side of |(`sse`)|.
 
-Identifying the lines that matches the left-hand side of some |(`sse`)| and rewrite them to the right-hand side will be a proof step we use a lot in this article.
+Identifying the lines that match the left-hand side of some |(`sse`)| and rewrite them to the right-hand side will be a proof step we use a lot in this article.
 It is actually a composition of many mini-steps.
 We first utilise the commutativity of non-determinism monad and the monad laws to group the relevant lines together:
 \begin{spec}
@@ -938,4 +946,4 @@ The function |maxlist| may decide how to resolve a tie --- in the implementation
 
 %\paraskip
 \paragraph{In the Agda model}
-We assume that |max| is a value satisfying a universal property that more closely resembles that of \citet{BirddeMoor:97:Algebra}, which essentially expands to \eqref{eq:max-univ-monadic}, from which we prove the rest of the properties.
+We assume that |max| is a value satisfying a universal property that more closely resembles that of \citet{BirddeMoor:97:Algebra}, which  expands to \eqref{eq:max-univ-monadic}, from which we prove the rest of the properties.

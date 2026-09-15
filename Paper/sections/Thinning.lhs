@@ -25,8 +25,6 @@ The catch, however, is that |preceq| is not total.
 The Greedy Theorem still holds, but refines the specification to a monadic program that does not return results for most if not all inputs.
 For such situations we need another theorem.
 
-Let us look at an example.
-
 \subsection{Example: 0-1 Knapsack}
 \label{sec:ex:0-1-knapsack}
 
@@ -190,9 +188,9 @@ Instead, one may use a different strategy: let the |foldR| maintain, in some dat
 For example, if at one point the algorithm computes a collection of solutions
 |{[(5,8)],[(4,6)], [(4,8)]}|, the solutions |[(5,8)]| and |[(4,6)]| must be kept because we do not yet know which will contribute to the final solution.
 Meanwhile, |[(4,8)]|, which is less valuable than |[(5,8)]| and heavier |[(4,6)]|, needs not be kept.
-This process of ``keeping useful solutions, while possibly dropping those useless ones'' is called \emph{thinning} in the terminology of \citet{BirddeMoor:97:Algebra}.
+This process of ``keeping useful solutions, while possibly dropping  useless ones'' is called \emph{thinning} in the terminology of \citet{BirddeMoor:97:Algebra}.
 
-Note our wording: that |[(4,8)]| needs not be kept does not mean that we \emph{have to} drop it.
+Notice our wording: that |[(4,8)]| needs not be kept does not mean that we \emph{have to} drop it.
 Doing a full thinning keeps the set of solutions small, but the thinning itself could be time consuming,
 and it may be beneficial to remove some but not all of the useless solutions.
 A general specification of thinning algorithms should allow such flexibility.
@@ -316,7 +314,7 @@ memThinId f =
     mem <=< thin_preceq . f `sse` f {-"~~,"-}
 \end{code}
 %endif
-and the |thin|-cancelation law:
+and the |thin|-cancellation law:
 \begin{equation}
 \setlength{\jot}{-1pt}
   \begin{aligned}

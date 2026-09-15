@@ -90,7 +90,7 @@ pfThinThm2 preceq f e x =
           b0 <- foldR f e xs
           y0 <- f x b0
           return (t1, y0)
- `sse`  {- |thin| cancelation -}
+ `sse`  {- |thin|-cancellation -}
       do  (u1, b0) <- any
           b1 <- mem u1
           b1 `fpreceq` b0
@@ -110,7 +110,7 @@ pfThinThm2 preceq f e x =
           y1 `fpreceq` y0
           t1 <- (thin_preceq . (f x <=< mem)) u1
           return (t1, y0)
- `sse`  {- |thin| cancelation -}
+ `sse`  {- |thin|-cancellation -}
       do  (y0, t1, y1) <- any
           y2 <- mem t1
           y2 `fpreceq` y1

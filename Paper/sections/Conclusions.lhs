@@ -23,7 +23,7 @@ Therefore, in principle their proofs can be ported into our framework as well.
 \paragraph{Related work}
 \citet{GibbonsHinze:11:Just} is a pioneering work showing that one does not have to give up equational reasoning with the presence of side effects.
 On the contrary, monadic programs are very suitable for reasoning using monad laws and properties of effect operators.
-Inspired, \citet{Mu:19:Equational} modelled Spark aggregation using non-determinism monad, in order to prove it properties.
+Inspired, \citet{Mu:19:Equational} modelled Spark aggregation using non-determinism monad, in order to prove its properties.
 \citet{MuChiang:20:Deriving} then explored how to derive programs from monadic specifications.
 List sorting was specified using non-determinism monad, from which a pure quicksort on lists was derived.
 The article went further to explore mixing of effects --- the quicksort algorithm on mutable arrays, defined using state monad, was also derived.
@@ -31,11 +31,11 @@ The article went further to explore mixing of effects --- the quicksort algorith
 \citet{MuKoJansson:09:Algebra} encoded the relational instance of the calculus of \citet{BirddeMoor:97:Algebra} in Agda.
 The intention was to use the interactive interface of Agda to carry out program derivations while having them formally checked.
 As the scenario got more complicated, the details one has to provide in an Agda proof got more massive, thus in this article we no longer promote Agda as an ideal interface to derive program with.
-Still, we use Agda to verify the correctness of our theory.
+Still, we use Agda to verify the correctness of our core theory.
 \citet{Affeldt:19:Hierarchy} presented an Coq/Rocq formalisation of monads and effects, the purpose being to formally model a hierarchy of effects and the properties of each of the effects.
 Having built the formalisation, they verified a number of previous work on reasoning about monads and corrected many bugs.
 
 In \citet{BirddeMoor:97:Algebra} and in this article, |max| is a relation/function that takes a set as its input. Alternatively, \citet{MuOliveira:12:Programming} proposed a ``shrink'' operator $(\upharpoonright)$ that is applied directly to relations --- given $S :: A \rightarrow B$, the relation ${S\!\upharpoonright} :: A \rightarrow B$ is included in $S$ but keeps only those outputs that are optimal.
 \citet{Oliveira:18:Programming} hinted at the possibility of extending the notion to another operator $(\downharpoonleft)$ that corresponds to thinning, which was further developed by \citet{Pinho:22:Greedy}, who carefully reviewed and proved many important properties of $(\upharpoonright)$ and $(\downharpoonleft)$, and applied them to a number of examples.
 Using these notations led to a more streamlined formalisation of optimisation problems by avoiding an intermediate set.
-As future work, it remains to investigate whether the advantage also applies to our setting.
+As future work, it remains to investigate whether the advantages also apply to our setting.
